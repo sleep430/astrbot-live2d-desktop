@@ -3,7 +3,7 @@
  * 用于验证基础功能的实现
  */
 
-import { describe, test, expect, beforeEach, afterEach } from 'vitest'
+import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest'
 import { CubismModel, LoadStep, MotionPriority } from './CubismModel'
 import {
   CubismMatrix44,
@@ -120,6 +120,27 @@ describe('CubismModel', () => {
   test('getFps should return number', () => {
     const fps = model.getFps()
     expect(typeof fps).toBe('number')
+  })
+
+  test('destroy should release textures without losing WebGL context', () => {
+    const texture = {} as WebGLTexture
+    const deleteTexture = vi.fn()
+    const getExtension = vi.fn()
+    const internals = model as unknown as {
+      gl: Pick<WebGLRenderingContext, 'deleteTexture' | 'getExtension'> | null
+      textures: WebGLTexture[]
+    }
+
+    internals.gl = {
+      deleteTexture,
+      getExtension,
+    } as unknown as WebGLRenderingContext
+    internals.textures = [texture]
+
+    model.destroy()
+
+    expect(deleteTexture).toHaveBeenCalledWith(texture)
+    expect(getExtension).not.toHaveBeenCalled()
   })
 })
 

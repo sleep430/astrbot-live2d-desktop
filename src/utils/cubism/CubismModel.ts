@@ -2112,9 +2112,7 @@ export class CubismModel {
         }
       })
       this.textures = []
-
-      const loseContextExtension = this.gl.getExtension('WEBGL_lose_context')
-      loseContextExtension?.loseContext()
+      // 模型重载和切换会复用同一个 canvas，不能在这里主动丢失 WebGL 上下文。
     }
 
     // 释放渲染器
