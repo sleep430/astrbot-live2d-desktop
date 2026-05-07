@@ -125,6 +125,37 @@ describe('discoverCubismModelCompatibility', () => {
     })
   })
 
+  test('keeps standard model expression names as primary ids', () => {
+    const modelDir = createTempModelDir()
+    writeText(path.join(modelDir, 'sample.moc3'), 'moc')
+    writeText(path.join(modelDir, 'texture_00.png'), 'png')
+    writeText(path.join(modelDir, 'expressions', 'smile.exp3.json'), '{"Parameters":[]}')
+
+    writeJson(path.join(modelDir, 'sample.model3.json'), {
+      FileReferences: {
+        Moc: 'sample.moc3',
+        Textures: ['texture_00.png'],
+        Expressions: [
+          {
+            Name: 'SmileName',
+            File: 'expressions/smile.exp3.json',
+          },
+        ],
+      },
+    })
+
+    const manifest = discoverCubismModelCompatibility(path.join(modelDir, 'sample.model3.json'))
+
+    expect(manifest.expressions).toEqual([
+      {
+        id: 'SmileName',
+        file: 'expressions/smile.exp3.json',
+        aliases: ['SmileName', 'smile'],
+        source: 'model3',
+      },
+    ])
+  })
+
   test('falls back to file basename when companion hotkey names are empty', () => {
     const modelDir = createTempModelDir()
     writeText(path.join(modelDir, 'sample.moc3'), 'moc')

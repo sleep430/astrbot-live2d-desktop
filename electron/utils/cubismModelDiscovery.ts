@@ -18,7 +18,7 @@ type Model3Json = {
     Pose?: string
     UserData?: string
     Motions?: Record<string, Array<{ File?: string }>>
-    Expressions?: Array<{ File?: string }>
+    Expressions?: Array<{ Name?: string; File?: string }>
   }
 }
 
@@ -359,13 +359,15 @@ function appendStandardDeclarations(
       continue
     }
     expressionCount += 1
+    const rawName = typeof expressionRef?.Name === 'string' ? expressionRef.Name.trim() : ''
+    const baseName = stripKnownExtension(path.basename(resolved))
     ensureExpressionEntry(
       expressionEntries,
       resolved,
       'model3',
       0,
-      stripKnownExtension(path.basename(resolved)),
-      [],
+      rawName || baseName,
+      uniqueStrings([rawName, baseName]),
     )
   }
 
