@@ -9,6 +9,8 @@ export type ExpressionParameterOp = {
 export type ParsedExpressionFile = {
   id: string
   file: string
+  fadeInMs?: number
+  fadeOutMs?: number
   parameters: ExpressionParameterOp[]
   parameterIds: string[]
   blendSummary: {
@@ -26,6 +28,8 @@ type RawExpressionParameter = {
 }
 
 type RawExp3Json = {
+  FadeInTime?: number
+  FadeOutTime?: number
   Parameters?: RawExpressionParameter[]
 }
 
@@ -38,6 +42,13 @@ function normalizeBlendType(rawBlend: unknown): ExpressionBlendType {
     return 'overwrite'
   }
   return 'add'
+}
+
+function normalizeFadeTimeMs(value: unknown): number | undefined {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return undefined
+  }
+  return Math.max(0, Math.round(value * 1000))
 }
 
 export function parseExp3Text(text: string, id: string, file: string): ParsedExpressionFile {
@@ -81,6 +92,8 @@ export function parseExp3Text(text: string, id: string, file: string): ParsedExp
   return {
     id,
     file,
+    fadeInMs: normalizeFadeTimeMs(parsed.FadeInTime),
+    fadeOutMs: normalizeFadeTimeMs(parsed.FadeOutTime),
     parameters,
     parameterIds,
     blendSummary: {

@@ -1,8 +1,12 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { CubismModel } from '../src/utils/cubism/CubismModel'
 
 describe('CubismModel expression runtime', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('restores the previous legacy expression when a held combo expires', () => {
     const model = Object.create(CubismModel.prototype) as any
     const restored: string[] = []
@@ -12,6 +16,10 @@ describe('CubismModel expression runtime', () => {
       previous: null,
       previousLegacyExpressionName: 'IdleSmile',
       holdUntil: Date.now() - 1,
+      startedAt: Date.now() - 1000,
+      fadeInMs: 0,
+      fadeOutMs: 0,
+      fadeOutStartedAt: null,
       resetPolicy: 'previous',
     }
     model.playLegacyExpressionByName = (expressionName: string) => {
@@ -69,5 +77,78 @@ describe('CubismModel expression runtime', () => {
     model.expression(' HAPPY_FACE ')
 
     expect(played).toEqual(['Smile'])
+  })
+
+  it('applies protocol fade to custom expression runtime weights', () => {
+    const model = Object.create(CubismModel.prototype) as any
+    const appliedWeights: number[] = []
+    const now = vi.spyOn(Date, 'now')
+
+    model.applyParsedExpression = (_model: unknown, _parsed: unknown, weight: number) => {
+      appliedWeights.push(weight)
+    }
+
+    now.mockReturnValue(1000)
+    model.beginCustomExpressionRuntime(
+      [{
+        id: 'Smile',
+        weight: 0.8,
+        order: 0,
+        parsed: { parameters: [], fadeInMs: 1000, fadeOutMs: 1000 },
+        conflictGroups: [],
+      }],
+      { fade: 400 }
+    )
+
+    now.mockReturnValue(1100)
+    model.updateCustomExpressionRuntime({})
+    now.mockReturnValue(1400)
+    model.updateCustomExpressionRuntime({})
+
+    expect(appliedWeights[0]).toBeCloseTo(0.2)
+    expect(appliedWeights[1]).toBeCloseTo(0.8)
+  })
+
+  it('fades out custom expression runtime before restoring previous legacy expression', () => {
+    const model = Object.create(CubismModel.prototype) as any
+    const appliedWeights: number[] = []
+    const restored: string[] = []
+    const now = vi.spyOn(Date, 'now')
+
+    model.applyParsedExpression = (_model: unknown, _parsed: unknown, weight: number) => {
+      appliedWeights.push(weight)
+    }
+    model.playLegacyExpressionByName = (expressionName: string) => {
+      restored.push(expressionName)
+      return true
+    }
+
+    now.mockReturnValue(1000)
+    model.beginCustomExpressionRuntime(
+      [{
+        id: 'Smile',
+        weight: 1,
+        order: 0,
+        parsed: { parameters: [], fadeInMs: 0, fadeOutMs: 400 },
+        conflictGroups: [],
+      }],
+      { holdMs: 100, resetPolicy: 'previous' }
+    )
+    model.activeExpressionRuntime.previousLegacyExpressionName = 'IdleSmile'
+
+    now.mockReturnValue(1100)
+    model.updateCustomExpressionRuntime({})
+    expect(restored).toEqual([])
+    expect(appliedWeights[0]).toBeCloseTo(1)
+
+    now.mockReturnValue(1300)
+    model.updateCustomExpressionRuntime({})
+    expect(restored).toEqual([])
+    expect(appliedWeights[1]).toBeCloseTo(0.5)
+
+    now.mockReturnValue(1500)
+    model.updateCustomExpressionRuntime({})
+    expect(restored).toEqual(['IdleSmile'])
+    expect(model.activeExpressionRuntime).toBeNull()
   })
 })

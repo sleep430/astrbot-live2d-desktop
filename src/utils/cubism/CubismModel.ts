@@ -171,6 +171,10 @@ type ActiveExpressionRuntime = {
   previous: ResolvedExpressionMember[] | null
   previousLegacyExpressionName: string | null
   holdUntil: number | null
+  startedAt: number
+  fadeInMs: number
+  fadeOutMs: number
+  fadeOutStartedAt: number | null
   resetPolicy: CubismExpressionResetPolicy
 }
 
@@ -970,6 +974,38 @@ export class CubismModel {
     }))
   }
 
+  private normalizeExpressionFadeMs(value: unknown, fallback: number): number {
+    const fadeMs = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(fadeMs)) {
+      return fallback
+    }
+    return Math.max(0, Math.floor(fadeMs))
+  }
+
+  private getDefaultExpressionFadeInMs(members: ResolvedExpressionMember[]): number {
+    const fadeTimes = members
+      .map((member) => member.parsed.fadeInMs)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+    if (fadeTimes.length === 0) {
+      return 300
+    }
+
+    return Math.max(...fadeTimes)
+  }
+
+  private getDefaultExpressionFadeOutMs(members: ResolvedExpressionMember[]): number {
+    const fadeTimes = members
+      .map((member) => member.parsed.fadeOutMs)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+    if (fadeTimes.length === 0) {
+      return 300
+    }
+
+    return Math.max(...fadeTimes)
+  }
+
   private resolveSemanticComboItems(
     semantic: CubismExpressionSemanticItem[] | undefined
   ): CubismExpressionComboItem[] {
@@ -1086,6 +1122,10 @@ export class CubismModel {
     const holdMs = typeof request.holdMs === 'number' && Number.isFinite(request.holdMs)
       ? Math.max(0, Math.floor(request.holdMs))
       : 0
+    const defaultFadeInMs = this.getDefaultExpressionFadeInMs(members)
+    const defaultFadeOutMs = this.getDefaultExpressionFadeOutMs(members)
+    const fadeInMs = this.normalizeExpressionFadeMs(request.fade, defaultFadeInMs)
+    const fadeOutMs = this.normalizeExpressionFadeMs(request.fade, defaultFadeOutMs)
     const resetPolicy = request.resetPolicy ?? 'keep'
     const previous = resetPolicy === 'previous'
       ? this.cloneResolvedExpressionMembers(this.activeExpressionRuntime?.members)
@@ -1094,11 +1134,16 @@ export class CubismModel {
       ? this.activeLegacyExpressionName
       : null
 
+    const now = Date.now()
     this.activeExpressionRuntime = {
       members: this.cloneResolvedExpressionMembers(members) ?? [],
       previous,
       previousLegacyExpressionName,
-      holdUntil: holdMs > 0 ? Date.now() + holdMs : null,
+      holdUntil: holdMs > 0 ? now + holdMs : null,
+      startedAt: now,
+      fadeInMs,
+      fadeOutMs,
+      fadeOutStartedAt: null,
       resetPolicy
     }
     this.activeLegacyExpressionName = null
@@ -1106,7 +1151,23 @@ export class CubismModel {
 
   private refreshActiveExpressionRuntime(): void {
     const runtime = this.activeExpressionRuntime
-    if (!runtime || runtime.holdUntil === null || Date.now() < runtime.holdUntil) {
+    if (!runtime) {
+      return
+    }
+
+    const now = Date.now()
+    const fadeOutStartedAt = typeof runtime.fadeOutStartedAt === 'number'
+      ? runtime.fadeOutStartedAt
+      : null
+    if (fadeOutStartedAt !== null) {
+      const fadeOutMs = this.normalizeExpressionFadeMs(runtime.fadeOutMs, 0)
+      if (fadeOutMs <= 0 || now - fadeOutStartedAt >= fadeOutMs) {
+        this.finishActiveExpressionRuntime(runtime)
+      }
+      return
+    }
+
+    if (runtime.holdUntil === null || now < runtime.holdUntil) {
       return
     }
 
@@ -1117,12 +1178,28 @@ export class CubismModel {
       return
     }
 
+    const fadeOutMs = this.normalizeExpressionFadeMs(runtime.fadeOutMs, 0)
+    if (fadeOutMs > 0) {
+      runtime.holdUntil = null
+      runtime.fadeOutStartedAt = now
+      return
+    }
+
+    this.finishActiveExpressionRuntime(runtime)
+  }
+
+  private finishActiveExpressionRuntime(runtime: ActiveExpressionRuntime): void {
     if (runtime.resetPolicy === 'previous' && runtime.previous?.length) {
+      const now = Date.now()
       this.activeExpressionRuntime = {
         members: this.cloneResolvedExpressionMembers(runtime.previous) ?? [],
         previous: null,
         previousLegacyExpressionName: null,
         holdUntil: null,
+        startedAt: now,
+        fadeInMs: runtime.fadeInMs,
+        fadeOutMs: runtime.fadeOutMs,
+        fadeOutStartedAt: null,
         resetPolicy: 'keep'
       }
       return
@@ -1184,8 +1261,23 @@ export class CubismModel {
       return
     }
 
-    for (const member of this.activeExpressionRuntime.members) {
-      this.applyParsedExpression(model, member.parsed, member.weight)
+    const runtime = this.activeExpressionRuntime
+    const now = Date.now()
+    const fadeInMs = this.normalizeExpressionFadeMs(runtime.fadeInMs, 0)
+    const fadeInWeight = fadeInMs <= 0
+      ? 1
+      : Math.min(Math.max((now - runtime.startedAt) / fadeInMs, 0), 1)
+    const fadeOutStartedAt = typeof runtime.fadeOutStartedAt === 'number'
+      ? runtime.fadeOutStartedAt
+      : null
+    const fadeOutMs = this.normalizeExpressionFadeMs(runtime.fadeOutMs, 0)
+    const fadeOutWeight = fadeOutStartedAt === null || fadeOutMs <= 0
+      ? 1
+      : Math.min(Math.max(1 - ((now - fadeOutStartedAt) / fadeOutMs), 0), 1)
+    const fadeWeight = fadeInWeight * fadeOutWeight
+
+    for (const member of runtime.members) {
+      this.applyParsedExpression(model, member.parsed, member.weight * fadeWeight)
     }
   }
 

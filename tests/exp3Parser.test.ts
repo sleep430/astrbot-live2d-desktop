@@ -5,6 +5,8 @@ import { parseExp3Text } from '../src/utils/cubism/exp3Parser'
 describe('parseExp3Text', () => {
   it('parses exp3 parameters and normalizes blend types', () => {
     const parsed = parseExp3Text(JSON.stringify({
+      FadeInTime: 0.5,
+      FadeOutTime: 1.25,
       Parameters: [
         { Id: 'ParamMouthOpenY', Value: 0.8, Blend: 'Add' },
         { Id: 'ParamEyeLOpen', Value: 0.5, Blend: 'Multiply' },
@@ -14,6 +16,8 @@ describe('parseExp3Text', () => {
 
     expect(parsed.id).toBe('smile')
     expect(parsed.file).toBe('smile.exp3.json')
+    expect(parsed.fadeInMs).toBe(500)
+    expect(parsed.fadeOutMs).toBe(1250)
     expect(parsed.parameterIds).toEqual([
       'ParamMouthOpenY',
       'ParamEyeLOpen',
