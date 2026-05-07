@@ -29,7 +29,8 @@
       <n-button
         size="small"
         type="primary"
-        :disabled="!currentModelPath || expressionTypeStatus === 'loading'"
+        :disabled="!currentModelPath || expressionTypeStatus === 'loading' || expressionTypeSaving"
+        :loading="expressionTypeSaving"
         @click="handleSaveExpressionTypes"
       >
         保存分配
@@ -147,6 +148,7 @@ const {
   expressionTypeExpressions,
   expressionTypePresets,
   expressionTypeProfilePath,
+  expressionTypeSaving,
   expressionTypeStatus,
   handleExpressionTypeChange,
   handleModelScaleChange,

@@ -19,6 +19,7 @@ export interface ModelSettingsDomain {
   ensureLibraryReady: (force?: boolean) => Promise<void>
   ensureExpressionTypesReady: (force?: boolean) => Promise<void>
   expressionTypeStatus: Ref<'idle' | 'loading' | 'ready' | 'error'>
+  expressionTypeSaving: Ref<boolean>
   expressionTypeProfilePath: Ref<string>
   expressionTypeExpressions: Ref<Live2DExpressionTypeEntry[]>
   expressionTypePresets: Ref<Live2DExpressionTypePresetMap>
@@ -59,6 +60,7 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
   const modelList = ref<Array<{ name: string; path: string }>>([])
   const libraryStatus = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const expressionTypeStatus = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const expressionTypeSaving = ref(false)
   const expressionTypeProfilePath = ref('')
   const expressionTypeExpressions = ref<Live2DExpressionTypeEntry[]>([])
   const expressionTypePresets = ref<Live2DExpressionTypePresetMap>(createEmptyExpressionTypePresets())
@@ -155,18 +157,32 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
       message.error('当前未加载模型')
       return
     }
-
-    const result = await window.electron.model.saveExpressionTypes(
-      currentModelPath.value,
-      expressionTypePresets.value,
-    )
-    if (!result.success) {
-      message.error(`保存表情类型失败: ${result.error}`)
+    if (expressionTypeSaving.value) {
       return
     }
 
-    message.success('表情类型已保存，重新加载当前模型后生效')
-    await ensureExpressionTypesReady(true)
+    expressionTypeSaving.value = true
+    try {
+      const result = await window.electron.model.saveExpressionTypes(
+        currentModelPath.value,
+        expressionTypePresets.value,
+      )
+      if (!result.success) {
+        message.error(`保存表情类型失败: ${result.error}`)
+        return
+      }
+
+      await ensureExpressionTypesReady(true)
+      const loadResult = await window.electron.model.load(currentModelPath.value)
+      if (!loadResult.success) {
+        message.warning(`表情类型已保存，但重新加载模型失败: ${loadResult.error}`)
+        return
+      }
+
+      message.success('表情类型已保存，正在重新加载当前模型')
+    } finally {
+      expressionTypeSaving.value = false
+    }
   }
 
   function handleModelScaleChange(value: number) {
@@ -240,6 +256,7 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
     currentModelStatusLabel,
     ensureLibraryReady,
     ensureExpressionTypesReady,
+    expressionTypeSaving,
     expressionTypeStatus,
     expressionTypeProfilePath,
     expressionTypeExpressions,
