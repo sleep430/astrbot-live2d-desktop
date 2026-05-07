@@ -651,5 +651,17 @@ export function createCubismModelLoadDescriptor(modelPath: string, modelJsonPath
     modelPath,
     compatibilityManifest,
     warnings: [...compatibilityManifest.discovery.warnings],
+    manifest: {
+      modelFile: compatibilityManifest.modelFile,
+      moc: '',
+      textures: [],
+      motions: compatibilityManifest.motions
+        ? Object.values(compatibilityManifest.motions).flat().map((item) => normalizeRelativePath(item.file))
+        : [],
+      expressions: compatibilityManifest.expressions.map((item) => normalizeRelativePath(item.file)),
+      physics: undefined,
+      pose: undefined,
+      userData: undefined,
+    },
   }
 }

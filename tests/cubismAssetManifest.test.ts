@@ -98,4 +98,20 @@ describe('validateCubismModelAssets', () => {
     expect(formatted).toContain('optional:pose:sample.pose3.json')
     expect(formatted).toContain('optional:userData:sample.userdata3.json')
   })
+
+  test('reports fatal error for invalid model3 json payload', () => {
+    const modelDir = createTempModelDir()
+    fs.writeFileSync(path.join(modelDir, 'invalid.model3.json'), '{', 'utf8')
+
+    const result = validateCubismModelAssets(path.join(modelDir, 'invalid.model3.json'))
+
+    expect(result.fatalError).toContain('模型配置解析失败')
+    expect(result.issues).toEqual([
+      expect.objectContaining({
+        severity: 'required',
+        kind: 'model',
+        relativePath: 'invalid.model3.json',
+      }),
+    ])
+  })
 })

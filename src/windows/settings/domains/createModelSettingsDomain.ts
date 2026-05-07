@@ -144,7 +144,7 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
 
   async function handleLoadModel(modelPath: string) {
     await window.electron.model.load(modelPath)
-    message.success('模型加载指令已发送')
+    message.success('模型加载指令已发送，实际结果以主窗口提示为准')
   }
 
   async function handleDeleteModel(modelName: string) {

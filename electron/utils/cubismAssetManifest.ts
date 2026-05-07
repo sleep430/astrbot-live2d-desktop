@@ -34,6 +34,8 @@ export type CubismAssetValidationResult = {
   manifest: CubismAssetManifest
   issues: CubismAssetIssue[]
   discoveryWarnings: string[]
+  compatibilityManifest?: ReturnType<typeof discoverCubismModelCompatibility>
+  fatalError?: string
 }
 
 type Model3Json = {
@@ -89,7 +91,24 @@ export function validateCubismModelAssets(modelJsonPath: string): CubismAssetVal
     }
   }
 
-  const parsed = JSON.parse(fs.readFileSync(modelAbsolutePath, 'utf8')) as Model3Json
+  let parsed: Model3Json
+  try {
+    parsed = JSON.parse(fs.readFileSync(modelAbsolutePath, 'utf8')) as Model3Json
+  } catch (error) {
+    return {
+      manifest: {
+        modelFile: relativeModelFile,
+        moc: '',
+        textures: [],
+        motions: [],
+        expressions: []
+      },
+      issues: [createIssue('required', 'model', relativeModelFile)],
+      discoveryWarnings: [],
+      fatalError: `模型配置解析失败: ${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
   const refs = parsed.FileReferences ?? {}
   const compatibilityManifest = discoverCubismModelCompatibility(modelAbsolutePath)
   const standardExpressionRefs = (refs.Expressions ?? [])
@@ -167,7 +186,8 @@ export function validateCubismModelAssets(modelJsonPath: string): CubismAssetVal
   return {
     manifest,
     issues,
-    discoveryWarnings: [...compatibilityManifest.discovery.warnings]
+    discoveryWarnings: [...compatibilityManifest.discovery.warnings],
+    compatibilityManifest,
   }
 }
 

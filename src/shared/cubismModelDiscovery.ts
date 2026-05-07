@@ -38,4 +38,14 @@ export type CubismModelLoadDescriptor = {
   modelPath: string
   compatibilityManifest: CubismCompatibilityManifest
   warnings: string[]
+  manifest: {
+    modelFile: string
+    moc: string
+    textures: string[]
+    motions: string[]
+    expressions: string[]
+    physics?: string
+    pose?: string
+    userData?: string
+  }
 }

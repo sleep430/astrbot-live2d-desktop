@@ -47,4 +47,27 @@ describe('CubismModel expression runtime', () => {
 
     expect(played).toEqual(['Smile'])
   })
+
+  it('resolves expression aliases and case-insensitive ids for legacy playback', () => {
+    const model = Object.create(CubismModel.prototype) as any
+    const played: string[] = []
+
+    model.expressionFiles = [{
+      name: 'Smile',
+      file: 'Smile.exp3.json',
+      expression: {},
+      aliases: ['happy_face', '开心'],
+      parseWarnings: [],
+    }]
+    model.expressionCatalogMap = new Map()
+    model.semanticPresets = {}
+    model.playLegacyExpressionByName = (expressionName: string) => {
+      played.push(expressionName)
+      return true
+    }
+
+    model.expression(' HAPPY_FACE ')
+
+    expect(played).toEqual(['Smile'])
+  })
 })

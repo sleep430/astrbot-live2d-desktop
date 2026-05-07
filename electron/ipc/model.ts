@@ -380,7 +380,22 @@ ipcMain.handle('model:prepareLoad', async (_event, modelPath: string) => {
   const timer = logger.timer('prepare_load', { modelPath })
   try {
     const modelAbsolutePath = resolveModelAbsolutePath(modelPath)
+    const validationResult = validateCubismModelAssets(modelAbsolutePath)
+    if (validationResult.fatalError) {
+      throw new Error(validationResult.fatalError)
+    }
+
+    const requiredIssues = validationResult.issues.filter((issue) => issue.severity === 'required')
+    if (requiredIssues.length > 0) {
+      throw new Error(`模型资源不完整：${formatCubismAssetIssues(requiredIssues).join(', ')}`)
+    }
+
     const descriptor = createCubismModelLoadDescriptor(modelPath, modelAbsolutePath)
+    descriptor.warnings = [
+      ...formatCubismAssetIssues(validationResult.issues.filter((issue) => issue.severity === 'optional')),
+      ...descriptor.warnings,
+    ]
+    descriptor.manifest = validationResult.manifest
     timer.done({
       modelPath,
       discoveryMode: descriptor.compatibilityManifest.discovery.mode,

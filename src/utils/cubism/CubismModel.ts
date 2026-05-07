@@ -331,9 +331,9 @@ export class CubismModel {
     this.compatibilityManifest = compatibilityManifest ?? null
     this.discoveryInfo = compatibilityManifest?.discovery ?? null
 
-    // 检查是否为 Cubism 3 模型
+    // 检查是否为 .model3.json 模型
     if (!isCubism3Model(modelPath)) {
-      throw new Error('当前版本仅支持 Cubism 3（.model3.json）模型。')
+      throw new Error('当前版本仅支持 Cubism 3/4 的 .model3.json 模型。')
     }
 
     try {
@@ -531,6 +531,33 @@ export class CubismModel {
     return definitions
   }
 
+  private getExecutableExpressionFiles(): LoadedExpressionFile[] {
+    return this.expressionFiles.filter((entry) => Boolean(entry.expression || entry.parsed))
+  }
+
+  private resolveExpressionEntry(expressionId: string | number | undefined): LoadedExpressionFile | null {
+    const executableExpressions = this.getExecutableExpressionFiles()
+    if (typeof expressionId === 'number') {
+      return executableExpressions[expressionId] ?? null
+    }
+
+    if (typeof expressionId !== 'string') {
+      return null
+    }
+
+    const normalized = expressionId.trim().toLowerCase()
+    if (!normalized) {
+      return null
+    }
+
+    return executableExpressions.find((entry) => {
+      if (entry.name.trim().toLowerCase() === normalized) {
+        return true
+      }
+      return entry.aliases.some((alias) => alias.trim().toLowerCase() === normalized)
+    }) ?? null
+  }
+
   private getResolvedMotionDefinitions(): ResolvedMotionDefinition[] {
     if (this.compatibilityManifest?.motions && Object.keys(this.compatibilityManifest.motions).length > 0) {
       return Object.entries(this.compatibilityManifest.motions)
@@ -626,14 +653,16 @@ export class CubismModel {
         console.log(`[CubismModel] 表情加载成功: ${name}`)
       } catch (error) {
         console.warn(`[CubismModel] 表情加载失败: ${expressionPath}`, error)
-        this.expressionFiles.push({
-          name,
-          file: expressionFileName,
-          aliases: definition.aliases,
-          source: definition.source,
-          parsed,
-          parseWarnings
-        })
+        if (parsed) {
+          this.expressionFiles.push({
+            name,
+            file: expressionFileName,
+            aliases: definition.aliases,
+            source: definition.source,
+            parsed,
+            parseWarnings
+          })
+        }
       }
     }
 
@@ -647,6 +676,14 @@ export class CubismModel {
     }, {})
     const mergedProfile = mergeExpressionProfileAliases(profile, compatibilityAliases)
     this.hasExpressionProfile = Boolean(profile)
+    this.expressionFiles = this.expressionFiles.map((entry) => ({
+      ...entry,
+      aliases: uniqueAliases([
+        entry.name,
+        ...entry.aliases,
+        ...(mergedProfile?.aliases?.[entry.name] ?? []),
+      ]),
+    }))
 
     const parsedExpressions = this.expressionFiles
       .filter((item): item is LoadedExpressionFile & { parsed: ParsedExpressionFile } => Boolean(item.parsed))
@@ -785,14 +822,12 @@ export class CubismModel {
           })
         } catch (error) {
           console.warn(`[CubismModel] 动作加载失败: ${motionPath}`, error)
-          motions.push({
-            file: motionFileName,
-            source: definition.motions[j].source,
-          })
         }
       }
 
-      this.motionGroups.set(groupName, motions)
+      if (motions.length > 0) {
+        this.motionGroups.set(groupName, motions)
+      }
     }
 
     console.log('[CubismModel] 动作加载完成')
@@ -909,16 +944,7 @@ export class CubismModel {
   }
 
   private resolveExpressionName(expressionId: string | number | undefined): string | null {
-    if (typeof expressionId === 'number') {
-      return this.expressionFiles[expressionId]?.name ?? null
-    }
-
-    if (typeof expressionId !== 'string') {
-      return null
-    }
-
-    const normalized = expressionId.trim()
-    return normalized || null
+    return this.resolveExpressionEntry(expressionId)?.name ?? null
   }
 
   private normalizeExpressionWeight(value: unknown, fallback = 1): number {
@@ -1159,7 +1185,7 @@ export class CubismModel {
       return false
     }
 
-    const expressionData = this.expressionFiles.find((entry) => entry.name === expressionName)
+    const expressionData = this.resolveExpressionEntry(expressionName)
     if (!expressionData?.expression) {
       console.warn(`[CubismModel] 表情未找到: ${expressionName}`)
       return false
@@ -1578,26 +1604,40 @@ export class CubismModel {
     // 获取动作组信息
     const motionGroups: Record<string, Array<{ index: number; file: string }>> = {}
     this.motionGroups.forEach((motions, groupName) => {
-      motionGroups[groupName] = motions.map((motion, index) => ({
+      const executableMotions = motions
+        .filter((motion) => Boolean(motion.motion))
+        .map((motion, index) => ({
         index,
         file: motion.file
       }))
+      if (executableMotions.length > 0) {
+        motionGroups[groupName] = executableMotions
+      }
     })
 
     // 获取表情信息
-    const expressions = this.expressionFiles.map(e => e.name)
+    const executableExpressionNames = new Set(this.getExecutableExpressionFiles().map((entry) => entry.name))
+    const expressions = [...executableExpressionNames]
+    const expressionCatalog = this.expressionCatalogSummary.filter((entry) => executableExpressionNames.has(entry.id))
+    const semanticPresets = Object.entries(this.semanticPresets).reduce<Record<string, string[]>>((result, [key, value]) => {
+      const filtered = value.filter((item) => executableExpressionNames.has(item))
+      if (filtered.length > 0) {
+        result[key] = filtered
+      }
+      return result
+    }, {})
 
     return {
       name: this.getModelName(),
       motionGroups,
       expressions,
       capabilities: {
-        expressionCombo: this.expressionCatalogSummary.some((entry) => entry.supportsCombo),
-        semanticExpression: Object.values(this.semanticPresets).some((items) => items.length > 0),
+        expressionCombo: expressionCatalog.some((entry) => entry.supportsCombo),
+        semanticExpression: Object.values(semanticPresets).some((items) => items.length > 0),
         expressionProfile: this.hasExpressionProfile
       },
-      expressionCatalog: this.expressionCatalogSummary,
-      semanticPresets: this.semanticPresets,
+      expressionCatalog,
+      semanticPresets,
       discovery: this.discoveryInfo ?? undefined,
     }
   }

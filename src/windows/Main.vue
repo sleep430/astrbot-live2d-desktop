@@ -780,7 +780,11 @@ function applyModelPositionState(savedPosition: { x: number; y: number } | null)
   updateUIPositions()
 }
 
-async function loadModelWithState(modelPath: string) {
+async function loadModelWithState(
+  modelPath: string,
+  options: { showWarnings?: boolean } = {}
+) {
+  const shouldShowWarnings = options.showWarnings !== false
   const savedPosition = modelStore.getModelPosition(modelPath)
   const savedScale = modelStore.getModelScale(modelPath)
   loadingModelPath.value = modelPath
@@ -792,6 +796,9 @@ async function loadModelWithState(modelPath: string) {
   const { descriptor } = prepareResult
   if (descriptor.warnings.length > 0) {
     console.warn('[主窗口] 模型兼容发现告警:', descriptor.warnings)
+    if (shouldShowWarnings) {
+      showModelStatus(`模型存在兼容或可降级资源告警：${descriptor.warnings.join('；')}`, 'warning', 5200)
+    }
   }
 
   await live2dCanvasRef.value?.loadModel(
@@ -853,7 +860,7 @@ async function handleImportModel() {
       showModelStatus(`模型存在兼容或可降级资源告警：${importResult.warnings.join('；')}`, 'warning', 5200)
     }
 
-    await loadModelWithState(importResult.modelPath!)
+    await loadModelWithState(importResult.modelPath!, { showWarnings: false })
 
     showBaseEventStatus('模型导入成功', 'success')
   } catch (error: any) {
