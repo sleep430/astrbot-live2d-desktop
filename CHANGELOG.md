@@ -1,8 +1,9 @@
 # Changelog
 
-## [1.1.0-beta.20] - 2026-05-07
+## [1.1.0] - 2026-05-11
 
 ### Changed
+- 正式版号从 `1.1.0-beta.20` 升级为 `1.1.0`。
 - 明确当前桌面端只支持 Cubism 3/4 的 `.model3.json` 模型入口，不支持 Cubism 2 `.model.json`。
 - 补全文档中的模型发现边界：运行时会按 `.model3.json` 标准声明、`.vtube.json` companion、目录扫描 fallback 的顺序整合动作与表情。
 - 补充 `astrbot.live2d.profile.json` 的真实作用范围：自动加载表情目录别名、语义标签与语义预设，不参与替代模型主清单。

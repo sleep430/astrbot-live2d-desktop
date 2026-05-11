@@ -5,6 +5,8 @@
 一个基于 Electron + Vue 3 的 Live2D 桌面客户端。
 可与 AstrBot 实时通信，让模型展示文本、动作、表情、语音与多媒体内容。
 
+> 💡 我最初开发这个项目的目的是为了展示 **AstrBot 插件生态的完善性与兼容性**，因此通过适配器插件的形式实现与桌面应用的连接。这也想说明一点：**AstrBot 的能力远不止现有的默认平台**，它可以拓展到更多场景。在智能处理方面，**本项目本身并不带有任何 Agent 功能**——所有输入、输出、交互及智能决策逻辑，全部交由 AstrBot 端定义和驱动，桌面端只专注于 Live2D 模型的渲染与表现。当然，目前项目可能还存在许多不足，**非常欢迎社区的朋友们提交 PR**，一起让它变得更好。
+
 > 使用前请先安装 AstrBot 适配器插件：
 > [astrbot_plugin_live2d_adapter](https://github.com/lxfight/astrbot_plugin_live2d_adapter)
 
@@ -46,16 +48,6 @@
   - 仅靠目录扫描发现的表情，默认不会自动开放推断语义标签；需要在 `astrbot.live2d.profile.json` 中显式配置 `tags` 或 `semanticPresets`。
 - 更完整的加载规则与限制说明见 [`docs/CUBISM_RUNTIME.zh-CN.md`](./docs/CUBISM_RUNTIME.zh-CN.md)。
 
-## 技术栈
-
-| 模块 | 技术 |
-| --- | --- |
-| UI | Vue 3 + TypeScript + Naive UI |
-| 桌面框架 | Electron 28 |
-| 状态管理 | Pinia |
-| 图表 | ECharts |
-| 数据存储 | Better-SQLite3 |
-| Live2D | 官方 Cubism SDK for Web（5-r.4 基线） |
 
 ## 用户快速开始
 
@@ -63,9 +55,9 @@
 
 从 [Releases](https://github.com/lxfight/astrbot-live2d-desktop/releases) 页面下载对应平台的安装包：
 
-- Windows: `AstrBot-Live2D-x.x.x-win-x64.exe` (安装版) 或 `AstrBot-Live2D-x.x.x-portable-x64.exe` (便携版)
-- macOS: `AstrBot-Live2D-x.x.x-mac.dmg`
-- Linux: `AstrBot-Live2D-x.x.x-linux.AppImage`
+- Windows: `astrbot-live2d-desktop-v<version>-win-<arch>.exe` (安装版) 或 `astrbot-live2d-desktop-v<version>-portable-<arch>.exe` (便携版)
+- macOS: `astrbot-live2d-desktop-v<version>-mac-<arch>.dmg`
+- Linux: `astrbot-live2d-desktop-v<version>-linux-<arch>.AppImage`
 
 > 首次启动时，应用会提示下载 Live2D Cubism Core 运行时文件（约 200KB），点击确定即可自动下载。
 
@@ -149,21 +141,6 @@ pnpm run typecheck
 
 ```bash
 pnpm run rebuild
-```
-
-## 项目结构
-
-```text
-astrbot-live2d-desktop/
-├─ electron/               # 主进程、IPC、窗口、协议桥接
-├─ src/                    # 渲染进程（Vue）
-│  ├─ windows/             # 主窗口/设置/历史等
-│  ├─ components/          # 组件
-│  ├─ stores/              # Pinia 状态
-│  └─ utils/               # 工具与业务模块
-├─ public/                 # 公共资源（模型、静态文件）
-├─ resources/              # 打包资源
-└─ docs/                   # 使用文档
 ```
 
 ## 安全建议
