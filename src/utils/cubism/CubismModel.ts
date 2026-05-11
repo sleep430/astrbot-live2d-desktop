@@ -32,11 +32,21 @@ import { csmMap } from '@cubism-framework/type/csmmap'
 import { BreathParameterData } from '@cubism-framework/effect/cubismbreath'
 
 import type {
+  CubismCompatibilityManifest,
+  CubismExpressionCatalogItem,
+  CubismExpressionComboItem,
+  CubismExpressionRequest,
+  CubismExpressionResetPolicy,
+  CubismExpressionSemanticItem,
   CubismModelInfo,
   ModelBounds,
   ModelOverlayBounds,
   Position
 } from './index'
+import type { ExpressionCatalogEntry, ExpressionCatalogInput } from './expressionCatalog'
+import type { ParsedExpressionFile } from './exp3Parser'
+import type { ExpressionProfile } from './expressionProfile'
+import type { CubismModelDiscoverySource } from '@/shared/cubismModelDiscovery'
 
 import {
   isCubism3Model,
@@ -47,6 +57,9 @@ import {
   getPhysicsPath,
   getPosePath
 } from './CubismCore'
+import { buildExpressionCatalog } from './expressionCatalog'
+import { parseExp3Text } from './exp3Parser'
+import { loadExpressionProfile } from './expressionProfile'
 
 // ============================================================================
 // 类型定义
@@ -78,6 +91,91 @@ export enum MotionPriority {
   Idle = 1,
   Normal = 2,
   Force = 3
+}
+
+type LoadedExpressionFile = {
+  name: string
+  file: string
+  aliases: string[]
+  source: CubismModelDiscoverySource
+  expression?: CubismExpressionMotion
+  parsed?: ParsedExpressionFile
+  parseWarnings: string[]
+}
+
+type ResolvedExpressionDefinition = {
+  name: string
+  file: string
+  aliases: string[]
+  source: CubismModelDiscoverySource
+}
+
+type ResolvedMotionDefinition = {
+  groupName: string
+  motions: Array<{ file: string; source: CubismModelDiscoverySource }>
+}
+
+function uniqueAliases(values: string[]): string[] {
+  const seen = new Set<string>()
+  const result: string[] = []
+
+  for (const value of values) {
+    const normalized = String(value || '').trim()
+    if (!normalized) {
+      continue
+    }
+    const key = normalized.toLowerCase()
+    if (seen.has(key)) {
+      continue
+    }
+    seen.add(key)
+    result.push(normalized)
+  }
+
+  return result
+}
+
+function mergeExpressionProfileAliases(
+  profile: ExpressionProfile | null,
+  compatibilityAliases: Record<string, string[]>,
+): ExpressionProfile | null {
+  const aliasKeys = Object.keys(compatibilityAliases)
+  if (!profile && aliasKeys.length === 0) {
+    return null
+  }
+
+  const mergedAliases: Record<string, string[]> = {
+    ...(profile?.aliases ?? {}),
+  }
+
+  for (const [id, aliases] of Object.entries(compatibilityAliases)) {
+    mergedAliases[id] = uniqueAliases([...(mergedAliases[id] ?? []), ...aliases])
+  }
+
+  return {
+    ...(profile ?? {}),
+    aliases: mergedAliases,
+  }
+}
+
+type ResolvedExpressionMember = {
+  id: string
+  weight: number
+  order: number
+  parsed: ParsedExpressionFile
+  conflictGroups: string[]
+}
+
+type ActiveExpressionRuntime = {
+  members: ResolvedExpressionMember[]
+  previous: ResolvedExpressionMember[] | null
+  previousLegacyExpressionName: string | null
+  holdUntil: number | null
+  startedAt: number
+  fadeInMs: number
+  fadeOutMs: number
+  fadeOutStartedAt: number | null
+  resetPolicy: CubismExpressionResetPolicy
 }
 
 // ============================================================================
@@ -148,10 +246,20 @@ export class CubismModel {
   private textures: WebGLTexture[] = []
 
   private static readonly MODEL_BOUNDS_PADDING = 8
+  private static readonly SEMANTIC_EXPRESSION_MIN_WEIGHT = 0.8
 
   // 动作和表情文件
-  private motionGroups: Map<string, Array<{ file: string; motion?: CubismMotion }>> = new Map()
-  private expressionFiles: Array<{ name: string; file: string; expression?: CubismExpressionMotion }> = []
+  private motionGroups: Map<string, Array<{ file: string; motion?: CubismMotion; source: CubismModelDiscoverySource }>> = new Map()
+  private expressionFiles: LoadedExpressionFile[] = []
+  private expressionCatalogSummary: CubismExpressionCatalogItem[] = []
+  private expressionCatalogMap: Map<string, ExpressionCatalogEntry> = new Map()
+  private semanticPresets: Record<string, string[]> = {}
+  private hasExpressionProfile = false
+  private compatibilityManifest: CubismCompatibilityManifest | null = null
+  private discoveryInfo: CubismModelInfo['discovery'] | null = null
+  private activeExpressionRuntime: ActiveExpressionRuntime | null = null
+  private activeLegacyExpressionName: string | null = null
+  private expressionParameterIdHandles: Map<string, CubismIdHandle> = new Map()
   private hitAreaNames: string[] = []
 
   // 性能监控
@@ -172,9 +280,9 @@ export class CubismModel {
   /**
    * 从配置文件加载模型
    */
-  static async from(modelPath: string): Promise<CubismModel> {
+  static async from(modelPath: string, compatibilityManifest?: CubismCompatibilityManifest | null): Promise<CubismModel> {
     const instance = new CubismModel()
-    await instance.load(modelPath)
+    await instance.load(modelPath, compatibilityManifest)
     return instance
   }
 
@@ -224,12 +332,14 @@ export class CubismModel {
   /**
    * 加载模型
    */
-  async load(modelPath: string): Promise<void> {
+  async load(modelPath: string, compatibilityManifest?: CubismCompatibilityManifest | null): Promise<void> {
     this.modelPath = modelPath
+    this.compatibilityManifest = compatibilityManifest ?? null
+    this.discoveryInfo = compatibilityManifest?.discovery ?? null
 
-    // 检查是否为 Cubism 3 模型
+    // 检查是否为 .model3.json 模型
     if (!isCubism3Model(modelPath)) {
-      throw new Error('当前版本仅支持 Cubism 3（.model3.json）模型。')
+      throw new Error('当前版本仅支持 Cubism 3/4 的 .model3.json 模型。')
     }
 
     try {
@@ -364,6 +474,14 @@ export class CubismModel {
     return await response.arrayBuffer()
   }
 
+  private async loadFileAsText(filePath: string): Promise<string> {
+    const response = await fetch(filePath)
+    if (!response.ok) {
+      throw new Error(`无法加载文件: ${filePath} (${response.status})`)
+    }
+    return await response.text()
+  }
+
   private initializeEffectIds(): void {
     if (!this.modelSetting) return
 
@@ -387,28 +505,145 @@ export class CubismModel {
 
   }
 
+  private getResolvedExpressionDefinitions(): ResolvedExpressionDefinition[] {
+    if (this.compatibilityManifest?.expressions?.length) {
+      return this.compatibilityManifest.expressions.map((entry) => ({
+        name: entry.id,
+        file: entry.file,
+        aliases: entry.aliases,
+        source: entry.source,
+      }))
+    }
+
+    if (!this.modelSetting) {
+      return []
+    }
+
+    const definitions: ResolvedExpressionDefinition[] = []
+    const expressionCount = this.modelSetting.getExpressionCount()
+    for (let i = 0; i < expressionCount; i++) {
+      const expressionFileName = this.modelSetting.getExpressionFileName(i)
+      if (!expressionFileName) {
+        continue
+      }
+      const name = expressionFileName.replace(/\.(exp3\.json|json)$/, '')
+      definitions.push({
+        name,
+        file: expressionFileName,
+        aliases: [name],
+        source: 'model3',
+      })
+    }
+    return definitions
+  }
+
+  private getExecutableExpressionFiles(): LoadedExpressionFile[] {
+    return this.expressionFiles.filter((entry) => Boolean(entry.expression || entry.parsed))
+  }
+
+  private resolveExpressionEntry(expressionId: string | number | undefined): LoadedExpressionFile | null {
+    const executableExpressions = this.getExecutableExpressionFiles()
+    if (typeof expressionId === 'number') {
+      return executableExpressions[expressionId] ?? null
+    }
+
+    if (typeof expressionId !== 'string') {
+      return null
+    }
+
+    const normalized = expressionId.trim().toLowerCase()
+    if (!normalized) {
+      return null
+    }
+
+    return executableExpressions.find((entry) => {
+      if (entry.name.trim().toLowerCase() === normalized) {
+        return true
+      }
+      return entry.aliases.some((alias) => alias.trim().toLowerCase() === normalized)
+    }) ?? null
+  }
+
+  private getResolvedMotionDefinitions(): ResolvedMotionDefinition[] {
+    if (this.compatibilityManifest?.motions && Object.keys(this.compatibilityManifest.motions).length > 0) {
+      return Object.entries(this.compatibilityManifest.motions)
+        .map(([groupName, motions]) => ({
+          groupName,
+          motions: motions.map((motion) => ({
+            file: motion.file,
+            source: motion.source,
+          })),
+        }))
+    }
+
+    if (!this.modelSetting) {
+      return []
+    }
+
+    const definitions: ResolvedMotionDefinition[] = []
+    const motionGroupCount = this.modelSetting.getMotionGroupCount()
+    for (let i = 0; i < motionGroupCount; i++) {
+      const groupName = this.modelSetting.getMotionGroupName(i)
+      const motionCount = this.modelSetting.getMotionCount(groupName)
+      const motions: Array<{ file: string; source: CubismModelDiscoverySource }> = []
+
+      for (let j = 0; j < motionCount; j++) {
+        const motionFileName = this.modelSetting.getMotionFileName(groupName, j)
+        if (motionFileName) {
+          motions.push({
+            file: motionFileName,
+            source: 'model3',
+          })
+        }
+      }
+
+      definitions.push({ groupName, motions })
+    }
+
+    return definitions
+  }
+
   /**
    * 加载表情
    */
   private async loadExpressions(): Promise<void> {
     if (!this.modelSetting) return
 
-    const expressionCount = this.modelSetting.getExpressionCount()
-    if (expressionCount === 0) {
+    this.expressionFiles = []
+    this.expressionCatalogSummary = []
+    this.expressionCatalogMap.clear()
+    this.semanticPresets = {}
+    this.hasExpressionProfile = false
+    this.activeExpressionRuntime = null
+    this.activeLegacyExpressionName = null
+    this.expressionParameterIdHandles.clear()
+    const expressionDefinitions = this.getResolvedExpressionDefinitions()
+    if (expressionDefinitions.length === 0) {
       console.log('[CubismModel] 无表情文件')
       return
     }
 
-    console.log(`[CubismModel] 加载 ${expressionCount} 个表情`)
+    console.log(`[CubismModel] 加载 ${expressionDefinitions.length} 个表情`)
 
-    for (let i = 0; i < expressionCount; i++) {
-      const expressionFileName = this.modelSetting.getExpressionFileName(i)
-      if (!expressionFileName) continue
-
+    for (const definition of expressionDefinitions) {
+      const expressionFileName = definition.file
       const expressionPath = getExpressionPath(this.modelPath, expressionFileName)
-      const name = expressionFileName.replace(/\.(exp3\.json|json)$/, '')
+      const name = definition.name
+      const parseWarnings: string[] = []
+      let parsed: ParsedExpressionFile | undefined
 
       try {
+        if (expressionFileName.toLowerCase().endsWith('.exp3.json')) {
+          const expressionText = await this.loadFileAsText(expressionPath)
+          const parsedCandidate = parseExp3Text(expressionText, name, expressionFileName)
+          parseWarnings.push(...parsedCandidate.parseWarnings)
+          if (parsedCandidate.parameters.length > 0) {
+            parsed = parsedCandidate
+          } else {
+            parseWarnings.push('表情文件未解析出可执行参数，已回退到原生表情运行时')
+          }
+        }
+
         const expressionBuffer = await this.loadFileAsArrayBuffer(expressionPath)
         const expression = this.userModel
           ? this.userModel.loadExpression(expressionBuffer, expressionBuffer.byteLength, name) as CubismExpressionMotion
@@ -416,13 +651,75 @@ export class CubismModel {
         this.expressionFiles.push({
           name,
           file: expressionFileName,
-          expression
+          aliases: definition.aliases,
+          source: definition.source,
+          expression,
+          parsed,
+          parseWarnings
         })
         console.log(`[CubismModel] 表情加载成功: ${name}`)
       } catch (error) {
         console.warn(`[CubismModel] 表情加载失败: ${expressionPath}`, error)
-        this.expressionFiles.push({ name, file: expressionFileName })
+        if (parsed) {
+          this.expressionFiles.push({
+            name,
+            file: expressionFileName,
+            aliases: definition.aliases,
+            source: definition.source,
+            parsed,
+            parseWarnings
+          })
+        }
       }
+    }
+
+    const profile = await loadExpressionProfile(
+      this.modelPath,
+      this.compatibilityManifest?.expressionProfileFile,
+    )
+    const compatibilityAliases = this.expressionFiles.reduce<Record<string, string[]>>((result, entry) => {
+      result[entry.name] = uniqueAliases([...(result[entry.name] ?? []), ...entry.aliases])
+      return result
+    }, {})
+    const mergedProfile = mergeExpressionProfileAliases(profile, compatibilityAliases)
+    this.hasExpressionProfile = Boolean(profile)
+    this.expressionFiles = this.expressionFiles.map((entry) => ({
+      ...entry,
+      aliases: uniqueAliases([
+        entry.name,
+        ...entry.aliases,
+        ...(mergedProfile?.aliases?.[entry.name] ?? []),
+      ]),
+    }))
+
+    const parsedExpressions = this.expressionFiles
+      .filter((item): item is LoadedExpressionFile & { parsed: ParsedExpressionFile } => Boolean(item.parsed))
+      .map<ExpressionCatalogInput>((item) => ({
+        parsed: item.parsed,
+        source: item.source,
+      }))
+
+    const catalogResult = buildExpressionCatalog(parsedExpressions, mergedProfile)
+    this.expressionCatalogMap = new Map(
+      catalogResult.entries.map((entry) => [entry.id, entry])
+    )
+    this.expressionCatalogSummary = catalogResult.entries.map((entry) => ({
+      id: entry.id,
+      aliases: entry.aliases,
+      tags: entry.tags,
+      conflictGroups: entry.conflictGroups,
+      supportsCombo: entry.supportsCombo
+    }))
+    this.semanticPresets = catalogResult.semanticPresets
+
+    for (const expressionFile of this.expressionFiles) {
+      if (!expressionFile.parseWarnings.length) {
+        continue
+      }
+      console.warn(
+        `[CubismModel] 表情解析告警: ${expressionFile.name}`,
+        expressionFile.parseWarnings
+      )
     }
   }
 
@@ -480,13 +777,13 @@ export class CubismModel {
   private async loadMotions(): Promise<void> {
     if (!this.modelSetting) return
 
-    const motionGroupCount = this.modelSetting.getMotionGroupCount()
-    if (motionGroupCount === 0) {
+    const motionDefinitions = this.getResolvedMotionDefinitions()
+    if (motionDefinitions.length === 0) {
       console.log('[CubismModel] 无动作文件')
       return
     }
 
-    console.log(`[CubismModel] 加载 ${motionGroupCount} 个动作组`)
+    console.log(`[CubismModel] 加载 ${motionDefinitions.length} 个动作组`)
     this.hitAreaNames = []
 
     const hitAreaCount = this.modelSetting.getHitAreasCount()
@@ -494,21 +791,18 @@ export class CubismModel {
       this.hitAreaNames.push(this.modelSetting.getHitAreaName(i))
     }
 
-    for (let i = 0; i < motionGroupCount; i++) {
-      const groupName = this.modelSetting.getMotionGroupName(i)
-      const motionCount = this.modelSetting.getMotionCount(groupName)
+    for (const definition of motionDefinitions) {
+      const groupName = definition.groupName
+      const motions: Array<{ file: string; motion?: CubismMotion; source: CubismModelDiscoverySource }> = []
 
-      const motions: Array<{ file: string; motion?: CubismMotion }> = []
-
-      for (let j = 0; j < motionCount; j++) {
-        const motionFileName = this.modelSetting.getMotionFileName(groupName, j)
-        if (!motionFileName) continue
-
+      for (let j = 0; j < definition.motions.length; j++) {
+        const motionFileName = definition.motions[j].file
         const motionPath = getMotionPath(this.modelPath, motionFileName)
 
         try {
           const motionBuffer = await this.loadFileAsArrayBuffer(motionPath)
-          const motion = this.userModel
+          const canUseModelSettingMotion = definition.motions[j].source === 'model3'
+          const motion = this.userModel && canUseModelSettingMotion
             ? this.userModel.loadMotion(
                 motionBuffer,
                 motionBuffer.byteLength,
@@ -530,15 +824,17 @@ export class CubismModel {
           }
           motions.push({
             file: motionFileName,
+            source: definition.motions[j].source,
             motion
           })
         } catch (error) {
           console.warn(`[CubismModel] 动作加载失败: ${motionPath}`, error)
-          motions.push({ file: motionFileName })
         }
       }
 
-      this.motionGroups.set(groupName, motions)
+      if (motions.length > 0) {
+        this.motionGroups.set(groupName, motions)
+      }
     }
 
     console.log('[CubismModel] 动作加载完成')
@@ -643,6 +939,405 @@ export class CubismModel {
       image.crossOrigin = 'anonymous'
       image.src = texturePath
     })
+  }
+
+  private normalizeExpressionRequest(
+    expression: string | number | CubismExpressionRequest
+  ): CubismExpressionRequest {
+    if (typeof expression === 'string' || typeof expression === 'number') {
+      return { id: expression }
+    }
+    return expression ?? {}
+  }
+
+  private resolveExpressionName(expressionId: string | number | undefined): string | null {
+    return this.resolveExpressionEntry(expressionId)?.name ?? null
+  }
+
+  private normalizeExpressionWeight(value: unknown, fallback = 1): number {
+    const weight = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(weight)) {
+      return fallback
+    }
+    return Math.min(Math.max(weight, 0), 1)
+  }
+
+  private normalizeSemanticExpressionWeight(value: unknown, fallback = 1): number {
+    const weight = this.normalizeExpressionWeight(value, fallback)
+    if (weight <= 0) {
+      return 0
+    }
+    return Math.max(weight, CubismModel.SEMANTIC_EXPRESSION_MIN_WEIGHT)
+  }
+
+  private cloneResolvedExpressionMembers(
+    members: ResolvedExpressionMember[] | null | undefined
+  ): ResolvedExpressionMember[] | null {
+    if (!members?.length) {
+      return null
+    }
+
+    return members.map((member) => ({
+      ...member,
+      conflictGroups: [...member.conflictGroups]
+    }))
+  }
+
+  private normalizeExpressionFadeMs(value: unknown, fallback: number): number {
+    const fadeMs = typeof value === 'number' ? value : Number(value)
+    if (!Number.isFinite(fadeMs)) {
+      return fallback
+    }
+    return Math.max(0, Math.floor(fadeMs))
+  }
+
+  private getDefaultExpressionFadeInMs(members: ResolvedExpressionMember[]): number {
+    const fadeTimes = members
+      .map((member) => member.parsed.fadeInMs)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+    if (fadeTimes.length === 0) {
+      return 300
+    }
+
+    return Math.max(...fadeTimes)
+  }
+
+  private getDefaultExpressionFadeOutMs(members: ResolvedExpressionMember[]): number {
+    const fadeTimes = members
+      .map((member) => member.parsed.fadeOutMs)
+      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+    if (fadeTimes.length === 0) {
+      return 300
+    }
+
+    return Math.max(...fadeTimes)
+  }
+
+  private resolveSemanticComboItems(
+    semantic: CubismExpressionSemanticItem[] | undefined
+  ): CubismExpressionComboItem[] {
+    if (!Array.isArray(semantic) || semantic.length === 0) {
+      return []
+    }
+
+    const resolved: CubismExpressionComboItem[] = []
+    for (const item of semantic) {
+      const tag = typeof item?.tag === 'string' ? item.tag.trim() : ''
+      if (!tag) {
+        continue
+      }
+
+      const presetMatches = this.semanticPresets[tag.toLowerCase()] ?? []
+      const executableMatches = presetMatches
+        .map((item) => this.resolveExpressionName(item))
+        .filter((item): item is string => Boolean(item))
+      const presetId = executableMatches.length > 0
+        ? executableMatches[Math.floor(Math.random() * executableMatches.length)]
+        : null
+      if (!presetId) {
+        console.warn(`[CubismModel] 语义表情未命中可执行表情: tag=${tag}`, {
+          presetMatches,
+          executableMatches,
+        })
+        continue
+      }
+
+      const requestedWeight = this.normalizeExpressionWeight(item.weight, 1)
+      const effectiveWeight = this.normalizeSemanticExpressionWeight(item.weight, 1)
+      console.log(`[CubismModel] 语义表情命中: tag=${tag}, expression=${presetId}`, {
+        candidates: executableMatches,
+        requestedWeight,
+        effectiveWeight,
+      })
+
+      resolved.push({
+        id: presetId,
+        weight: effectiveWeight
+      })
+    }
+
+    return resolved
+  }
+
+  private resolveExpressionMembers(request: CubismExpressionRequest): ResolvedExpressionMember[] {
+    const rawItems: Array<{ id: string; weight: number; order: number }> = []
+
+    if (Array.isArray(request.combo) && request.combo.length > 0) {
+      request.combo.forEach((item, index) => {
+        const id = typeof item?.id === 'string' ? item.id.trim() : ''
+        if (!id) {
+          return
+        }
+        rawItems.push({
+          id,
+          weight: this.normalizeExpressionWeight(item.weight, 1),
+          order: index
+        })
+      })
+    } else {
+      const expressionName = this.resolveExpressionName(request.id)
+      if (expressionName) {
+        rawItems.push({
+          id: expressionName,
+          weight: 1,
+          order: 0
+        })
+      } else {
+        this.resolveSemanticComboItems(request.semantic).forEach((item, index) => {
+          rawItems.push({
+            id: item.id,
+            weight: this.normalizeExpressionWeight(item.weight, 1),
+            order: index
+          })
+        })
+      }
+    }
+
+    const deduped = new Map<string, ResolvedExpressionMember>()
+    for (const item of rawItems) {
+      const expressionName = this.resolveExpressionName(item.id)
+      if (!expressionName) {
+        continue
+      }
+
+      const expressionFile = this.expressionFiles.find((entry) => entry.name === expressionName)
+      if (!expressionFile?.parsed) {
+        continue
+      }
+
+      const catalogEntry = this.expressionCatalogMap.get(expressionName)
+      deduped.set(expressionName, {
+        id: expressionName,
+        weight: item.weight,
+        order: item.order,
+        parsed: expressionFile.parsed,
+        conflictGroups: [...(catalogEntry?.conflictGroups ?? [])]
+      })
+    }
+
+    const candidates = [...deduped.values()].sort((left, right) => left.order - right.order)
+    if (candidates.length === 0) {
+      return []
+    }
+
+    const winners = new Map<string, ResolvedExpressionMember>()
+    for (const candidate of candidates) {
+      for (const group of candidate.conflictGroups) {
+        const current = winners.get(group)
+        if (
+          !current
+          || candidate.weight > current.weight
+          || (candidate.weight === current.weight && candidate.order >= current.order)
+        ) {
+          winners.set(group, candidate)
+        }
+      }
+    }
+
+    return candidates.filter((candidate) => (
+      candidate.conflictGroups.every((group) => winners.get(group)?.id === candidate.id)
+    ))
+  }
+
+  private beginCustomExpressionRuntime(
+    members: ResolvedExpressionMember[],
+    request: CubismExpressionRequest
+  ): void {
+    const holdMs = typeof request.holdMs === 'number' && Number.isFinite(request.holdMs)
+      ? Math.max(0, Math.floor(request.holdMs))
+      : 0
+    const defaultFadeInMs = this.getDefaultExpressionFadeInMs(members)
+    const defaultFadeOutMs = this.getDefaultExpressionFadeOutMs(members)
+    const fadeInMs = this.normalizeExpressionFadeMs(request.fade, defaultFadeInMs)
+    const fadeOutMs = this.normalizeExpressionFadeMs(request.fade, defaultFadeOutMs)
+    const resetPolicy = request.resetPolicy ?? 'keep'
+    const previous = resetPolicy === 'previous'
+      ? this.cloneResolvedExpressionMembers(this.activeExpressionRuntime?.members)
+      : null
+    const previousLegacyExpressionName = resetPolicy === 'previous'
+      ? this.activeLegacyExpressionName
+      : null
+
+    const now = Date.now()
+    this.activeExpressionRuntime = {
+      members: this.cloneResolvedExpressionMembers(members) ?? [],
+      previous,
+      previousLegacyExpressionName,
+      holdUntil: holdMs > 0 ? now + holdMs : null,
+      startedAt: now,
+      fadeInMs,
+      fadeOutMs,
+      fadeOutStartedAt: null,
+      resetPolicy
+    }
+    this.activeLegacyExpressionName = null
+    console.log('[CubismModel] 自定义表情运行时已启动:', {
+      expressions: members.map((member) => ({
+        id: member.id,
+        weight: member.weight,
+        parameters: member.parsed.parameterIds,
+      })),
+      holdMs,
+      fadeInMs,
+      fadeOutMs,
+      resetPolicy,
+    })
+  }
+
+  private refreshActiveExpressionRuntime(): void {
+    const runtime = this.activeExpressionRuntime
+    if (!runtime) {
+      return
+    }
+
+    const now = Date.now()
+    const fadeOutStartedAt = typeof runtime.fadeOutStartedAt === 'number'
+      ? runtime.fadeOutStartedAt
+      : null
+    if (fadeOutStartedAt !== null) {
+      const fadeOutMs = this.normalizeExpressionFadeMs(runtime.fadeOutMs, 0)
+      if (fadeOutMs <= 0 || now - fadeOutStartedAt >= fadeOutMs) {
+        this.finishActiveExpressionRuntime(runtime)
+      }
+      return
+    }
+
+    if (runtime.holdUntil === null || now < runtime.holdUntil) {
+      return
+    }
+
+    if (runtime.resetPolicy === 'keep') {
+      runtime.holdUntil = null
+      runtime.previous = null
+      runtime.previousLegacyExpressionName = null
+      return
+    }
+
+    const fadeOutMs = this.normalizeExpressionFadeMs(runtime.fadeOutMs, 0)
+    if (fadeOutMs > 0) {
+      runtime.holdUntil = null
+      runtime.fadeOutStartedAt = now
+      return
+    }
+
+    this.finishActiveExpressionRuntime(runtime)
+  }
+
+  private finishActiveExpressionRuntime(runtime: ActiveExpressionRuntime): void {
+    if (runtime.resetPolicy === 'previous' && runtime.previous?.length) {
+      const now = Date.now()
+      this.activeExpressionRuntime = {
+        members: this.cloneResolvedExpressionMembers(runtime.previous) ?? [],
+        previous: null,
+        previousLegacyExpressionName: null,
+        holdUntil: null,
+        startedAt: now,
+        fadeInMs: runtime.fadeInMs,
+        fadeOutMs: runtime.fadeOutMs,
+        fadeOutStartedAt: null,
+        resetPolicy: 'keep'
+      }
+      return
+    }
+
+    if (runtime.resetPolicy === 'previous' && runtime.previousLegacyExpressionName) {
+      const previousLegacyExpressionName = runtime.previousLegacyExpressionName
+      this.activeExpressionRuntime = null
+      this.playLegacyExpressionByName(previousLegacyExpressionName)
+      return
+    }
+
+    this.activeExpressionRuntime = null
+  }
+
+  private applyParsedExpression(model: any, parsed: ParsedExpressionFile, weight: number): void {
+    const normalizedWeight = this.normalizeExpressionWeight(weight, 1)
+    if (normalizedWeight <= 0) {
+      return
+    }
+
+    for (const parameter of parsed.parameters) {
+      const parameterId = this.getExpressionParameterIdHandle(parameter.parameterId)
+      switch (parameter.blend) {
+        case 'multiply':
+          if (typeof model.multiplyParameterValueById === 'function') {
+            model.multiplyParameterValueById(parameterId, parameter.value, normalizedWeight)
+          } else if (typeof model.getParameterValueById === 'function') {
+            const currentValue = model.getParameterValueById(parameterId)
+            model.setParameterValueById(parameterId, currentValue * parameter.value, normalizedWeight)
+          }
+          break
+        case 'overwrite':
+          model.setParameterValueById(parameterId, parameter.value, normalizedWeight)
+          break
+        case 'add':
+        default:
+          model.addParameterValueById(parameterId, parameter.value, normalizedWeight)
+          break
+      }
+    }
+  }
+
+  private getExpressionParameterIdHandle(parameterId: string): CubismIdHandle {
+    const cached = this.expressionParameterIdHandles.get(parameterId)
+    if (cached) {
+      return cached
+    }
+
+    const handle = CubismFramework.getIdManager().getId(parameterId)
+    this.expressionParameterIdHandles.set(parameterId, handle)
+    return handle
+  }
+
+  private updateCustomExpressionRuntime(model: any): void {
+    this.refreshActiveExpressionRuntime()
+
+    if (!this.activeExpressionRuntime?.members.length) {
+      return
+    }
+
+    const runtime = this.activeExpressionRuntime
+    const now = Date.now()
+    const fadeInMs = this.normalizeExpressionFadeMs(runtime.fadeInMs, 0)
+    const fadeInWeight = fadeInMs <= 0
+      ? 1
+      : Math.min(Math.max((now - runtime.startedAt) / fadeInMs, 0), 1)
+    const fadeOutStartedAt = typeof runtime.fadeOutStartedAt === 'number'
+      ? runtime.fadeOutStartedAt
+      : null
+    const fadeOutMs = this.normalizeExpressionFadeMs(runtime.fadeOutMs, 0)
+    const fadeOutWeight = fadeOutStartedAt === null || fadeOutMs <= 0
+      ? 1
+      : Math.min(Math.max(1 - ((now - fadeOutStartedAt) / fadeOutMs), 0), 1)
+    const fadeWeight = fadeInWeight * fadeOutWeight
+
+    for (const member of runtime.members) {
+      this.applyParsedExpression(model, member.parsed, member.weight * fadeWeight)
+    }
+  }
+
+  private clearCustomExpressionRuntime(): void {
+    this.activeExpressionRuntime = null
+  }
+
+  private playLegacyExpressionByName(expressionName: string): boolean {
+    if (!this.expressionManager) {
+      console.warn('[CubismModel] 表情管理器未初始化')
+      return false
+    }
+
+    const expressionData = this.resolveExpressionEntry(expressionName)
+    if (!expressionData?.expression) {
+      console.warn(`[CubismModel] 表情未找到: ${expressionName}`)
+      return false
+    }
+
+    this.clearCustomExpressionRuntime()
+    this.activeLegacyExpressionName = expressionName
+    this.expressionManager.startMotion(expressionData.expression, false)
+    return true
   }
 
   // ============================================================================
@@ -899,8 +1594,9 @@ export class CubismModel {
     model.addParameterValueById('ParamEyeBallX', dragX)
     model.addParameterValueById('ParamEyeBallY', dragY)
 
-    // 更新模型
+    // 保存不含自定义组合表情的基础状态，避免组合参数永久写回
     model.saveParameters()
+    this.updateCustomExpressionRuntime(model)
     model.update()
 
     // 更新 FPS
@@ -1015,30 +1711,29 @@ export class CubismModel {
   /**
    * 设置表情
    */
-  expression(expressionId: string | number): void {
-    console.log(`[CubismModel] 设置表情: ${expressionId}`)
+  expression(expression: string | number | CubismExpressionRequest): void {
+    console.log('[CubismModel] 设置表情:', expression)
 
-    if (!this.expressionManager) {
-      console.warn('[CubismModel] 表情管理器未初始化')
+    const request = this.normalizeExpressionRequest(expression)
+    const resolvedMembers = this.resolveExpressionMembers(request)
+
+    if (resolvedMembers.length > 0) {
+      this.expressionManager?.stopAllMotions()
+      this.beginCustomExpressionRuntime(resolvedMembers, request)
       return
     }
 
-    const expressionName = typeof expressionId === 'number'
-      ? this.expressionFiles[expressionId]?.name
-      : expressionId
-
+    const expressionName = this.resolveExpressionName(request.id)
     if (!expressionName) {
-      console.warn(`[CubismModel] 表情未找到: ${expressionId}`)
+      console.warn('[CubismModel] 表情请求未解析为可执行项:', request)
       return
     }
 
-    const expressionData = this.expressionFiles.find(e => e.name === expressionName)
-    if (!expressionData || !expressionData.expression) {
-      console.warn(`[CubismModel] 表情未找到: ${expressionName}`)
+    if (this.playLegacyExpressionByName(expressionName)) {
       return
     }
 
-    this.expressionManager.startMotion(expressionData.expression, false)
+    console.warn(`[CubismModel] 表情未找到: ${expressionName}`)
   }
 
   // ============================================================================
@@ -1052,19 +1747,41 @@ export class CubismModel {
     // 获取动作组信息
     const motionGroups: Record<string, Array<{ index: number; file: string }>> = {}
     this.motionGroups.forEach((motions, groupName) => {
-      motionGroups[groupName] = motions.map((motion, index) => ({
+      const executableMotions = motions
+        .filter((motion) => Boolean(motion.motion))
+        .map((motion, index) => ({
         index,
         file: motion.file
       }))
+      if (executableMotions.length > 0) {
+        motionGroups[groupName] = executableMotions
+      }
     })
 
     // 获取表情信息
-    const expressions = this.expressionFiles.map(e => e.name)
+    const executableExpressionNames = new Set(this.getExecutableExpressionFiles().map((entry) => entry.name))
+    const expressions = [...executableExpressionNames]
+    const expressionCatalog = this.expressionCatalogSummary.filter((entry) => executableExpressionNames.has(entry.id))
+    const semanticPresets = Object.entries(this.semanticPresets).reduce<Record<string, string[]>>((result, [key, value]) => {
+      const filtered = value.filter((item) => executableExpressionNames.has(item))
+      if (filtered.length > 0) {
+        result[key] = filtered
+      }
+      return result
+    }, {})
 
     return {
       name: this.getModelName(),
       motionGroups,
-      expressions
+      expressions,
+      capabilities: {
+        expressionCombo: expressionCatalog.some((entry) => entry.supportsCombo),
+        semanticExpression: Object.values(semanticPresets).some((items) => items.length > 0),
+        expressionProfile: this.hasExpressionProfile
+      },
+      expressionCatalog,
+      semanticPresets,
+      discovery: this.discoveryInfo ?? undefined,
     }
   }
 
@@ -1427,9 +2144,7 @@ export class CubismModel {
         }
       })
       this.textures = []
-
-      const loseContextExtension = this.gl.getExtension('WEBGL_lose_context')
-      loseContextExtension?.loseContext()
+      // 模型重载和切换会复用同一个 canvas，不能在这里主动丢失 WebGL 上下文。
     }
 
     // 释放渲染器
@@ -1451,6 +2166,15 @@ export class CubismModel {
     this.pose = null
     this.motionGroups.clear()
     this.expressionFiles = []
+    this.expressionCatalogSummary = []
+    this.expressionCatalogMap.clear()
+    this.semanticPresets = {}
+    this.hasExpressionProfile = false
+    this.compatibilityManifest = null
+    this.discoveryInfo = null
+    this.activeExpressionRuntime = null
+    this.activeLegacyExpressionName = null
+    this.expressionParameterIdHandles.clear()
     this.hitAreaNames = []
     this.gl = null
     this.canvas = null

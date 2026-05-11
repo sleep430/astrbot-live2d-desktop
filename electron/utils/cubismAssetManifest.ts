@@ -1,6 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 
+import { discoverCubismModelCompatibility } from './cubismModelDiscovery'
+
 export type CubismAssetSeverity = 'required' | 'optional'
 
 export type CubismAssetIssue = {
@@ -31,6 +33,9 @@ export type CubismAssetManifest = {
 export type CubismAssetValidationResult = {
   manifest: CubismAssetManifest
   issues: CubismAssetIssue[]
+  discoveryWarnings: string[]
+  compatibilityManifest?: ReturnType<typeof discoverCubismModelCompatibility>
+  fatalError?: string
 }
 
 type Model3Json = {
@@ -81,31 +86,59 @@ export function validateCubismModelAssets(modelJsonPath: string): CubismAssetVal
         motions: [],
         expressions: []
       },
-      issues: [createIssue('required', 'model', relativeModelFile)]
+      issues: [createIssue('required', 'model', relativeModelFile)],
+      discoveryWarnings: []
     }
   }
 
-  const parsed = JSON.parse(fs.readFileSync(modelAbsolutePath, 'utf8')) as Model3Json
+  let parsed: Model3Json
+  try {
+    parsed = JSON.parse(fs.readFileSync(modelAbsolutePath, 'utf8')) as Model3Json
+  } catch (error) {
+    return {
+      manifest: {
+        modelFile: relativeModelFile,
+        moc: '',
+        textures: [],
+        motions: [],
+        expressions: []
+      },
+      issues: [createIssue('required', 'model', relativeModelFile)],
+      discoveryWarnings: [],
+      fatalError: `模型配置解析失败: ${error instanceof Error ? error.message : String(error)}`
+    }
+  }
+
   const refs = parsed.FileReferences ?? {}
+  const compatibilityManifest = discoverCubismModelCompatibility(modelAbsolutePath)
+  const standardExpressionRefs = (refs.Expressions ?? [])
+    .map((entry) => entry?.File)
+    .filter((value): value is string => Boolean(value))
+    .map(normalizeRelativePath)
+  const standardMotionRefs: string[] = []
+  for (const motions of Object.values(refs.Motions ?? {})) {
+    for (const motion of motions) {
+      if (motion?.File) {
+        standardMotionRefs.push(normalizeRelativePath(motion.File))
+      }
+    }
+  }
 
   const manifest: CubismAssetManifest = {
     modelFile: relativeModelFile,
     moc: normalizeRelativePath(refs.Moc ?? ''),
     textures: (refs.Textures ?? []).map(normalizeRelativePath),
     motions: [],
-    expressions: (refs.Expressions ?? [])
-      .map((entry) => entry?.File)
-      .filter((value): value is string => Boolean(value))
-      .map(normalizeRelativePath),
+    expressions: compatibilityManifest.expressions.map((entry) => normalizeRelativePath(entry.file)),
     physics: refs.Physics ? normalizeRelativePath(refs.Physics) : undefined,
     pose: refs.Pose ? normalizeRelativePath(refs.Pose) : undefined,
     userData: refs.UserData ? normalizeRelativePath(refs.UserData) : undefined
   }
 
-  for (const motions of Object.values(refs.Motions ?? {})) {
+  for (const motions of Object.values(compatibilityManifest.motions)) {
     for (const motion of motions) {
-      if (motion?.File) {
-        manifest.motions.push(normalizeRelativePath(motion.File))
+      if (motion?.file) {
+        manifest.motions.push(normalizeRelativePath(motion.file))
       }
     }
   }
@@ -126,13 +159,13 @@ export function validateCubismModelAssets(modelJsonPath: string): CubismAssetVal
     }
   }
 
-  for (const motion of manifest.motions) {
+  for (const motion of standardMotionRefs) {
     if (!ensureFileExists(modelDir, motion)) {
       issues.push(createIssue('optional', 'motion', motion))
     }
   }
 
-  for (const expression of manifest.expressions) {
+  for (const expression of standardExpressionRefs) {
     if (!ensureFileExists(modelDir, expression)) {
       issues.push(createIssue('optional', 'expression', expression))
     }
@@ -152,7 +185,9 @@ export function validateCubismModelAssets(modelJsonPath: string): CubismAssetVal
 
   return {
     manifest,
-    issues
+    issues,
+    discoveryWarnings: [...compatibilityManifest.discovery.warnings],
+    compatibilityManifest,
   }
 }
 

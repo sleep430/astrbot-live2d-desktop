@@ -80,11 +80,7 @@ export interface HandshakePayload {
   clientId: string
   token?: string
   tools?: DesktopToolDeclaration[]
-  model?: {
-    name: string
-    motionGroups: string[] // 可用的动作组列表
-    expressions: string[] // 可用的表情列表
-  }
+  model?: StateModelPayload
 }
 
 // 握手确认
@@ -129,9 +125,58 @@ export interface InputMessagePayload {
   }
 }
 
+export interface PerformExpressionComboItem {
+  id: string
+  weight?: number
+}
+
+export interface PerformExpressionSemanticItem {
+  tag: string
+  weight?: number
+}
+
+export type PerformExpressionResetPolicy = 'previous' | 'neutral' | 'keep'
+
+export interface ModelExpressionCapabilities {
+  expressionCombo: boolean
+  semanticExpression: boolean
+  expressionProfile: boolean
+}
+
+export interface ModelExpressionCatalogItem {
+  id: string
+  aliases: string[]
+  tags: string[]
+  conflictGroups: string[]
+  supportsCombo: boolean
+}
+
+export interface ModelDiscoveryInfo {
+  mode: 'standard' | 'hybrid' | 'compatibility'
+  sources: Array<'model3' | 'companion' | 'scan'>
+  companionFiles: string[]
+  standardDeclaredExpressions: number
+  standardDeclaredMotionGroups: number
+  discoveredExpressions: number
+  discoveredMotionGroups: number
+  scannedExpressionCount: number
+  scannedMotionCount: number
+  warnings: string[]
+}
+
+export interface StateModelPayload {
+  name: string
+  motionGroups: Record<string, Array<{ index: number; file: string }>>
+  expressions: string[]
+  capabilities: ModelExpressionCapabilities
+  expressionCatalog?: ModelExpressionCatalogItem[]
+  semanticPresets?: Record<string, string[]>
+  discovery?: ModelDiscoveryInfo
+}
+
 // 表演序列元素
 export interface PerformElement {
-  type: 'text' | 'tts' | 'audio' | 'motion' | 'expression' | 'image' | 'video' | 'wait'
+  type: 'text' | 'tts' | 'audio' | 'motion' | 'expression' | 'image' | 'video' | 'wait' | 'delay'
 
   // 文字气泡
   content?: string
@@ -157,8 +202,12 @@ export interface PerformElement {
   motionType?: string
 
   // 表情
-  id?: string
+  id?: string | number
+  combo?: PerformExpressionComboItem[]
+  semantic?: PerformExpressionSemanticItem[]
   fade?: number
+  holdMs?: number
+  resetPolicy?: PerformExpressionResetPolicy
 
   // 图片/视频
   autoplay?: boolean
@@ -222,13 +271,6 @@ export interface STTResultPayload {
   text: string // 识别的文字
   confidence?: number // 置信度 0-1
   language?: string // 检测到的语言
-}
-
-// 模型信息载荷
-export interface StateModelPayload {
-  name: string // 模型名称
-  motionGroups: Record<string, Array<{ index: number; file: string }>> // 动作组及每个动作的详细信息
-  expressions: string[] // 可用的表情列表
 }
 
 // 桌面感知 - 窗口信息

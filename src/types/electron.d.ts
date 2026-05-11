@@ -41,6 +41,15 @@ import type {
   HistoryMessageRecord as _HistoryMessageRecord,
   HistorySaveMessageResult as _HistorySaveMessageResult,
 } from '../shared/history'
+import type {
+  CubismCompatibilityManifest as _CubismCompatibilityManifest,
+  CubismModelLoadDescriptor as _CubismModelLoadDescriptor,
+} from '../shared/cubismModelDiscovery'
+import type {
+  Live2DExpressionTypePresetMap as _Live2DExpressionTypePresetMap,
+  Live2DExpressionTypesLoadResult as _Live2DExpressionTypesLoadResult,
+  Live2DExpressionTypesSaveResult as _Live2DExpressionTypesSaveResult,
+} from '../shared/live2dExpressionTypes'
 
 declare global {
   type Unsubscribe = () => void
@@ -74,6 +83,11 @@ declare global {
   type HistoryMessageRecord = _HistoryMessageRecord
   type HistoryGetMessagesResult = _HistoryGetMessagesResult
   type HistorySaveMessageResult = _HistorySaveMessageResult
+  type CubismCompatibilityManifest = _CubismCompatibilityManifest
+  type CubismModelLoadDescriptor = _CubismModelLoadDescriptor
+  type Live2DExpressionTypePresetMap = _Live2DExpressionTypePresetMap
+  type Live2DExpressionTypesLoadResult = _Live2DExpressionTypesLoadResult
+  type Live2DExpressionTypesSaveResult = _Live2DExpressionTypesSaveResult
 
   interface UpdateState {
     status: 'disabled' | 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
@@ -213,6 +227,9 @@ declare global {
         }>
         getList: () => Promise<{ success: boolean; models?: Array<{ name: string; path: string }>; error?: string }>
         delete: (modelName: string) => Promise<{ success: boolean; error?: string }>
+        prepareLoad: (modelPath: string) => Promise<{ success: boolean; descriptor?: CubismModelLoadDescriptor; error?: string }>
+        getExpressionTypes: (modelPath: string) => Promise<Live2DExpressionTypesLoadResult>
+        saveExpressionTypes: (modelPath: string, presets: Live2DExpressionTypePresetMap) => Promise<Live2DExpressionTypesSaveResult>
         load: (modelPath: string) => Promise<{ success: boolean; error?: string }>
         onLoad: (callback: (modelPath: string) => void) => Unsubscribe
       }
