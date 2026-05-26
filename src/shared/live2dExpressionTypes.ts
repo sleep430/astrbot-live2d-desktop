@@ -22,9 +22,31 @@ export type Live2DExpressionType = typeof LIVE2D_EXPRESSION_TYPES[number]
 export type Live2DExpressionTypeMeta = {
   key: Live2DExpressionType
   label: string
-  group: '基础' | '情绪' | '状态' | '效果'
+  group: string
 }
 
+export type ExpressionTypeResolver = (key: string) => string
+
+export function createLive2DExpressionTypeMeta(t: ExpressionTypeResolver): Live2DExpressionTypeMeta[] {
+  return [
+    { key: 'neutral', label: t('expression.neutral'), group: t('expression.group.basic') },
+    { key: 'happy', label: t('expression.happy'), group: t('expression.group.emotion') },
+    { key: 'sad', label: t('expression.sad'), group: t('expression.group.emotion') },
+    { key: 'angry', label: t('expression.angry'), group: t('expression.group.emotion') },
+    { key: 'anxious', label: t('expression.anxious'), group: t('expression.group.emotion') },
+    { key: 'surprised', label: t('expression.surprised'), group: t('expression.group.state') },
+    { key: 'thinking', label: t('expression.thinking'), group: t('expression.group.state') },
+    { key: 'tired', label: t('expression.tired'), group: t('expression.group.state') },
+    { key: 'disgusted', label: t('expression.disgusted'), group: t('expression.group.state') },
+    { key: 'blush', label: t('expression.blush'), group: t('expression.group.effect') },
+    { key: 'playful', label: t('expression.playful'), group: t('expression.group.effect') },
+    { key: 'sweat', label: t('expression.sweat'), group: t('expression.group.effect') },
+    { key: 'special', label: t('expression.special'), group: t('expression.group.effect') },
+    { key: 'speaking', label: t('expression.speaking'), group: t('expression.group.effect') },
+  ]
+}
+
+/** @deprecated Use createLive2DExpressionTypeMeta(t) instead */
 export const LIVE2D_EXPRESSION_TYPE_META: Live2DExpressionTypeMeta[] = [
   { key: 'neutral', label: '中性', group: '基础' },
   { key: 'happy', label: '开心', group: '情绪' },
