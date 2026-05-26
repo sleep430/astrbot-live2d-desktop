@@ -1,12 +1,12 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>当前模型</h2>
+      <h2>{{ $t('settings.menu.model.current') }}</h2>
       <span class="status-pill" :class="currentModelStatusClass">
         {{ currentModelStatusLabel }}
       </span>
     </div>
-    <p class="settings-section__desc">查看当前加载的 Live2D 模型信息，并确认当前主题色是否来自模型配色。</p>
+    <p class="settings-section__desc">{{ $t('settings.model.current.description') }}</p>
 
     <template v-if="currentModelPath">
       <div class="current-model-info">
@@ -20,12 +20,12 @@
         </div>
       </div>
     </template>
-    <n-empty v-else description="当前未加载模型" />
+    <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
   </section>
 
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>表情类型</h2>
+      <h2>{{ $t('settings.model.current.expressions') }}</h2>
       <n-button
         size="small"
         type="primary"
@@ -33,14 +33,14 @@
         :loading="expressionTypeSaving"
         @click="handleSaveExpressionTypes"
       >
-        保存分配
+        {{ $t('settings.model.current.saveExpression') }}
       </n-button>
     </div>
-    <p class="settings-section__desc">为固定表情类型分配当前模型的 exp3 表情。一个类型可分配多个表情，执行时会随机选择一个。</p>
+    <p class="settings-section__desc">{{ $t('settings.model.current.expressionDesc') }}</p>
 
     <template v-if="currentModelPath">
       <n-alert v-if="expressionTypeProfilePath" type="info" :show-icon="false" class="expression-type-alert">
-        配置随模型保存：{{ expressionTypeProfilePath }}
+        {{ $t('settings.model.current.expressionProfilePath', { path: expressionTypeProfilePath }) }}
       </n-alert>
 
       <div v-if="expressionTypeExpressions.length > 0" class="expression-type-groups">
@@ -67,26 +67,26 @@
                 size="small"
                 :options="expressionOptions"
                 :value="expressionTypePresets[type.key]"
-                placeholder="未分配"
+                :placeholder="$t('settings.model.current.unassigned')"
                 @update:value="(value: string[]) => handleExpressionTypeChange(type.key, value)"
               />
             </div>
           </div>
         </div>
       </div>
-      <n-empty v-else description="当前模型没有可分配的 exp3 表情" />
+      <n-empty v-else :description="$t('settings.model.current.noExpressions')" />
     </template>
-    <n-empty v-else description="当前未加载模型" />
+    <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
   </section>
 
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>模型偏好</h2>
+      <h2>{{ $t('settings.model.current.preferences') }}</h2>
     </div>
-    <p class="settings-section__desc">配置主题色跟随策略。切换后立即生效。</p>
+    <p class="settings-section__desc">{{ $t('settings.model.current.preferencesDesc') }}</p>
 
     <n-form label-placement="top">
-      <n-form-item label="当前模型大小缩放">
+      <n-form-item :label="$t('settings.model.current.scale')">
         <n-space align="center" style="width: 100%;">
           <n-slider
             :value="currentModelScaleValue"
@@ -107,25 +107,25 @@
           >
             <template #suffix>x</template>
           </n-input-number>
-          <n-button size="small" @click="handleResetModelScale">重置</n-button>
+          <n-button size="small" @click="handleResetModelScale">{{ $t('settings.model.current.resetScale') }}</n-button>
         </n-space>
       </n-form-item>
-      <n-form-item label="主题色跟随当前模型">
+      <n-form-item :label="$t('settings.model.current.themeFollowModel')">
         <n-switch v-model:value="advancedSettings.themeFollowModel" @update:value="handleThemeFollowChange" />
         <template #feedback>
-          启用后，界面主题会跟随当前模型配色；关闭后将保留手动或已有主题设置。
+          {{ $t('settings.model.current.themeFollowFeedback') }}
         </template>
       </n-form-item>
     </n-form>
 
     <div class="settings-kv-list">
       <div class="settings-kv-list__row">
-        <span>当前主题色</span>
+        <span>{{ $t('settings.model.current.currentThemeColor') }}</span>
         <strong>{{ sourceColor.toUpperCase() }}</strong>
       </div>
       <div class="settings-kv-list__row">
-        <span>同步状态</span>
-        <strong>{{ advancedSettings.themeFollowModel ? (currentModelPath ? '跟随当前模型' : '等待模型加载') : '已关闭自动同步' }}</strong>
+        <span>{{ $t('settings.model.current.syncStatus') }}</span>
+        <strong>{{ syncStatusLabel }}</strong>
       </div>
     </div>
   </section>
@@ -133,10 +133,12 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { LIVE2D_EXPRESSION_TYPE_META, type Live2DExpressionTypeMeta } from '@/shared/live2dExpressionTypes'
+import { useI18n } from 'vue-i18n'
+import { createLive2DExpressionTypeMeta, type Live2DExpressionTypeMeta } from '@/shared/live2dExpressionTypes'
 import { useAdvancedSettingsDomain } from '../domains/createAdvancedSettingsDomain'
 import { useModelSettingsDomain } from '../domains/createModelSettingsDomain'
 
+const { t } = useI18n()
 const { advancedSettings, handleThemeFollowChange } = useAdvancedSettingsDomain()
 const {
   currentModelDisplay,
@@ -160,7 +162,7 @@ const {
 
 const expressionTypeGroups = computed(() => {
   const groups: Array<{ name: string; items: Live2DExpressionTypeMeta[] }> = []
-  for (const item of LIVE2D_EXPRESSION_TYPE_META) {
+  for (const item of createLive2DExpressionTypeMeta(t)) {
     let group = groups.find((candidate) => candidate.name === item.group)
     if (!group) {
       group = { name: item.group, items: [] }
@@ -177,6 +179,13 @@ const expressionOptions = computed(() => expressionTypeExpressions.value.map((en
     : entry.id,
   value: entry.id,
 })))
+
+const syncStatusLabel = computed(() => {
+  if (!advancedSettings.value.themeFollowModel) {
+    return t('settings.model.current.syncDisabled')
+  }
+  return currentModelPath.value ? t('settings.model.current.followingModel') : t('settings.model.current.waitingForModel')
+})
 </script>
 
 <style scoped>

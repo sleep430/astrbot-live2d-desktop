@@ -1,23 +1,22 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>Bridge 连接</h2>
+      <h2>{{ $t('settings.menu.connection.bridge') }}</h2>
       <span class="status-pill" :class="isConnected ? 'status-pill--success' : 'status-pill--warning'">
         {{ connectionStatusText }}
       </span>
     </div>
-    <p class="settings-section__desc">连接到 AstrBot Bridge 以控制 Live2D 模型和接收消息。</p>
 
     <n-form label-placement="top">
-      <n-form-item label="服务器地址">
+      <n-form-item :label="$t('settings.connection.bridge.serverUrl')">
         <n-input v-model:value="serverUrl" placeholder="ws://127.0.0.1:9090/astrbot/live2d" />
       </n-form-item>
-      <n-form-item label="认证令牌">
+      <n-form-item :label="$t('settings.connection.bridge.token')">
         <n-input
           v-model:value="token"
           type="password"
           show-password-on="click"
-          placeholder="必填，需与 AstrBot 适配器 auth_token 一致"
+          :placeholder="$t('settings.connection.bridge.tokenPlaceholder')"
         />
       </n-form-item>
     </n-form>
@@ -30,34 +29,33 @@
         :disabled="!hasUnsavedConnectionSettings"
         @click="handleSaveConnectionSettings"
       >
-        保存连接配置
+        {{ $t('settings.connection.bridge.saveConfig') }}
       </n-button>
       <n-button type="primary" :disabled="!canConnect || !token.trim()" @click="handleConnect">
-        {{ isConnected ? '已连接' : '连接服务器' }}
+        {{ isConnected ? $t('settings.connection.bridge.connected') : $t('settings.connection.bridge.connect') }}
       </n-button>
-      <n-button :disabled="!canDisconnect" @click="handleDisconnect">断开连接</n-button>
+      <n-button :disabled="!canDisconnect" @click="handleDisconnect">{{ $t('settings.connection.bridge.disconnect') }}</n-button>
     </div>
   </section>
 
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>资源服务</h2>
+      <h2>{{ $t('settings.connection.bridge.resourceService') }}</h2>
     </div>
-    <p class="settings-section__desc">配置图片、音频、视频等资源的访问地址。默认复用 WebSocket 连接地址。</p>
 
     <n-form label-placement="top">
-      <n-form-item label="资源服务地址">
-        <n-input v-model:value="resourceServerUrl" placeholder="留空时自动跟随连接地址" />
+      <n-form-item :label="$t('settings.connection.bridge.resourceServerUrl')">
+        <n-input v-model:value="resourceServerUrl" :placeholder="$t('settings.connection.bridge.resourceServerUrlPlaceholder')" />
       </n-form-item>
-      <n-form-item label="资源路径">
-        <n-input v-model:value="resourceServerPath" placeholder="默认沿用握手路径或 /resources" />
+      <n-form-item :label="$t('settings.connection.bridge.resourcePath')">
+        <n-input v-model:value="resourceServerPath" :placeholder="$t('settings.connection.bridge.resourcePathPlaceholder')" />
       </n-form-item>
-      <n-form-item label="资源访问令牌">
+      <n-form-item :label="$t('settings.connection.bridge.resourceToken')">
         <n-input
           v-model:value="resourceAccessToken"
           type="password"
           show-password-on="click"
-          placeholder="留空时复用 WebSocket 认证令牌"
+          :placeholder="$t('settings.connection.bridge.resourceTokenPlaceholder')"
         />
       </n-form-item>
     </n-form>

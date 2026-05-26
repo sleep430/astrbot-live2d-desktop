@@ -1,15 +1,15 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>数据管理</h2>
+      <h2>{{ $t('settings.menu.advanced.data') }}</h2>
     </div>
-    <p class="settings-section__desc">管理应用缓存、日志和设置数据。</p>
+    <p class="settings-section__desc">{{ $t('settings.advanced.data.description') }}</p>
 
     <div class="settings-section__actions">
-      <n-button @click="handleOpenLogs">打开日志目录</n-button>
-      <n-button @click="handleExportLogs">导出最近日志</n-button>
-      <n-button @click="handleClearCache">清除缓存</n-button>
-      <n-button type="error" @click="handleResetSettings">重置所有设置</n-button>
+      <n-button @click="handleOpenLogs">{{ $t('settings.advanced.data.openLogs') }}</n-button>
+      <n-button @click="handleExportLogs">{{ $t('settings.advanced.data.exportLogs') }}</n-button>
+      <n-button @click="handleClearCache">{{ $t('settings.advanced.data.clearCache') }}</n-button>
+      <n-button type="error" @click="handleResetSettings">{{ $t('settings.advanced.data.resetSettings') }}</n-button>
     </div>
   </section>
 </template>

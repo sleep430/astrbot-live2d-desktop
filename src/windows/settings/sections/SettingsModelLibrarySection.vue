@@ -1,10 +1,10 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>模型库</h2>
-      <n-button type="primary" size="small" @click="handleImportModel">导入模型</n-button>
+      <h2>{{ $t('settings.menu.model.library') }}</h2>
+      <n-button type="primary" size="small" @click="handleImportModel">{{ $t('settings.model.library.importModel') }}</n-button>
     </div>
-    <p class="settings-section__desc">管理本地 Live2D 模型文件。共 {{ modelList.length }} 个模型。</p>
+    <p class="settings-section__desc">{{ $t('settings.model.library.description', { count: modelList.length }) }}</p>
 
     <div v-if="modelList.length > 0" class="model-grid">
       <article
@@ -17,7 +17,7 @@
           <div class="model-card__preview" :style="getModelPreviewStyle(model.path)">
             <span>{{ model.name.slice(0, 1).toUpperCase() }}</span>
           </div>
-          <span v-if="currentModelPath === model.path" class="model-card__badge">当前</span>
+          <span v-if="currentModelPath === model.path" class="model-card__badge">{{ $t('settings.model.library.current') }}</span>
         </div>
         <div class="model-card__body">
           <strong>{{ model.name }}</strong>
@@ -25,13 +25,13 @@
         </div>
         <div class="model-card__actions">
           <n-button size="small" type="primary" @click="handleLoadModel(model.path)">
-            {{ currentModelPath === model.path ? '重新加载' : '加载' }}
+            {{ currentModelPath === model.path ? $t('settings.model.library.reload') : $t('settings.model.library.load') }}
           </n-button>
-          <n-button size="small" tertiary type="error" @click="handleDeleteModel(model.name)">删除</n-button>
+          <n-button size="small" tertiary type="error" @click="handleDeleteModel(model.name)">{{ $t('settings.model.library.delete') }}</n-button>
         </div>
       </article>
     </div>
-    <n-empty v-else description="暂无模型，请先导入" />
+    <n-empty v-else :description="$t('settings.model.library.empty')" />
   </section>
 </template>
 

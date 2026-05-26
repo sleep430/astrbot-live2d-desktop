@@ -1,7 +1,7 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>统计概览</h2>
+      <h2>{{ $t('settings.menu.history.statistics') }}</h2>
       <n-date-picker
         v-model:value="dateRange"
         type="daterange"
@@ -10,19 +10,19 @@
         @update:value="handleDateRangeChange"
       />
     </div>
-    <p class="settings-section__desc">消息趋势和内容分布统计。</p>
+    <p class="settings-section__desc">{{ $t('settings.history.statistics.description') }}</p>
 
     <div class="chart-grid">
       <div class="chart-card">
-        <h3>消息趋势</h3>
+        <h3>{{ $t('settings.history.statistics.messageTrend') }}</h3>
         <div ref="messageTrendRef" class="chart-container"></div>
       </div>
       <div class="chart-card">
-        <h3>内容分布</h3>
+        <h3>{{ $t('settings.history.statistics.contentDistribution') }}</h3>
         <div ref="performElementRef" class="chart-container"></div>
       </div>
       <div class="chart-card chart-card--wide">
-        <h3>活跃时段</h3>
+        <h3>{{ $t('settings.history.statistics.activeHours') }}</h3>
         <div ref="activeHoursRef" class="chart-container"></div>
       </div>
     </div>
@@ -31,12 +31,14 @@
 
 <script setup lang="ts">
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import * as echarts from 'echarts'
 import { useThemeStore } from '@/stores/theme'
 import { withAlpha } from '@/utils/themePalette'
 import { useHistorySettingsDomain } from '../domains/createHistorySettingsDomain'
 
+const { t } = useI18n()
 const { dateRange, handleDateRangeChange, statisticsData } = useHistorySettingsDomain()
 
 const themeStore = useThemeStore()
@@ -97,7 +99,7 @@ function renderCharts(data: any[]) {
       },
       grid: { top: 20, right: 20, bottom: 20, left: 40, containLabel: true },
       series: [{
-        name: '消息数',
+        name: t('settings.history.statistics.messageCount'),
         type: 'line',
         data: data.map((item) => item.message_count),
         smooth: true,
@@ -135,7 +137,7 @@ function renderCharts(data: any[]) {
       tooltip: { trigger: 'axis' },
       xAxis: {
         type: 'category',
-        data: ['文字', '图片', '音频', '视频'],
+        data: [t('settings.history.statistics.text'), t('settings.history.statistics.image'), t('settings.history.statistics.audio'), t('settings.history.statistics.video')],
         axisLine: { lineStyle: { color: axisColor } },
         axisLabel: { color: labelColor },
       },
@@ -146,7 +148,7 @@ function renderCharts(data: any[]) {
       },
       grid: { top: 20, right: 20, bottom: 20, left: 40, containLabel: true },
       series: [{
-        name: '使用量',
+        name: t('settings.history.statistics.usageCount'),
         type: 'bar',
         barWidth: '40%',
         data: [totalData.text, totalData.image, totalData.audio, totalData.video],
@@ -188,7 +190,7 @@ function renderCharts(data: any[]) {
       },
       grid: { top: 20, right: 20, bottom: 20, left: 40, containLabel: true },
       series: [{
-        name: '消息数',
+        name: t('settings.history.statistics.messageCount'),
         type: 'bar',
         barWidth: '60%',
         data: hourData,

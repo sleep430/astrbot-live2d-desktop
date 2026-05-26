@@ -1,11 +1,11 @@
 <template>
   <section class="settings-section settings-section--fill">
     <div class="settings-section__header">
-      <h2>消息列表</h2>
+      <h2>{{ $t('settings.menu.history.messages') }}</h2>
       <div class="history-toolbar-actions">
         <n-input
           v-model:value="keyword"
-          placeholder="搜索消息..."
+          :placeholder="$t('settings.history.messages.searchPlaceholder')"
           clearable
           size="small"
           @update:value="handleSearch"
@@ -17,17 +17,17 @@
         <n-select
           v-model:value="directionFilter"
           :options="directionOptions"
-          placeholder="方向"
+          :placeholder="$t('settings.history.messages.direction')"
           clearable
           size="small"
           style="width: 100px"
           @update:value="handleDirectionFilterChange"
         />
-        <n-button size="small" type="error" @click="handleClearHistory">清空</n-button>
-        <n-button size="small" type="primary" @click="handleRefreshMessages">刷新</n-button>
+        <n-button size="small" type="error" @click="handleClearHistory">{{ $t('settings.history.messages.clear') }}</n-button>
+        <n-button size="small" type="primary" @click="handleRefreshMessages">{{ $t('settings.history.messages.refresh') }}</n-button>
       </div>
     </div>
-    <p class="settings-section__desc">共 {{ totalMessages }} 条消息</p>
+    <p class="settings-section__desc">{{ $t('settings.history.messages.total', { count: totalMessages }) }}</p>
 
     <div class="message-list">
       <article
@@ -139,6 +139,7 @@
 
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { format } from 'date-fns'
 import {
   Bot,
@@ -161,6 +162,8 @@ import {
 import { configureMarked, renderBubbleMarkdown as renderMarkdownFromShared } from '@/utils/markedLatex'
 import { useHistorySettingsDomain } from '../domains/createHistorySettingsDomain'
 import SettingsHistoryMediaViewer from './SettingsHistoryMediaViewer.vue'
+
+const { t } = useI18n()
 
 const {
   currentPage,
@@ -359,14 +362,14 @@ function getVoiceItemKey(messageRecord: any, index: number): string {
 
 function getMessageAuthorLabel(messageRecord: any): string {
   if (messageRecord.direction === 'outgoing') {
-    return messageRecord.user_name || '我'
+    return messageRecord.user_name || t('settings.history.messages.me')
   }
 
   if (messageRecord.user_id === 'server' || messageRecord.user_id === 'bot') {
     return 'AstrBot'
   }
 
-  return messageRecord.user_name || messageRecord.user_id || '未知来源'
+  return messageRecord.user_name || messageRecord.user_id || t('settings.history.messages.unknownSource')
 }
 
 onBeforeUnmount(() => {

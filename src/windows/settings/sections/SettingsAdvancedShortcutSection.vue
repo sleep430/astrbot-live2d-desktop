@@ -1,26 +1,25 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>快捷键</h2>
+      <h2>{{ $t('settings.menu.advanced.shortcut') }}</h2>
     </div>
-    <p class="settings-section__desc">配置全局录音快捷键和录音时长限制。</p>
 
     <n-form label-placement="top">
-      <n-form-item label="全局录音快捷键">
+      <n-form-item :label="$t('settings.advanced.shortcut.recordingShortcut')">
         <div class="shortcut-row">
           <n-input
             v-model:value="advancedSettings.recordingShortcut"
-            placeholder="按下快捷键..."
+            :placeholder="$t('settings.advanced.shortcut.pressKeys')"
             readonly
             @keydown="handleShortcutKeyDown"
           />
-          <n-button @click="handleClearShortcut">清除</n-button>
+          <n-button @click="handleClearShortcut">{{ $t('settings.advanced.shortcut.clear') }}</n-button>
           <n-button type="primary" @click="handleRegisterShortcut">
-            {{ shortcutRegistered ? '已注册' : '注册' }}
+            {{ shortcutRegistered ? $t('settings.advanced.shortcut.registered') : $t('settings.advanced.shortcut.register') }}
           </n-button>
         </div>
       </n-form-item>
-      <n-form-item label="最长录音时长">
+      <n-form-item :label="$t('settings.advanced.shortcut.maxDuration')">
         <n-space align="center">
           <n-input-number
             v-model:value="recordingSecondsValue"
@@ -29,7 +28,7 @@
             :precision="0"
             @update:value="applyAdvancedSettingChange"
           />
-          <span>秒（上限 60 秒）</span>
+          <span>{{ $t('settings.advanced.shortcut.maxDurationHint') }}</span>
         </n-space>
       </n-form-item>
     </n-form>

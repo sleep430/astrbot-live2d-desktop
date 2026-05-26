@@ -6,10 +6,10 @@
           <X :size="24" />
         </button>
         <div class="media-container" @click.stop>
-          <img v-if="type === 'image'" :src="src" alt="历史消息图片放大预览" />
+          <img v-if="type === 'image'" :src="src" :alt="$t('settings.history.mediaViewer.imageAlt')" />
           <video v-else-if="type === 'video'" :src="src" controls autoplay playsinline></video>
         </div>
-        <div class="hint-text">按 ESC 键或点击空白区域关闭</div>
+        <div class="hint-text">{{ $t('settings.history.mediaViewer.closeHint') }}</div>
       </div>
     </transition>
   </teleport>

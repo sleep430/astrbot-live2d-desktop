@@ -1,9 +1,9 @@
 <template>
   <section class="settings-section">
     <div class="settings-section__header">
-      <h2>工作区状态</h2>
+      <h2>{{ $t('settings.menu.connection.workspace') }}</h2>
     </div>
-    <p class="settings-section__desc">当前连接和会话的运行状态信息。</p>
+    <p class="settings-section__desc">{{ $t('settings.connection.workspace.description') }}</p>
 
     <div class="settings-kv-list">
       <div v-for="row in workspaceRows" :key="row.label" class="settings-kv-list__row">
@@ -11,11 +11,11 @@
         <strong>{{ row.value }}</strong>
       </div>
       <div class="settings-kv-list__row">
-        <span>当前模型</span>
+        <span>{{ $t('settings.connection.workspace.currentModel') }}</span>
         <strong>{{ currentModelDisplay }}</strong>
       </div>
       <div class="settings-kv-list__row">
-        <span>主题色</span>
+        <span>{{ $t('settings.connection.workspace.sourceColor') }}</span>
         <strong>{{ sourceColor.toUpperCase() }}</strong>
       </div>
     </div>
