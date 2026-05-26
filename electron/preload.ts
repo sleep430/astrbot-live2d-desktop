@@ -321,5 +321,10 @@ contextBridge.exposeInMainWorld('electron', {
     updateSettings: (settings: any) => ipcRenderer.invoke('update:updateSettings', settings),
     quitAndInstall: () => ipcRenderer.invoke('update:quitAndInstall'),
     onStateChanged: (callback: (state: any) => void) => subscribeIpc('update:stateChanged', callback)
+  },
+
+  // 语言设置
+  locale: {
+    set: (locale: string) => ipcRenderer.invoke('locale:set', locale),
   }
 })

@@ -1,7 +1,9 @@
-import { createApp, defineComponent, h, markRaw, onBeforeUnmount, onMounted, type Component, watch } from 'vue'
+import { createApp, computed, defineComponent, h, markRaw, onBeforeUnmount, onMounted, type Component, watch } from 'vue'
 import { createPinia, storeToRefs } from 'pinia'
-import naive, { NConfigProvider, NDialogProvider, NMessageProvider, darkTheme } from 'naive-ui'
+import naive, { NConfigProvider, NDialogProvider, NMessageProvider, darkTheme, zhCN as naiveZhCN, enUS as naiveEnUS, dateZhCN, dateEnUS } from 'naive-ui'
 import { useThemeStore } from '@/stores/theme'
+import { useLocaleStore } from '@/stores/locale'
+import { i18n } from '@/i18n'
 import { setupRendererLogging } from '@/utils/rendererLogger'
 import { applyWindowKindClasses, type WindowKind } from '@/utils/windowKind'
 import '@/styles/global.scss'
@@ -29,11 +31,14 @@ function createWindowRoot(component: Component) {
     name: 'WindowAppRoot',
     setup() {
       const themeStore = useThemeStore()
+      const localeStore = useLocaleStore()
       const { cssVars, naiveThemeOverrides } = storeToRefs(themeStore)
 
       onMounted(() => {
         themeStore.syncFromStorage()
         themeStore.startStorageSync()
+        localeStore.bindI18n()
+        window.electron?.locale?.set(localeStore.locale)
       })
 
       onBeforeUnmount(() => {
@@ -44,11 +49,16 @@ function createWindowRoot(component: Component) {
         applyThemeCssVars(vars)
       }, { immediate: true })
 
+      const naiveLocale = computed(() => localeStore.locale === 'zh-CN' ? naiveZhCN : naiveEnUS)
+      const naiveDateLocale = computed(() => localeStore.locale === 'zh-CN' ? dateZhCN : dateEnUS)
+
       return () => h(
         NConfigProvider,
         {
           theme: darkTheme,
           themeOverrides: naiveThemeOverrides.value,
+          locale: naiveLocale.value,
+          dateLocale: naiveDateLocale.value,
         },
         {
           default: () => h(
@@ -167,6 +177,7 @@ export async function mountWindowApp(options: MountWindowAppOptions): Promise<vo
   const app = createApp(createWindowRoot(component))
 
   app.use(createPinia())
+  app.use(i18n)
   app.use(naive)
   app.mount(mountSelector)
 }

@@ -260,6 +260,9 @@ declare global {
         quitAndInstall: () => Promise<{ success: boolean; message: string }>
         onStateChanged: (callback: (state: UpdateState) => void) => Unsubscribe
       }
+      locale: {
+        set: (locale: string) => Promise<{ success: boolean }>
+      }
     }
   }
 }

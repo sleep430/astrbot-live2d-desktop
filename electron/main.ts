@@ -13,6 +13,7 @@ import { migrateLegacyAppDataIfNeeded } from './utils/appDataMigration'
 import { configureElectronDataPath } from './utils/appPaths'
 import { createScopedLogger, initializeMainLogger, installMainProcessErrorHandlers, shutdownMainLogger } from './utils/logger'
 import { initializeAutoUpdater } from './utils/updater'
+import { t } from '../src/i18n/mainProcess'
 import './ipc/connection'
 import './ipc/desktopBehavior'
 import './ipc/window'
@@ -26,6 +27,7 @@ import './ipc/update'
 import './ipc/connectionSettings'
 import './ipc/connectionBehaviorSettings'
 import './ipc/bridgeLifecycle'
+import './ipc/locale'
 
 // 禁用 GPU 缓存以避免权限错误（可选）
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
@@ -155,8 +157,8 @@ async function initialize() {
     logger.error('database.init.failed', error)
     timer.fail(error)
     dialog.showErrorBox(
-      '数据库初始化失败',
-      `无法创建或打开数据库文件，应用将退出。\n\n错误详情: ${error instanceof Error ? error.message : String(error)}`
+      t('mainProcess.databaseInitFailed'),
+      t('mainProcess.databaseInitFailedDetail', { error: error instanceof Error ? error.message : String(error) })
     )
     app.quit()
     return
@@ -227,8 +229,8 @@ app.whenReady().then(() => {
     console.error('[主进程] 初始化失败:', err)
     logger.error('initialize.failed', err)
     dialog.showErrorBox(
-      '初始化失败',
-      `应用初始化过程中发生错误，将退出。\n\n${err instanceof Error ? err.message : String(err)}`
+      t('mainProcess.initFailed'),
+      t('mainProcess.initFailedDetail', { error: err instanceof Error ? err.message : String(err) })
     )
     app.quit()
   })
