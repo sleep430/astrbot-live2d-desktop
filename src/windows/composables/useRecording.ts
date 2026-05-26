@@ -1,4 +1,5 @@
 import { ref, computed, type Ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useConnectionStore } from '@/stores/connection'
 import { AudioRecorder } from '@/utils/AudioRecorder'
 import {
@@ -33,14 +34,16 @@ export function useRecording(options: UseRecordingOptions) {
     syncRecordingState,
   } = options
 
+  const { t } = useI18n()
+
   const isRecording = ref(false)
   const recordingDuration = ref(0)
   const currentRecordingSource = ref<RecordingSource>('manual')
   const recordingHintText = computed(() => {
     if (currentRecordingSource.value === 'shortcut') {
-      return '再次按下快捷键停止'
+      return t('main.recording.hintShortcut')
     }
-    return '点击麦克风按钮停止'
+    return t('main.recording.hintManual')
   })
 
   let audioRecorder: AudioRecorder | null = null
@@ -89,7 +92,7 @@ export function useRecording(options: UseRecordingOptions) {
     }
 
     if (!AudioRecorder.isSupported()) {
-      showModelStatus('您的浏览器不支持录音功能', 'error')
+      showModelStatus(t('main.recording.notSupported'), 'error')
       return
     }
 
@@ -131,7 +134,7 @@ export function useRecording(options: UseRecordingOptions) {
 
       console.log('[主窗口] 开始录音，来源:', source)
     } catch (error: any) {
-      showModelStatus(`录音失败: ${error.message}`, 'error')
+      showModelStatus(t('main.recording.failed', { message: error.message }), 'error')
       isRecording.value = false
       notifyRecordingState(false)
       recordingDuration.value = 0
@@ -158,18 +161,18 @@ export function useRecording(options: UseRecordingOptions) {
       console.log('[主窗口] 录音完成，大小:', audioBlob.size, '字节')
 
       if (audioBlob.size < 1000) {
-        showModelStatus('录音时间太短', 'warning')
+        showModelStatus(t('main.recording.short'), 'warning')
         return
       }
 
       if (!connectionStore.isConnected) {
-        showModelStatus('未连接到服务器', 'error')
+        showModelStatus(t('main.recording.notConnected'), 'error')
         return
       }
 
       await sendAudioMessage(audioBlob)
     } catch (error: any) {
-      showModelStatus(`停止录音失败: ${error.message}`, 'error')
+      showModelStatus(t('main.recording.stopFailed', { message: error.message }), 'error')
     } finally {
       isRecording.value = false
       notifyRecordingState(false)
@@ -199,7 +202,7 @@ export function useRecording(options: UseRecordingOptions) {
 
   async function sendAudioMessage(audioBlob: Blob) {
     try {
-      showBaseEventStatus('正在发送语音...', 'info')
+      showBaseEventStatus(t('main.recording.sending'), 'info')
 
       const format = audioBlob.type.split('/')[1] || 'webm'
 
@@ -214,24 +217,24 @@ export function useRecording(options: UseRecordingOptions) {
 
       const result = await connectionStore.sendMessage(content, {
         userId: connectionStore.userId || 'desktop-user',
-        userName: currentUserName.value || '桌面用户',
+        userName: currentUserName.value || t('main.defaultUserName'),
         sessionId: connectionStore.sessionId,
         messageType: 'friend'
       })
 
       if (result.success) {
-        showBaseEventStatus('语音已发送', 'success')
+        showBaseEventStatus(t('main.recording.sent'), 'success')
 
         try {
           await window.electron.history.saveMessage({
             messageId: generateMessageId(),
             sessionId: connectionStore.sessionId || 'default',
             userId: connectionStore.userId || 'desktop-user',
-            userName: currentUserName.value || '桌面用户',
+            userName: currentUserName.value || t('main.defaultUserName'),
             messageType: 'friend',
             direction: 'outgoing',
             content,
-            rawText: '[语音消息]',
+            rawText: t('main.recording.voiceMessage'),
             timestamp: Date.now(),
             resourceContext: {
               resourceBaseUrl: connectionStore.resourceBaseUrl,
@@ -243,10 +246,10 @@ export function useRecording(options: UseRecordingOptions) {
           console.error('[主窗口] 保存语音消息记录失败:', error)
         }
       } else {
-        showModelStatus(`发送失败: ${result.error}`, 'error')
+        showModelStatus(t('main.recording.sendFailed', { message: result.error }), 'error')
       }
     } catch (error: any) {
-      showModelStatus(`发送失败: ${error.message}`, 'error')
+      showModelStatus(t('main.recording.sendFailed', { message: error.message }), 'error')
     }
   }
 

@@ -3,6 +3,7 @@ import type { MessageContent } from '@/types/protocol'
 import { useConnectionStore } from '@/stores/connection'
 import type { AdvancedSettings } from '@/utils/advancedSettings'
 import type { FloatingOverlayStyle } from './useBubbleStack'
+import { useI18n } from 'vue-i18n'
 
 export type { FloatingOverlayStyle }
 
@@ -28,6 +29,8 @@ export function useInputPanel(options: UseInputPanelOptions) {
     updateUIPositions,
     generateMessageId,
   } = options
+
+  const { t } = useI18n()
 
   const showInput = ref(false)
   const inputRef = ref<HTMLInputElement | null>(null)
@@ -76,7 +79,7 @@ export function useInputPanel(options: UseInputPanelOptions) {
 
       const file = files[0]
       if (file.size > getImageMaxSizeBytes()) {
-        showModelStatus(`图片大小不能超过 ${advancedSettings.value.imageMaxSizeMb}MB`, 'warning')
+        showModelStatus(t('main.input.imageTooLarge', { max: advancedSettings.value.imageMaxSizeMb }), 'warning')
         return
       }
 
@@ -134,7 +137,7 @@ export function useInputPanel(options: UseInputPanelOptions) {
     if (!rawTextToStore && !selectedImage.value) return
 
     if (!connectionStore.isConnected) {
-      showModelStatus('未连接到服务器', 'error')
+      showModelStatus(t('main.input.notConnected'), 'error')
       return
     }
 
@@ -152,7 +155,7 @@ export function useInputPanel(options: UseInputPanelOptions) {
           const base64 = await fileToBase64(file)
           content.push({ type: 'image', inline: base64 })
         } else {
-          showBaseEventStatus('正在处理图片...', 'info')
+          showBaseEventStatus(t('main.input.processingImage'), 'info')
           content.push({
             type: 'image',
             bytes: new Uint8Array(await file.arrayBuffer()),
@@ -164,13 +167,13 @@ export function useInputPanel(options: UseInputPanelOptions) {
 
       const result = await connectionStore.sendMessage(content, {
         userId: connectionStore.userId || 'desktop-user',
-        userName: currentUserName.value || '桌面用户',
+        userName: currentUserName.value || t('main.defaultUserName'),
         sessionId: connectionStore.sessionId,
         messageType: 'friend'
       })
 
       if (result.success) {
-        showBaseEventStatus('消息已发送', 'success')
+        showBaseEventStatus(t('main.input.sent'), 'success')
         closeInputPanel()
         inputText.value = ''
 
@@ -179,7 +182,7 @@ export function useInputPanel(options: UseInputPanelOptions) {
             messageId: generateMessageId(),
             sessionId: connectionStore.sessionId || 'default',
             userId: connectionStore.userId || 'desktop-user',
-            userName: currentUserName.value || '桌面用户',
+            userName: currentUserName.value || t('main.defaultUserName'),
             messageType: 'friend',
             direction: 'outgoing',
             content,
@@ -195,10 +198,10 @@ export function useInputPanel(options: UseInputPanelOptions) {
           console.error('[主窗口] 保存消息记录失败:', error)
         }
       } else {
-        showModelStatus(`发送失败: ${result.error}`, 'error')
+        showModelStatus(t('main.input.sendingFailed', { message: result.error }), 'error')
       }
     } catch (error: any) {
-      showModelStatus(`发送失败: ${error.message}`, 'error')
+      showModelStatus(t('main.input.sendingFailed', { message: error.message }), 'error')
     }
   }
 

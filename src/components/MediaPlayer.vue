@@ -15,10 +15,10 @@
       <div v-if="currentImage" class="media-overlay image-overlay" @click="hideImage">
         <div class="media-card media-card--image" @click.stop>
           <div class="media-card__header">
-            <button class="media-card__close" type="button" @click.stop="hideImage">关闭</button>
+            <button class="media-card__close" type="button" @click.stop="hideImage">{{ $t('media.close') }}</button>
           </div>
-          <img :src="currentImage" alt="表演图片" />
-          <p class="media-card__hint">点击空白区域也可关闭</p>
+          <img :src="currentImage" :alt="$t('media.imageAlt')" />
+          <p class="media-card__hint">{{ $t('media.clickToClose') }}</p>
         </div>
       </div>
     </transition>
@@ -28,7 +28,7 @@
       <div v-if="currentVideo" class="media-overlay video-overlay" @click="hideVideo">
         <div class="media-card media-card--video" @click.stop>
           <div class="media-card__header">
-            <button class="media-card__close" type="button" @click.stop="hideVideo">关闭</button>
+            <button class="media-card__close" type="button" @click.stop="hideVideo">{{ $t('media.close') }}</button>
           </div>
           <video
             ref="videoRef"
@@ -37,7 +37,7 @@
             controls
             @ended="handleVideoEnded"
           />
-          <p class="media-card__hint">点击空白区域也可关闭</p>
+          <p class="media-card__hint">{{ $t('media.clickToClose') }}</p>
         </div>
       </div>
     </transition>
@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref } from 'vue'
 import { useConnectionStore } from '@/stores/connection'
+import { useI18n } from 'vue-i18n'
 import { isDirectResourceUrl, resolveResourceSource, type ResourceLike } from '@/utils/resourceUrl'
 
 const audioRef = ref<HTMLAudioElement>()
@@ -54,6 +55,7 @@ const videoRef = ref<HTMLVideoElement>()
 const currentImage = ref<string>()
 const currentVideo = ref<string>()
 const connectionStore = useConnectionStore()
+const { t } = useI18n()
 
 let isAudioActive = false
 let imageHideTimer: number | null = null
@@ -235,15 +237,15 @@ function waitForAudioReady(audioElement: HTMLAudioElement, timeoutMs = AUDIO_REA
     }
 
     const handleError = () => {
-      settle(() => reject(new Error('音频资源加载失败')))
+      settle(() => reject(new Error(t('media.audioLoadFailed'))))
     }
 
     const handleAbort = () => {
-      settle(() => reject(new Error('音频资源加载被中止')))
+      settle(() => reject(new Error(t('media.audioLoadAborted'))))
     }
 
     const timeoutId = window.setTimeout(() => {
-      settle(() => reject(new Error(`音频资源加载超时 (${timeoutMs}ms)`)))
+      settle(() => reject(new Error(t('media.audioLoadTimeout', { ms: timeoutMs }))))
     }, timeoutMs)
 
     audioElement.addEventListener('canplay', handleCanPlay, { once: true })
@@ -277,7 +279,7 @@ async function playAudio(source: ResourceLike, volume: number = 1.0) {
     )
 
     if (!resolvedAudioUrl) {
-      throw new Error('音频资源地址不可用')
+      throw new Error(t('media.audioUrlInvalid'))
     }
 
     playbackAudioUrl = resolvedAudioUrl

@@ -1,5 +1,6 @@
 import { ref, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import type { useThemeStore } from '@/stores/theme'
 import { withAlpha } from '@/utils/themePalette'
 import {
@@ -18,6 +19,7 @@ interface UseRadialMenuOptions {
 export function useRadialMenu(options: UseRadialMenuOptions) {
   const { themeStore, openHistory, openSettings } = options
   const { palette } = storeToRefs(themeStore)
+  const { t } = useI18n()
   let openInput = options.openInput ?? (() => {})
 
   const showMenu = ref(false)
@@ -28,9 +30,9 @@ export function useRadialMenu(options: UseRadialMenuOptions) {
   const menuThemeColorHover = computed(() => withAlpha(palette.value.accent, 0.24))
 
   const menuItems = computed(() => [
-    { key: 'history', icon: ChartColumn, label: '历史', action: openHistory },
-    { key: 'settings', icon: Settings, label: '设置', action: openSettings },
-    { key: 'talk', icon: MessageCircle, label: '对话', action: openInput }
+    { key: 'history', icon: ChartColumn, label: t('menu.history'), action: openHistory },
+    { key: 'settings', icon: Settings, label: t('menu.settings'), action: openSettings },
+    { key: 'talk', icon: MessageCircle, label: t('menu.talk'), action: openInput }
   ])
 
   function startMenuAutoCloseTimer() {

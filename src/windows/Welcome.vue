@@ -16,7 +16,7 @@
       <button
         class="welcome-close window-no-drag"
         type="button"
-        aria-label="关闭"
+        :aria-label="$t('welcome.close')"
         @click="handleClose"
       >
         <X :size="15" />
@@ -45,8 +45,8 @@
           </div>
 
           <div class="greeting-box">
-            <h1 class="welcome-greeting">初次见面，请多关照～</h1>
-            <p class="welcome-subtitle">我将作为你的专属桌宠，长伴你左右...</p>
+            <h1 class="welcome-greeting">{{ $t('welcome.greeting') }}</h1>
+            <p class="welcome-subtitle">{{ $t('welcome.subtitle') }}</p>
           </div>
         </section>
 
@@ -71,8 +71,8 @@
             </div>
 
             <div class="welcome-form-header">
-              <h2>该怎么称呼你呢？</h2>
-              <p>告诉我你的昵称，开启旅程 ✦</p>
+              <h2>{{ $t('welcome.formTitle') }}</h2>
+              <p>{{ $t('welcome.formHint') }}</p>
             </div>
 
             <div class="welcome-input-area">
@@ -83,7 +83,7 @@
                   v-model="userName"
                   type="text"
                   class="welcome-input"
-                  placeholder="在此输入昵称..."
+                  :placeholder="$t('welcome.placeholder')"
                   maxlength="20"
                   autocomplete="nickname"
                   @keyup.enter="handleSubmit"
@@ -100,8 +100,8 @@
               :disabled="!userName.trim() || isSubmitting"
               @click="handleSubmit"
             >
-              <span class="submit-text" v-if="!isSubmitting">开始我们的旅程</span>
-              <span class="submit-text" v-else>正在为你准备小窝...</span>
+              <span class="submit-text" v-if="!isSubmitting">{{ $t('welcome.submit') }}</span>
+              <span class="submit-text" v-else>{{ $t('welcome.submitting') }}</span>
             </button>
 
             <transition name="fade">
@@ -110,7 +110,7 @@
               </p>
             </transition>
 
-            <span class="welcome-hint">按下 Enter 键也可以继续哦</span>
+            <span class="welcome-hint">{{ $t('welcome.enterHint') }}</span>
           </div>
         </section>
       </transition>
@@ -121,10 +121,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { X, Sparkles, Heart } from 'lucide-vue-next'
 import { useThemeStore } from '@/stores/theme'
 
 const themeStore = useThemeStore()
+const { t } = useI18n()
 const { palette } = storeToRefs(themeStore)
 
 const stage = ref<'intro' | 'form'>('intro')
@@ -237,7 +239,7 @@ async function handleSubmit() {
     await window.electron.user.setUserName(name)
   } catch (error) {
     console.error('[Welcome] 设置用户名称失败:', error)
-    submitError.value = '呜呜，设置失败了，请稍后再试～'
+    submitError.value = t('welcome.error')
     isSubmitting.value = false
   }
 }

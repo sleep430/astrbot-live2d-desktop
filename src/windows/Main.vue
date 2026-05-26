@@ -7,17 +7,17 @@
           <div class="empty-icon">
             <Drama :size="80" />
           </div>
-          <h2>欢迎使用 AstrBot Live2D</h2>
-          <p>还没有导入模型，请先导入一个 Live2D 模型</p>
+          <h2>{{ $t('main.empty.title') }}</h2>
+          <p>{{ $t('main.empty.subtitle') }}</p>
           <n-space vertical :size="16">
             <n-button type="primary" size="large" @click="handleImportModel">
               <template #icon>
                 <FolderOpen :size="18" />
               </template>
-              导入模型
+              {{ $t('main.empty.import') }}
             </n-button>
             <n-button text @click="openSettings">
-              或者在设置中管理模型
+              {{ $t('main.empty.settings') }}
             </n-button>
           </n-space>
         </div>
@@ -136,7 +136,7 @@
       <div v-if="isRecording" class="recording-toast" :style="recordingToastStyle" @click.stop>
         <div class="recording-toast-content">
           <span class="recording-dot"></span>
-          <span class="recording-text">正在录音... {{ recordingDuration }}s</span>
+          <span class="recording-text">{{ $t('main.recording.indicator', { duration: recordingDuration }) }}</span>
           <span class="recording-hint">{{ recordingHintText }}</span>
         </div>
       </div>
@@ -149,7 +149,7 @@
         <Transition name="fade">
           <div v-if="isRecording" class="recording-indicator-floating">
             <span class="recording-dot"></span>
-            <span>录音中... {{ recordingDuration }}s</span>
+            <span>{{ $t('main.recording.indicator', { duration: recordingDuration }) }}</span>
           </div>
         </Transition>
 
@@ -165,14 +165,14 @@
 
         <!-- 玻璃拟态输入条 -->
         <div class="glass-input-bar">
-          <button class="icon-btn" @click="handleSelectImage" title="发送图片">
+          <button class="icon-btn" @click="handleSelectImage" :title="$t('main.input.sendImage')">
             <ImageIcon :size="20" />
           </button>
           
             <input
               v-model="inputText"
               class="transparent-input"
-              placeholder="输入消息... (Ctrl+V 粘贴)"
+              :placeholder="$t('main.input.placeholder')"
               @keydown.enter.exact="handleSendMessage"
               @paste="handlePasteEvent"
               :ref="(el) => inputPanel.inputRef.value = el as HTMLInputElement | null"
@@ -185,12 +185,12 @@
               @mousedown="startRecording"
               @mouseup="stopRecording"
               @mouseleave="cancelRecordingIfActive"
-              title="按住录音"
+              :title="$t('main.input.holdToRecord')"
             >
               <component :is="isRecording ? Disc : Mic" :size="20" />
             </button>
             
-            <button class="icon-btn send-btn" @click="handleSendMessage" title="发送">
+            <button class="icon-btn send-btn" @click="handleSendMessage" :title="$t('main.input.send')">
               <SendHorizontal :size="20" />
             </button>
           </div>
@@ -203,6 +203,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import type { PerformElement, PerformSequence, StateModelPayload } from '@/types/protocol'
 import { useConnectionStore } from '@/stores/connection'
 import { useModelStore } from '@/stores/model'
@@ -239,6 +240,7 @@ import { useInputPanel, type FloatingOverlayStyle } from './composables/useInput
 const connectionStore = useConnectionStore()
 const modelStore = useModelStore()
 const themeStore = useThemeStore()
+const { t } = useI18n()
 const { sourceRgb } = storeToRefs(themeStore)
 const {
   desiredState,
@@ -450,7 +452,7 @@ let modelPositionX = window.innerWidth / 2
 let modelPositionY = window.innerHeight / 2
 const PLATFORM_COMPATIBILITY_HINT_KEY = 'platformCompatibilityHintShown'
 
-const currentUserName = ref('桌面用户')
+const currentUserName = ref(t('main.defaultUserName'))
 const hasModel = ref(false)
 const loadingModelPath = ref('')
 let themeExtractionRevision = 0
@@ -504,12 +506,12 @@ function showPlatformCompatibilityHint(capabilities: PlatformCapabilities): void
   if (capabilities.platform === 'linux') {
     hint = capabilities.linuxSessionType === 'wayland'
       ? {
-          text: '当前为 Linux Wayland 会话：智能穿透与自动检测全屏应用不可用。',
+          text: t('main.platform.waylandWarning'),
           type: 'warning',
           duration: 5200,
         }
       : {
-          text: '当前为 Linux 会话：智能穿透不可用，自动更新需手动下载。',
+          text: t('main.platform.linuxWarning'),
           type: 'info',
           duration: 4800,
         }
@@ -759,7 +761,7 @@ performQueue.onImage((url, _duration) => {
     return
   }
 
-  latestBubbleEntryId = pushBubble([{ type: 'image', src: resolvedSrc, alt: 'AstrBot message image' }], 'center', false)
+  latestBubbleEntryId = pushBubble([{ type: 'image', src: resolvedSrc, alt: t('main.imageAlt') }], 'center', false)
 })
 
 performQueue.onVideo((url) => {
@@ -790,14 +792,14 @@ async function loadModelWithState(
   loadingModelPath.value = modelPath
   const prepareResult = await window.electron.model.prepareLoad(modelPath)
   if (!prepareResult.success || !prepareResult.descriptor) {
-    throw new Error(prepareResult.error || '解析模型资源失败')
+    throw new Error(prepareResult.error || t('main.status.modelInfoParseFailed'))
   }
 
   const { descriptor } = prepareResult
   if (descriptor.warnings.length > 0) {
     console.warn('[主窗口] 模型兼容发现告警:', descriptor.warnings)
     if (shouldShowWarnings) {
-      showModelStatus(`模型存在兼容或可降级资源告警：${descriptor.warnings.join('；')}`, 'warning', 5200)
+      showModelStatus(t('main.model.compatibilityWarning', { warnings: descriptor.warnings.join('; ') }), 'warning', 5200)
     }
   }
 
@@ -836,7 +838,7 @@ async function handleImportModel() {
     }
 
     if (!result.success) {
-      showModelStatus(`选择文件夹失败: ${result.error}`, 'error')
+      showModelStatus(t('main.model.folderFailed', { message: result.error }), 'error')
       return
     }
 
@@ -848,24 +850,24 @@ async function handleImportModel() {
     const importResult = await window.electron.model.import(result.folderPath!, modelName)
 
     if (!importResult.success) {
-      showModelStatus(`导入模型失败: ${importResult.error}`, 'error')
+      showModelStatus(t('main.status.modelImportFailed', { message: importResult.error }), 'error')
       return
     }
 
     if (importResult.modelFiles && importResult.modelFiles.length > 1 && importResult.chosenFile) {
-      showBaseEventStatus(`检测到多个模型文件，已自动选择：${importResult.chosenFile}`, 'info')
+      showBaseEventStatus(t('main.model.multiFileDetected', { file: importResult.chosenFile }), 'info')
     }
 
     if (Array.isArray(importResult.warnings) && importResult.warnings.length > 0) {
-      showModelStatus(`模型存在兼容或可降级资源告警：${importResult.warnings.join('；')}`, 'warning', 5200)
+      showModelStatus(t('main.model.compatibilityWarning', { warnings: importResult.warnings.join('; ') }), 'warning', 5200)
     }
 
     await loadModelWithState(importResult.modelPath!, { showWarnings: false })
 
-    showBaseEventStatus('模型导入成功', 'success')
+    showBaseEventStatus(t('main.status.modelImportSuccess'), 'success')
   } catch (error: any) {
     loadingModelPath.value = ''
-    showModelStatus(`导入模型失败: ${error.message}`, 'error')
+    showModelStatus(t('main.status.modelImportFailed', { message: error.message }), 'error')
   }
 }
 
@@ -883,7 +885,7 @@ async function handleModelLoaded() {
     updateUIPositions()
   }
   
-  showBaseEventStatus('模型加载成功', 'success')
+  showBaseEventStatus(t('main.status.modelLoaded'), 'success')
   if (activeModelPath) {
     themeStore.setCurrentModel(activeModelPath)
   }
@@ -1043,16 +1045,16 @@ function handleStorageChange(event: StorageEvent) {
 
 function formatRetryHint(): string {
   if (!nextRetryAt.value) {
-    return '连接已断开，等待自动重试'
+    return t('main.retry.waiting')
   }
 
   const seconds = Math.max(1, Math.ceil((nextRetryAt.value - Date.now()) / 1000))
-  return `连接已断开，${seconds} 秒后自动重试（第 ${reconnectAttempt.value} 次）`
+  return t('main.retry.hint', { seconds, attempt: reconnectAttempt.value })
 }
 
 watch(lifecycleStatus, (status, previousStatus) => {
   if (status === 'connected' && previousStatus !== 'connected') {
-    showBaseEventStatus('已连接到服务器', 'success')
+    showBaseEventStatus(t('main.status.connected'), 'success')
     void syncCurrentModelInfoToBridge('连接建立后补发当前模型状态')
     return
   }
@@ -1063,7 +1065,7 @@ watch(lifecycleStatus, (status, previousStatus) => {
   }
 
   if (status === 'suspended') {
-    showBaseEventStatus('系统挂起，连接已暂停', 'info', 3600)
+    showBaseEventStatus(t('main.status.suspended'), 'info', 3600)
     return
   }
 
@@ -1073,7 +1075,7 @@ watch(lifecycleStatus, (status, previousStatus) => {
     && previousStatus !== 'idle'
     && desiredState.value === 'disconnected'
   ) {
-    showBaseEventStatus('已断开连接', 'warning')
+    showBaseEventStatus(t('main.status.disconnected'), 'warning')
   }
 })
 
@@ -1082,7 +1084,7 @@ watch(lastError, (error, previousError) => {
     return
   }
 
-  showModelStatus(`连接错误: ${error.message}`, 'error', 4200)
+  showModelStatus(t('main.status.connectionError', { message: error.message }), 'error', 4200)
 })
 
 function handleAudioEnd() {
@@ -1155,7 +1157,7 @@ onMounted(async () => {
     } catch (error: any) {
       loadingModelPath.value = ''
       hasModel.value = false
-      showModelStatus(`模型加载失败: ${error.message}`, 'error')
+      showModelStatus(t('main.status.modelLoadFailed', { message: error.message }), 'error')
       openModelLibraryWindowOnce()
     } finally {
       modelLoadInFlight = false
@@ -1203,14 +1205,14 @@ onMounted(async () => {
         const dateStr = date.toISOString().split('T')[0]
         const hour = date.getHours()
         const performanceId = generateMessageId('perf')
-        const rawText = extractHistoryRawText(payload.sequence) || '[表演序列]'
+        const rawText = extractHistoryRawText(payload.sequence) || t('main.performSequence')
 
         // 先保存一条incoming消息记录（服务器发来的表演）
         window.electron.history.saveMessage({
           messageId: performanceId,
           sessionId: connectionStore.sessionId || 'default',
           userId: 'server',
-          userName: '服务器',
+          userName: t('main.serverUser'),
           messageType: 'friend',
           direction: 'incoming',
           content: payload.sequence,
