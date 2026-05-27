@@ -7,6 +7,7 @@ import { formatCubismAssetIssues, validateCubismModelAssets } from '../utils/cub
 import { createCubismModelLoadDescriptor } from '../utils/cubismModelDiscovery'
 import { getAppDataPath } from '../utils/appPaths'
 import { createScopedLogger } from '../utils/logger'
+import { t } from '../../src/i18n/mainProcess'
 import {
   LIVE2D_EXPRESSION_TYPES,
   createEmptyExpressionTypePresets,
@@ -74,7 +75,7 @@ function findCubism2ModelJsonFiles(rootDir: string): string[] {
 function resolveModelAbsolutePath(modelPath: string): string {
   const normalized = String(modelPath || '').trim()
   if (!normalized) {
-    throw new Error('模型路径不能为空')
+    throw new Error(t('error.modelPathEmpty'))
   }
 
   if (normalized.startsWith('file://')) {
@@ -86,7 +87,7 @@ function resolveModelAbsolutePath(modelPath: string): string {
     return path.join(getModelsDir(), relativePath)
   }
 
-  throw new Error(`不支持的模型路径格式: ${normalized}`)
+  throw new Error(t('error.unsupportedModelPathFormat', { path: normalized }))
 }
 
 function resolveModelDirectory(modelAbsolutePath: string): string {
@@ -202,13 +203,13 @@ function buildPresetAliasTags(presets: Live2DExpressionTypePresetMap): Record<st
 
 function normalizeModelName(rawName: unknown): { success: true; value: string } | { success: false; error: string } {
   if (typeof rawName !== 'string' || !rawName.trim()) {
-    return { success: false, error: '模型名称不能为空' }
+    return { success: false, error: t('error.modelNameEmpty') }
   }
 
   const trimmed = rawName.trim()
   const normalized = path.basename(trimmed)
   if (normalized !== trimmed || normalized === '.' || normalized === '..') {
-    return { success: false, error: '模型名称非法' }
+    return { success: false, error: t('error.modelNameIllegal') }
   }
 
   return { success: true, value: normalized }
@@ -338,7 +339,7 @@ ipcMain.handle('model:import', async (_event, sourceDir: string, modelName: stri
 
     if (!fs.existsSync(sourceDir) || !fs.statSync(sourceDir).isDirectory()) {
       timer.done({ success: false, reason: 'invalid_source_dir' })
-      return { success: false, error: '请选择有效的模型文件夹' }
+      return { success: false, error: t('error.selectValidModelFolder') }
     }
 
     // 自动识别模型文件（仅支持 .model3.json）
@@ -351,10 +352,10 @@ ipcMain.handle('model:import', async (_event, sourceDir: string, modelName: stri
           reason: 'cubism2_model_detected',
           cubism2ModelCount: cubism2Files.length,
         })
-        return { success: false, error: '检测到 .model.json（Cubism 2）模型。当前版本已停用 Cubism 2，请改用 .model3.json 模型。' }
+        return { success: false, error: t('error.cubism2ModelUnsupported') }
       }
       timer.done({ success: false, reason: 'model3_not_found' })
-      return { success: false, error: '该文件夹内未找到 .model3.json 模型文件' }
+      return { success: false, error: t('error.model3NotFound') }
     }
     const chosenModelFile = pickBestModelFile(sourceDir, modelFiles)
     logger.debug('import.model_file_selected', {
@@ -376,7 +377,7 @@ ipcMain.handle('model:import', async (_event, sourceDir: string, modelName: stri
       })
       return {
         success: false,
-        error: `模型资源不完整：${formatCubismAssetIssues(requiredIssues).join(', ')}`
+        error: `${t('error.modelResourceIncomplete')}：${formatCubismAssetIssues(requiredIssues).join(', ')}`
       }
     }
 
@@ -513,7 +514,7 @@ ipcMain.handle('model:prepareLoad', async (_event, modelPath: string) => {
 
     const requiredIssues = validationResult.issues.filter((issue) => issue.severity === 'required')
     if (requiredIssues.length > 0) {
-      throw new Error(`模型资源不完整：${formatCubismAssetIssues(requiredIssues).join(', ')}`)
+      throw new Error(`${t('error.modelResourceIncomplete')}：${formatCubismAssetIssues(requiredIssues).join(', ')}`)
     }
 
     const descriptor = createCubismModelLoadDescriptor(modelPath, modelAbsolutePath)

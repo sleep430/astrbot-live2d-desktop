@@ -8,6 +8,7 @@ import { buildMessageKeywordSearchCondition } from './messageSearch'
 import { resolveBetterSqliteNativeBindingPath } from './nativeBinding'
 import { USER_CONFIG_KEYS } from '../../src/shared/metadata'
 import { getAppDataPath } from '../utils/appPaths'
+import { t } from '../../src/i18n/mainProcess'
 
 let db: Database.Database | null = null
 const require = createRequire(import.meta.url)
@@ -200,7 +201,7 @@ export function initDatabase(): Database.Database {
  */
 export function getDatabase(): Database.Database {
   if (!db) {
-    throw new Error('数据库未初始化')
+    throw new Error(t('error.databaseNotInitialized'))
   }
   return db
 }

@@ -2,6 +2,7 @@ import { ipcMain } from 'electron'
 import type { InputMessagePayload } from '../protocol/types'
 import { getBridgeConnectionController } from '../main'
 import { createScopedLogger } from '../utils/logger'
+import { t } from '../../src/i18n/mainProcess'
 
 const logger = createScopedLogger('ipc.connection')
 
@@ -36,7 +37,7 @@ ipcMain.handle('bridge:sendMessage', async (_event, payload: InputMessagePayload
   try {
     const controller = getBridgeConnectionController()
     if (!controller) {
-      throw new Error('连接控制器未初始化')
+      throw new Error(t('error.connectionControllerNotInitialized'))
     }
 
     const preparedContent = await controller.sendMessage(payload)
@@ -54,7 +55,7 @@ ipcMain.handle('bridge:sendTouch', async (_event, x: number, y: number, action: 
   try {
     const controller = getBridgeConnectionController()
     if (!controller) {
-      throw new Error('连接控制器未初始化')
+      throw new Error(t('error.connectionControllerNotInitialized'))
     }
 
     controller.sendTouch(x, y, action)
@@ -72,7 +73,7 @@ ipcMain.handle('bridge:sendState', async (_event, op: string, payload: any) => {
   try {
     const controller = getBridgeConnectionController()
     if (!controller) {
-      throw new Error('连接控制器未初始化')
+      throw new Error(t('error.connectionControllerNotInitialized'))
     }
 
     controller.sendState(op, payload)

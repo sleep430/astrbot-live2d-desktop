@@ -1,4 +1,5 @@
 import type { MessageContent } from './types'
+import { t } from '../../src/i18n/mainProcess'
 
 export interface PreparedInlineResource {
   mime: string
@@ -124,12 +125,12 @@ export async function prepareMessageContentForTransport(
     }
 
     if (!options.uploadInlineResource) {
-      throw new Error(`附件大小超过内联限制 (${inlineLimit} bytes)，且服务端未提供资源上传能力`)
+      throw new Error(t('error.attachmentTooLarge', { limit: inlineLimit }))
     }
 
     const uploadedUrl = await options.uploadInlineResource(preparedResource.buffer, preparedResource.mime)
     if (!uploadedUrl) {
-      throw new Error('资源上传失败，无法发送大附件')
+      throw new Error(t('error.resourceUploadFailed'))
     }
 
     preparedContent.push({

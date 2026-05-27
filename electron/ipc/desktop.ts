@@ -9,6 +9,7 @@ import {
   safeGetActiveWindow as safeLoadActiveWindow,
 } from '../utils/activeWinLoader'
 import { createScopedLogger } from '../utils/logger'
+import { t } from '../../src/i18n/mainProcess'
 import type {
   DesktopWindowInfo,
   DesktopCaptureRequestPayload,
@@ -230,7 +231,7 @@ export async function captureScreenshot(
     })
     const desktopSource = pickDesktopSource(desktopSources, targetDisplay)
     if (!desktopSource) {
-      throw new Error('无法获取桌面截图源')
+      throw new Error(t('error.desktopSourceUnavailable'))
     }
     logger.debug('desktop_source.select.success', {
       displayId: targetDisplay.id,
@@ -298,7 +299,7 @@ export async function captureScreenshot(
       bytes: jpegBuf.length,
       fallbackReason,
     })
-    throw new Error('截图源不可捕获，请稍后重试')
+    throw new Error(t('error.screenshotSourceUnavailable'))
   }
 
   let image: string
@@ -389,7 +390,7 @@ export async function handleToolCall(
   })
   const handler = toolHandlers[toolName]
   if (!handler) {
-    const error = new Error(`未知工具: ${toolName}`)
+    const error = new Error(t('error.unknownTool', { name: toolName }))
     timer.fail(error)
     throw error
   }

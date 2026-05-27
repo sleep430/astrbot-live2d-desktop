@@ -4,6 +4,7 @@ import { net } from 'electron'
 import type { HistoryResourceContext } from '../../src/shared/history'
 import { decodeBinaryPayload, decodeInlineDataUrl } from '../protocol/messageContent'
 import { getDatabase } from './schema'
+import { t } from '../../src/i18n/mainProcess'
 
 export const HISTORY_RESOURCE_PROTOCOL_SCHEME = 'history-resource'
 
@@ -142,11 +143,11 @@ function normalizeResourceRid(rid: string): string {
     .filter(Boolean)
 
   if (normalizedRid.length === 0) {
-    throw new Error('资源标识不能为空')
+    throw new Error(t('error.resourceIdEmpty'))
   }
 
   if (normalizedRid.some((segment) => segment === '.' || segment === '..')) {
-    throw new Error('资源标识包含非法路径片段')
+    throw new Error(t('error.resourceIdIllegalPath'))
   }
 
   return normalizedRid.map((segment) => encodeURIComponent(segment)).join('/')
@@ -268,7 +269,7 @@ function resolveResourceSourceUrl(element: ResourceElement, resourceContext?: Hi
 async function fetchRemoteResource(sourceUrl: string): Promise<{ buffer: Buffer; mime: string; fileName: string | null }> {
   const response = await net.fetch(sourceUrl)
   if (!response.ok) {
-    throw new Error(`资源请求失败 (${response.status})`)
+    throw new Error(t('error.resourceRequestFailed', { status: response.status }))
   }
 
   const buffer = Buffer.from(await response.arrayBuffer())
@@ -477,7 +478,7 @@ export async function localizeMessageContent(
         typeof localizedItem.rid === 'string'
         || typeof localizedItem.url === 'string'
       )) {
-        throw new Error(`消息资源无法解析为可下载地址: ${localizedItem.name || localizedItem.type || index}`)
+        throw new Error(t('error.resourceNotResolvable', { name: String(localizedItem.name || localizedItem.type || index) }))
       }
       repairFailed = true
       continue
@@ -501,7 +502,7 @@ export async function localizeMessageContent(
 
   if (containsExistingLocalResource && pendingResources.length > 0) {
     if (options.strict) {
-      throw new Error('消息同时包含已本地化资源和待离线化资源，拒绝混合写入')
+      throw new Error(t('error.resourceMixedWrite'))
     }
     return { content: localizedItems, changed: false }
   }

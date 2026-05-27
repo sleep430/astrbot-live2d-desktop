@@ -11,6 +11,7 @@ import {
   getMessageResourceByUrl,
 } from '../database/messageResources'
 import { createScopedLogger } from '../utils/logger'
+import { t } from '../../src/i18n/mainProcess'
 
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:'])
 const ALLOWED_RESOURCE_PROTOCOLS = new Set(['http:', 'https:', 'data:', `${HISTORY_RESOURCE_PROTOCOL_SCHEME}:`])
@@ -115,7 +116,7 @@ async function fetchResourceBuffer(source: string): Promise<Buffer> {
   if (source.startsWith(`${HISTORY_RESOURCE_PROTOCOL_SCHEME}://`)) {
     const resource = getMessageResourceByUrl(source)
     if (!resource) {
-      throw new Error('本地历史资源不存在')
+      throw new Error(t('error.localHistoryResourceMissing'))
     }
 
     return Buffer.from(resource.data)
@@ -128,7 +129,7 @@ async function fetchResourceBuffer(source: string): Promise<Buffer> {
 
   const response = await net.fetch(source)
   if (!response.ok) {
-    throw new Error(`资源请求失败 (${response.status})`)
+    throw new Error(t('error.resourceRequestFailed', { status: response.status }))
   }
 
   const arrayBuffer = await response.arrayBuffer()
@@ -164,7 +165,7 @@ ipcMain.handle('window:minimizeCurrent', async (event) => {
   const targetWindow = getSenderWindow(event)
   if (!targetWindow) {
     logger.warn('minimize_current.failed', { reason: 'window_not_found' })
-    return { success: false, error: '未找到当前窗口' }
+    return { success: false, error: t('error.windowNotFound') }
   }
 
   logger.info('minimize_current', { windowId: targetWindow.id })
@@ -176,7 +177,7 @@ ipcMain.handle('window:toggleMaximizeCurrent', async (event) => {
   const targetWindow = getSenderWindow(event)
   if (!targetWindow) {
     logger.warn('toggle_maximize_current.failed', { reason: 'window_not_found' })
-    return { success: false, error: '未找到当前窗口' }
+    return { success: false, error: t('error.windowNotFound') }
   }
 
   const wasMaximized = targetWindow.isMaximized()
@@ -205,7 +206,7 @@ ipcMain.handle('window:closeCurrent', async (event) => {
   const targetWindow = getSenderWindow(event)
   if (!targetWindow) {
     logger.warn('close_current.failed', { reason: 'window_not_found' })
-    return { success: false, error: '未找到当前窗口' }
+    return { success: false, error: t('error.windowNotFound') }
   }
 
   logger.info('close_current', { windowId: targetWindow.id })
@@ -217,7 +218,7 @@ ipcMain.handle('window:notifyRendererReady', async (event, windowKind?: string) 
   const targetWindow = getSenderWindow(event)
   if (!targetWindow) {
     logger.warn('renderer_ready.failed', { windowKind, reason: 'window_not_found' })
-    return { success: false, error: '未找到当前窗口' }
+    return { success: false, error: t('error.windowNotFound') }
   }
 
   if (windowKind === 'settings') {
@@ -225,7 +226,7 @@ ipcMain.handle('window:notifyRendererReady', async (event, windowKind?: string) 
     logger.info('renderer_ready.settings', { windowId: targetWindow.id, handled })
     return handled
       ? { success: true }
-      : { success: false, error: '设置窗口状态不匹配' }
+      : { success: false, error: t('error.settingsWindowMismatch') }
   }
 
   if (!targetWindow.isDestroyed() && !targetWindow.isVisible()) {
@@ -269,7 +270,7 @@ ipcMain.handle('window:openExternal', async (_event, url: string) => {
   const safeUrl = toSafeExternalUrl(url)
   if (!safeUrl) {
     logger.warn('open_external.rejected', { url })
-    return { success: false, error: '仅支持打开 http/https/mailto 协议链接' }
+    return { success: false, error: t('error.onlyHttpMailtoProtocol') }
   }
 
   await shell.openExternal(safeUrl)
@@ -285,7 +286,7 @@ ipcMain.handle('window:openResource', async (_event, source: string, suggestedNa
   const safeSource = toSafeResourceSource(source)
   if (!safeSource) {
     timer.done({ success: false, reason: 'unsupported_protocol' })
-    return { success: false, error: '仅支持打开 http/https/data/history-resource 协议资源' }
+    return { success: false, error: t('error.onlyResourceProtocol') }
   }
 
   try {
@@ -316,7 +317,7 @@ ipcMain.handle('window:saveResource', async (_event, source: string, suggestedNa
   const safeSource = toSafeResourceSource(source)
   if (!safeSource) {
     timer.done({ success: false, reason: 'unsupported_protocol' })
-    return { success: false, error: '仅支持保存 http/https/data/history-resource 协议资源' }
+    return { success: false, error: t('error.onlyResourceProtocolSave') }
   }
 
   try {
@@ -396,7 +397,7 @@ ipcMain.handle('window:startWatching', async (event) => {
   const window = BrowserWindow.fromWebContents(event.sender)
   if (!window) {
     timer.done({ success: false, reason: 'window_not_found' })
-    return { success: false, error: '无法获取窗口实例' }
+    return { success: false, error: t('error.cannotGetWindowInstance') }
   }
 
   // 添加到已注册列表

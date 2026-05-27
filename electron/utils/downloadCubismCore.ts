@@ -38,7 +38,7 @@ function getCubismRuntimeConfig(): CubismRuntimeConfig {
   }
 
   if (!packageJson.cubism?.core?.filename || !packageJson.cubism?.core?.downloadUrl) {
-    throw new Error(`package.json 中缺少 cubism.core 配置: ${packageJsonPath}`)
+    throw new Error(t('error.cubismConfigMissing', { path: packageJsonPath }))
   }
 
   cachedCubismConfig = packageJson.cubism
@@ -104,7 +104,7 @@ function ensureDestinationDirectory(dest: string): void {
   if (fs.existsSync(dir)) {
     const stat = fs.statSync(dir)
     if (!stat.isDirectory()) {
-      throw new Error(`目标路径的父级不是目录: ${dir}`)
+      throw new Error(t('error.targetNotDirectory', { dir }))
     }
     return
   }
@@ -180,7 +180,7 @@ function downloadFile(url: string, dest: string, maxRedirects: number = MAX_REDI
           fs.unlinkSync(dest)
         }
         if (maxRedirects <= 0) {
-          return reject(new Error('重定向次数超过上限'))
+          return reject(new Error(t('error.redirectLimitExceeded')))
         }
         const redirectUrl = new URL(response.headers.location || '', url).toString()
         return downloadFile(redirectUrl, dest, maxRedirects - 1)
@@ -193,7 +193,7 @@ function downloadFile(url: string, dest: string, maxRedirects: number = MAX_REDI
         if (fs.existsSync(dest)) {
           fs.unlinkSync(dest)
         }
-        return reject(new Error(`下载失败: ${response.statusCode}`))
+        return reject(new Error(t('error.downloadFailed', { status: response.statusCode ?? 0 })))
       }
 
       response.pipe(file)

@@ -14,6 +14,7 @@ import type { InputMessagePayload, MessageContent } from '../protocol/types'
 import { classifyConnectError, classifyDisconnect, type BridgeFailure } from './bridgeFailureClassifier'
 import { calculateRetryDelayMs } from './bridgeRetryPolicy'
 import { createScopedLogger, type LogMeta } from '../utils/logger'
+import { t } from '../../src/i18n/mainProcess'
 
 type LifecycleEventMap = {
   stateChanged: (snapshot: BridgeLifecycleSnapshot) => void
@@ -273,7 +274,7 @@ export class BridgeConnectionController extends EventEmitter {
       } else {
         this.scheduleRetry({
           code: this.snapshot.lastError?.code || 'WS_UNEXPECTED_CLOSE',
-          message: this.snapshot.lastError?.message || '连接已断开',
+          message: this.snapshot.lastError?.message || t('error.notConnectedToServer'),
           retryable: true,
         })
       }
@@ -348,7 +349,7 @@ export class BridgeConnectionController extends EventEmitter {
 
   async sendMessage(payload: InputMessagePayload): Promise<MessageContent[]> {
     if (!this.activeClient?.isReady()) {
-      throw new Error('未连接到服务器')
+      throw new Error(t('error.notConnectedToServer'))
     }
 
     logger.debug('send_message.start', {
@@ -509,7 +510,7 @@ export class BridgeConnectionController extends EventEmitter {
         return {
           success: false,
           code: 'CLIENT_UNAVAILABLE',
-          message: '连接请求已被更新的生命周期操作取代',
+          message: t('error.connectionSuperseded'),
           snapshot: this.getSnapshot(),
         }
       }

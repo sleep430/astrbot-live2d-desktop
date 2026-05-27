@@ -2,6 +2,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import { getDesktopBehaviorCoordinator } from '../desktopBehavior/coordinator'
 import type { DesktopRevealReason } from '../desktopBehavior/types'
 import { createScopedLogger } from '../utils/logger'
+import { t } from '../../src/i18n/mainProcess'
 
 let snapshotBroadcastRegistered = false
 const REVEAL_REASONS = new Set<DesktopRevealReason>(['tray', 'restore', 'manual'])
@@ -13,7 +14,7 @@ function parseRevealReason(reason: unknown): DesktopRevealReason {
   }
 
   if (typeof reason !== 'string' || !REVEAL_REASONS.has(reason as DesktopRevealReason)) {
-    throw new Error('desktopBehavior:requestReveal 参数非法')
+    throw new Error(t('error.desktopBehaviorIllegalParam'))
   }
 
   return reason as DesktopRevealReason
