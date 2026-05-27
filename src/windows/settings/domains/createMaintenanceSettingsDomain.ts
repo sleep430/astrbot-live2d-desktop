@@ -56,7 +56,7 @@ export function createMaintenanceSettingsDomain(options: CreateMaintenanceSettin
       return
     }
 
-    message.error(t('toast.logDirOpenFailed', { error: result.error || '未知错误' }))
+    message.error(t('toast.logDirOpenFailed', { error: result.error || t('error.unknown') }))
   }
 
   async function handleExportLogs() {
@@ -66,7 +66,7 @@ export function createMaintenanceSettingsDomain(options: CreateMaintenanceSettin
       return
     }
 
-    message.error(t('toast.logExportFailed', { error: result.error || '未知错误' }))
+    message.error(t('toast.logExportFailed', { error: result.error || t('error.unknown') }))
   }
 
   function handleClearCache() {

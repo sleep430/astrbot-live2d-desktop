@@ -30,6 +30,7 @@ import type { CubismIdHandle } from '@cubism-framework/id/cubismid'
 import { csmVector } from '@cubism-framework/type/csmvector'
 import { csmMap } from '@cubism-framework/type/csmmap'
 import { BreathParameterData } from '@cubism-framework/effect/cubismbreath'
+import { i18n } from '@/i18n'
 
 import type {
   CubismCompatibilityManifest,
@@ -339,7 +340,7 @@ export class CubismModel {
 
     // 检查是否为 .model3.json 模型
     if (!isCubism3Model(modelPath)) {
-      throw new Error('当前版本仅支持 Cubism 3/4 的 .model3.json 模型。')
+      throw new Error(i18n.global.t('error.cubism3Only'))
     }
 
     try {
@@ -362,7 +363,7 @@ export class CubismModel {
       this.state = LoadStep.LoadModel
       const modelFileName = this.modelSetting.getModelFileName()
       if (!modelFileName) {
-        throw new Error('模型配置文件中未指定模型文件名')
+        throw new Error(i18n.global.t('error.modelFileNotSpecified'))
       }
 
       const modelFilePath = this.modelHomeDir + modelFileName
@@ -469,7 +470,7 @@ export class CubismModel {
   private async loadFileAsArrayBuffer(filePath: string): Promise<ArrayBuffer> {
     const response = await fetch(filePath)
     if (!response.ok) {
-      throw new Error(`无法加载文件: ${filePath} (${response.status})`)
+      throw new Error(i18n.global.t('error.loadFileFailed', { path: filePath, status: response.status }))
     }
     return await response.arrayBuffer()
   }
@@ -477,7 +478,7 @@ export class CubismModel {
   private async loadFileAsText(filePath: string): Promise<string> {
     const response = await fetch(filePath)
     if (!response.ok) {
-      throw new Error(`无法加载文件: ${filePath} (${response.status})`)
+      throw new Error(i18n.global.t('error.loadFileFailed', { path: filePath, status: response.status }))
     }
     return await response.text()
   }
@@ -640,7 +641,7 @@ export class CubismModel {
           if (parsedCandidate.parameters.length > 0) {
             parsed = parsedCandidate
           } else {
-            parseWarnings.push('表情文件未解析出可执行参数，已回退到原生表情运行时')
+            parseWarnings.push(i18n.global.t('error.expressionFallbackWarning'))
           }
         }
 
@@ -879,7 +880,7 @@ export class CubismModel {
     }
 
     if (failedTextures.length > 0) {
-      throw new Error(`纹理加载失败: ${failedTextures.join(', ')}`)
+      throw new Error(i18n.global.t('error.textureLoadAllFailed', { textures: failedTextures.join(', ') }))
     }
   }
 
@@ -888,7 +889,7 @@ export class CubismModel {
    */
   private async loadTexture(texturePath: string): Promise<WebGLTexture> {
     if (!this.gl) {
-      throw new Error('WebGL 上下文未初始化')
+      throw new Error(i18n.global.t('error.webglContextNotInitialized'))
     }
 
     return new Promise<WebGLTexture>((resolve, reject) => {
@@ -898,7 +899,7 @@ export class CubismModel {
         try {
           const texture = this.gl!.createTexture()
           if (!texture) {
-            reject(new Error('创建纹理失败'))
+            reject(new Error(i18n.global.t('error.createTextureFailed')))
             return
           }
 
@@ -933,7 +934,7 @@ export class CubismModel {
       }
 
       image.onerror = () => {
-        reject(new Error(`无法加载纹理: ${texturePath}`))
+        reject(new Error(i18n.global.t('error.loadTextureFailed', { path: texturePath })))
       }
 
       image.crossOrigin = 'anonymous'
@@ -1363,7 +1364,7 @@ export class CubismModel {
       || canvas.getContext('webgl', contextAttributes)
       || canvas.getContext('experimental-webgl', contextAttributes)
     if (!gl) {
-      throw new Error('无法获取 WebGL 上下文')
+      throw new Error(i18n.global.t('error.webglContextFailed'))
     }
     this.gl = gl as WebGLRenderingContext
 

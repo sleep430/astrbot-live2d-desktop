@@ -1,3 +1,5 @@
+import { i18n } from '@/i18n'
+
 export interface ResourceUrlConfig {
   resourceBaseUrl?: string
   resourcePath?: string
@@ -38,11 +40,11 @@ function normalizeResourceRid(rid: string): string {
     .filter(Boolean)
 
   if (normalizedRid.length === 0) {
-    throw new Error('资源标识不能为空')
+    throw new Error(i18n.global.t('error.resourceIdEmpty'))
   }
 
   if (normalizedRid.some((segment) => segment === '.' || segment === '..')) {
-    throw new Error('资源标识包含非法路径片段')
+    throw new Error(i18n.global.t('error.resourceIdIllegalPath'))
   }
 
   return normalizedRid.map((segment) => encodeURIComponent(segment)).join('/')

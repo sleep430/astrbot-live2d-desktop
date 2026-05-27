@@ -1225,7 +1225,7 @@ onMounted(async () => {
           }
         }).then((saveResult: { success?: boolean; localizedContent?: PerformElement[]; error?: string }) => {
           if (!saveResult?.success) {
-            throw new Error(saveResult?.error || '保存离线历史消息失败')
+            throw new Error(saveResult?.error || t('error.saveOfflineHistoryFailed'))
           }
 
           // 保存表演记录（关联到消息）

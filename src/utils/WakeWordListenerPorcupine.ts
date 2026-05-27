@@ -60,6 +60,8 @@ type PreparedKeyword =
       builtinName: string
     }
 
+import { i18n } from '@/i18n'
+
 export type WakeWordStatus = 'idle' | 'starting' | 'listening' | 'restarting' | 'stopped' | 'error'
 
 export interface WakeWordDetectedPayload {
@@ -142,7 +144,7 @@ export class WakeWordListener {
     const keywordBasePath = this.resolveKeywordBasePath(options)
     this.preparedKeywords = this.prepareKeywords(options.keywords, keywordBasePath)
     if (this.preparedKeywords.length === 0) {
-      this.handleFatalStartError('唤醒词为空，已停止监听')
+      this.handleFatalStartError(i18n.global.t('error.wakeWordEmpty'))
       return
     }
 
@@ -194,7 +196,7 @@ export class WakeWordListener {
 
     const accessKey = this.resolveAccessKey(options)
     if (!accessKey) {
-      this.handleFatalStartError('缺少 Porcupine AccessKey，请在配置中设置 VITE_PORCUPINE_ACCESS_KEY')
+      this.handleFatalStartError(i18n.global.t('error.missingPorcupineAccessKey'))
       return
     }
 
@@ -210,7 +212,7 @@ export class WakeWordListener {
     }
     if (missingAssets.length > 0) {
       const fileList = missingAssets.join(', ')
-      this.handleFatalStartError(`唤醒词资源缺失: ${fileList}`)
+      this.handleFatalStartError(i18n.global.t('error.wakeWordResourceMissing', { files: fileList }))
       return
     }
 
@@ -233,7 +235,7 @@ export class WakeWordListener {
       return
     }
     if (!createFunction) {
-      this.handleFatalStartError('未找到 Porcupine.create 接口，请检查本地 Porcupine SDK 文件')
+      this.handleFatalStartError(i18n.global.t('error.porcupineCreateNotFound'))
       return
     }
 
@@ -254,11 +256,11 @@ export class WakeWordListener {
         keyword: keywordConfigs,
         model: { publicPath: modelPath },
         processErrorCallback: (error) => {
-          this.handleRuntimeError(`Porcupine 运行错误: ${this.stringifyError(error)}`)
+          this.handleRuntimeError(i18n.global.t('error.porcupineRuntimeError', { error: this.stringifyError(error) }))
         },
       })
     } catch (error) {
-      this.handleFatalStartError(`Porcupine 初始化失败: ${this.stringifyError(error)}`)
+      this.handleFatalStartError(i18n.global.t('error.porcupineInitFailed', { error: this.stringifyError(error) }))
       return
     }
 
@@ -268,7 +270,7 @@ export class WakeWordListener {
     }
 
     if (!this.porcupine || typeof this.porcupine.process !== 'function') {
-      this.handleFatalStartError('Porcupine 实例不可用，缺少 process() 方法')
+      this.handleFatalStartError(i18n.global.t('error.porcupineInstanceUnavailable'))
       return
     }
 
@@ -278,7 +280,7 @@ export class WakeWordListener {
     try {
       await this.startAudioPipeline(options.audioStream ?? null)
     } catch (error) {
-      this.handleRuntimeError(`唤醒监听音频管线启动失败: ${this.stringifyError(error)}`)
+      this.handleRuntimeError(i18n.global.t('error.wakeWordAudioPipelineFailed', { error: this.stringifyError(error) }))
       return
     }
 
@@ -394,7 +396,7 @@ export class WakeWordListener {
     } catch (error) {
       const message = this.stringifyError(error)
       throw new Error(
-        `无法加载本地 Porcupine 模块 (${modulePath})。请确认文件存在且可离线访问。原始错误: ${message}`
+        i18n.global.t('error.porcupineModuleLoadFailed', { path: modulePath, message })
       )
     }
   }
@@ -413,7 +415,7 @@ export class WakeWordListener {
       }
     }
 
-    throw new Error('本地 Porcupine 模块缺少 create() 接口')
+    throw new Error(i18n.global.t('error.porcupineModuleMissingCreate'))
   }
 
   private toKeywordConfig(
@@ -429,12 +431,12 @@ export class WakeWordListener {
     }
 
     if (!builtInKeywords) {
-      throw new Error('当前 Porcupine 模块不支持内置关键词，请改为本地 .ppn 文件')
+      throw new Error(i18n.global.t('error.porcupineNoBuiltinKeyword'))
     }
 
     const builtInValue = this.resolveBuiltInKeyword(keyword.builtinName, builtInKeywords)
     if (builtInValue === null) {
-      throw new Error(`未找到内置唤醒词: ${keyword.builtinName}`)
+      throw new Error(i18n.global.t('error.builtinKeywordNotFound', { name: keyword.builtinName }))
     }
 
     return {
@@ -512,7 +514,7 @@ export class WakeWordListener {
 
     const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext
     if (!AudioContextCtor) {
-      throw new Error('当前环境不支持 AudioContext')
+      throw new Error(i18n.global.t('error.noAudioContext'))
     }
 
     this.audioContext = new AudioContextCtor()
@@ -649,7 +651,7 @@ export class WakeWordListener {
         })
       }
     } catch (error) {
-      this.handleRuntimeError(`唤醒词识别处理失败: ${this.stringifyError(error)}`)
+      this.handleRuntimeError(i18n.global.t('error.wakeWordProcessFailed', { error: this.stringifyError(error) }))
     } finally {
       this.processingFrames = false
       if (this.running && this.queuedSamples.length >= this.frameLength && !this.processingFrames) {

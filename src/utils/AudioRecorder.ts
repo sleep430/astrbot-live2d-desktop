@@ -3,6 +3,8 @@
  * 使用 MediaRecorder API 录制音频
  */
 
+import { i18n } from '@/i18n'
+
 export interface AudioRecorderOptions {
   sampleRate?: number // 采样率，默认 16000
   channelCount?: number // 声道数，默认 1（单声道）
@@ -123,7 +125,7 @@ export class AudioRecorder {
       console.log('[AudioRecorder] 开始录音，MIME 类型:', this.options.mimeType)
     } catch (error) {
       console.error('[AudioRecorder] 启动录音失败:', error)
-      throw new Error('无法访问麦克风，请检查权限设置')
+      throw new Error(i18n.global.t('error.microphoneAccess'))
     }
   }
 
@@ -133,12 +135,12 @@ export class AudioRecorder {
   async stop(): Promise<Blob> {
     return new Promise((resolve, reject) => {
       if (!this.mediaRecorder) {
-        reject(new Error('录音未开始'))
+        reject(new Error(i18n.global.t('error.recordingNotStarted')))
         return
       }
 
       if (this.mediaRecorder.state === 'inactive') {
-        reject(new Error('录音已停止'))
+        reject(new Error(i18n.global.t('error.recordingAlreadyStopped')))
         return
       }
 

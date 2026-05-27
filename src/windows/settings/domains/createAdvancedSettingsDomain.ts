@@ -129,7 +129,7 @@ export function createAdvancedSettingsDomain(message: MessageApi): AdvancedSetti
     const capabilities = platformCapabilities.value
     if (!capabilities) return t('settings.advanced.platform.unknown')
     if (!capabilities.gameMode.supported) {
-      return t('settings.advanced.platform.gameModeUnavailable', { reason: capabilities.gameMode.reason || '当前平台暂不支持' })
+      return t('settings.advanced.platform.gameModeUnavailable', { reason: capabilities.gameMode.reason || t('error.platformNotSupported') })
     }
     return capabilities.gameMode.mode === 'native-window-manager'
       ? t('settings.advanced.platform.gameModeNative')
@@ -171,7 +171,7 @@ export function createAdvancedSettingsDomain(message: MessageApi): AdvancedSetti
     if (capabilities.platform === 'win32' && !capabilities.gameMode.supported) {
       return {
         type: 'info',
-        text: t('settings.advanced.platform.win32GameModeDisabled', { reason: capabilities.gameMode.reason || '能力不可用' }),
+        text: t('settings.advanced.platform.win32GameModeDisabled', { reason: capabilities.gameMode.reason || t('error.capabilityUnavailable') }),
       }
     }
 
