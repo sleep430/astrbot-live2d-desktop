@@ -597,9 +597,9 @@ const {
     modelPositionX = window.innerWidth / 2
     modelPositionY = window.innerHeight / 2
     live2dCanvasRef.value?.setModelPosition(modelPositionX, modelPositionY)
-    const currentModelPath = modelStore.currentPath
+    const currentModelPath = modelStore.currentModel
     if (currentModelPath) {
-      modelStore.updateModelPosition(currentModelPath, modelPositionX, modelPositionY)
+      modelStore.setModelPosition(modelPositionX, modelPositionY)
     }
     updateUIPositions()
   },
