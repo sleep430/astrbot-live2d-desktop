@@ -313,6 +313,14 @@ const en: I18nMessageSchema = {
   'tray.settings': 'Settings',
   'tray.history': 'History',
   'tray.quit': 'Quit',
+  'tray.status.connected': 'Connected',
+  'tray.status.connecting': 'Connecting...',
+  'tray.status.handshaking': 'Handshaking...',
+  'tray.status.waiting': 'Waiting to reconnect',
+  'tray.status.retrying': 'Reconnecting...{seconds}s (attempt {attempt})',
+  'tray.status.suspended': 'Suspended',
+  'tray.status.error': 'Connection error',
+  'tray.status.offline': 'Offline',
 
   // Updater status
   'updater.notChecked': 'Not checked for updates',

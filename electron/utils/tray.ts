@@ -88,6 +88,15 @@ function updateTrayMenu(): void {
 }
 
 /**
+ * 更新托盘提示文字（连接状态）
+ */
+export function updateTrayTooltip(statusText: string): void {
+  if (tray && !tray.isDestroyed()) {
+    tray.setToolTip(`AstrBot Live2D - ${statusText}`)
+  }
+}
+
+/**
  * 销毁托盘
  */
 export function destroyTray(): void {

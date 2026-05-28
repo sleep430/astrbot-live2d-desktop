@@ -4,7 +4,7 @@ import { createMainWindow } from './windows/mainWindow'
 import { createWelcomeWindow } from './windows/welcomeWindow'
 import { initDatabase, closeDatabase, getUserName } from './database/schema'
 import { BridgeConnectionController } from './bridge/BridgeConnectionController'
-import { createTray, destroyTray } from './utils/tray'
+import { createTray, destroyTray, updateTrayTooltip } from './utils/tray'
 import { cleanupShortcuts } from './ipc/shortcut'
 import { getDesktopBehaviorCoordinator } from './desktopBehavior/coordinator'
 import { checkCubismCoreExists, showDownloadDialog, downloadWithProgress, registerCubismCoreProtocol } from './utils/downloadCubismCore'
@@ -108,6 +108,26 @@ export function initBridgeConnectionController() {
 
   bridgeConnectionController.on('stateChanged', (snapshot) => {
     broadcastToAllWindows('bridgeLifecycle:stateChanged', snapshot)
+
+    const statusLabel = (() => {
+      switch (snapshot.status) {
+        case 'connected': return t('tray.status.connected')
+        case 'connecting': return t('tray.status.connecting')
+        case 'handshaking': return t('tray.status.handshaking')
+        case 'waiting_retry': {
+          if (snapshot.nextRetryAt) {
+            const seconds = Math.max(1, Math.ceil((snapshot.nextRetryAt - Date.now()) / 1000))
+            return t('tray.status.retrying', { seconds, attempt: snapshot.reconnectAttempt })
+          }
+          return t('tray.status.waiting')
+        }
+        case 'suspended': return t('tray.status.suspended')
+        case 'error': return t('tray.status.error')
+        default: return t('tray.status.offline')
+      }
+    })()
+
+    updateTrayTooltip(statusLabel)
   })
 
   bridgeConnectionController.on('perform:show', (payload) => {

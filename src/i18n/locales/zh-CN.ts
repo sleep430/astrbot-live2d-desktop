@@ -311,6 +311,14 @@ export default {
   'tray.settings': '设置',
   'tray.history': '历史记录',
   'tray.quit': '退出',
+  'tray.status.connected': '已连接',
+  'tray.status.connecting': '正在连接...',
+  'tray.status.handshaking': '正在握手...',
+  'tray.status.waiting': '等待重连',
+  'tray.status.retrying': '重连中...{seconds}s（第{attempt}次）',
+  'tray.status.suspended': '已挂起',
+  'tray.status.error': '连接错误',
+  'tray.status.offline': '离线',
 
   // Updater status
   'updater.notChecked': '未检查更新',
