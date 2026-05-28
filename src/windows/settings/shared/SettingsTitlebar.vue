@@ -5,6 +5,15 @@
     </div>
 
     <div class="settings-titlebar__actions window-no-drag">
+      <button
+        class="settings-titlebar__button"
+        :class="{ 'settings-titlebar__button--active': isPinned }"
+        type="button"
+        :aria-label="isPinned ? $t('settings.titlebar.unpin') : $t('settings.titlebar.pin')"
+        @click="$emit('toggle-pin')"
+      >
+        <component :is="isPinned ? Pin : PinOff" :size="16" />
+      </button>
       <button class="settings-titlebar__button" type="button" :aria-label="$t('settings.titlebar.minimize')" @click="$emit('minimize')">
         <Minus :size="16" />
       </button>
@@ -29,10 +38,11 @@
 </template>
 
 <script setup lang="ts">
-import { Copy, Minus, Square, X } from 'lucide-vue-next'
+import { Copy, Minus, Pin, PinOff, Square, X } from 'lucide-vue-next'
 
 defineProps<{
   isWindowMaximized: boolean
+  isPinned: boolean
 }>()
 
 defineEmits<{
@@ -40,5 +50,6 @@ defineEmits<{
   (event: 'minimize'): void
   (event: 'titlebar-dblclick'): void
   (event: 'toggle-maximize'): void
+  (event: 'toggle-pin'): void
 }>()
 </script>

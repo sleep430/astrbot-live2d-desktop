@@ -212,7 +212,20 @@ ipcMain.handle('window:closeCurrent', async (event) => {
   logger.info('close_current', { windowId: targetWindow.id })
   targetWindow.close()
   return { success: true }
-})
+}
+
+ipcMain.handle('window:toggleSettingsPin', async (event) => {
+  const targetWindow = BrowserWindow.fromWebContents(event.sender)
+  if (!targetWindow || targetWindow.isDestroyed()) {
+    return { success: false, pinned: false }
+  }
+
+  const current = targetWindow.isAlwaysOnTop()
+  targetWindow.setAlwaysOnTop(!current)
+  const result = targetWindow.isAlwaysOnTop()
+  logger.debug('toggle_settings_pin', { windowId: targetWindow.id, pinned: result })
+  return { success: true, pinned: result }
+}))
 
 ipcMain.handle('window:notifyRendererReady', async (event, windowKind?: string) => {
   const targetWindow = getSenderWindow(event)

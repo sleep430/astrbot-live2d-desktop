@@ -2,10 +2,12 @@
   <div class="settings-window">
     <SettingsTitlebar
       :is-window-maximized="isWindowMaximized"
+      :is-pinned="isPinned"
       @close="handleCloseWindow"
       @minimize="handleMinimizeWindow"
       @titlebar-dblclick="handleTitleBarDoubleClick"
       @toggle-maximize="handleToggleWindowMaximize"
+      @toggle-pin="handleTogglePin"
     />
 
     <div class="settings-workspace">
@@ -99,6 +101,8 @@ const {
   handleTitleBarDoubleClick,
   handleToggleWindowMaximize,
   isWindowMaximized,
+  isPinned,
+  handleTogglePin,
   loadInitialState,
 } = useSettingsWindowChrome(message)
 

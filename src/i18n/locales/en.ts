@@ -94,6 +94,8 @@ const en: I18nMessageSchema = {
   'settings.titlebar.maximize': 'Maximize',
   'settings.titlebar.restore': 'Restore',
   'settings.titlebar.close': 'Close',
+  'settings.titlebar.pin': 'Pin window',
+  'settings.titlebar.unpin': 'Unpin window',
 
   // Welcome window
   'welcome.greeting': "Nice to meet you, let's be friends~",

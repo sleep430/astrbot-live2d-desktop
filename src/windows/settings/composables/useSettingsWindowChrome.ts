@@ -5,6 +5,7 @@ type MessageApi = ReturnType<typeof useMessage>
 
 export function useSettingsWindowChrome(message: MessageApi) {
   const isWindowMaximized = ref(false)
+  const isPinned = ref(true)
 
   async function loadInitialState() {
     try {
@@ -46,13 +47,20 @@ export function useSettingsWindowChrome(message: MessageApi) {
     void handleToggleWindowMaximize()
   }
 
+  async function handleTogglePin() {
+    const result = await window.electron.window.toggleSettingsPin()
+    isPinned.value = Boolean(result.pinned)
+  }
+
   return {
     isWindowMaximized,
+    isPinned,
     applyMaximizedChanged,
     handleCloseWindow,
     handleMinimizeWindow,
     handleTitleBarDoubleClick,
     handleToggleWindowMaximize,
+    handleTogglePin,
     loadInitialState,
   }
 }

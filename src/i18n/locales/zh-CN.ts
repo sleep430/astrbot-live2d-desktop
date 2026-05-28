@@ -92,6 +92,8 @@ export default {
   'settings.titlebar.maximize': '最大化',
   'settings.titlebar.restore': '还原',
   'settings.titlebar.close': '关闭',
+  'settings.titlebar.pin': '固定窗口',
+  'settings.titlebar.unpin': '取消固定',
 
   // Welcome window
   'welcome.greeting': '初次见面，请多关照～',
