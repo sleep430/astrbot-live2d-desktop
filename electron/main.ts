@@ -1,9 +1,10 @@
-import { app, BrowserWindow, dialog, powerMonitor } from 'electron'
+import { app, BrowserWindow, dialog, nativeImage, powerMonitor } from 'electron'
 import { APP_METADATA } from '../src/shared/metadata'
 import { createMainWindow } from './windows/mainWindow'
 import { createWelcomeWindow } from './windows/welcomeWindow'
 import { initDatabase, closeDatabase, getUserName } from './database/schema'
 import { BridgeConnectionController } from './bridge/BridgeConnectionController'
+import path from 'path'
 import { createTray, destroyTray, updateTrayTooltip } from './utils/tray'
 import { cleanupShortcuts } from './ipc/shortcut'
 import { getDesktopBehaviorCoordinator } from './desktopBehavior/coordinator'
@@ -239,6 +240,16 @@ async function initialize() {
  */
 app.whenReady().then(() => {
   logger.info('app.ready')
+
+  // macOS 开发模式下设置 Dock 图标（nativeImage 不支持 icns，必须用 PNG）
+  if (process.platform === 'darwin' && !app.isPackaged && app.dock) {
+    const pngPath = path.join(process.cwd(), 'resources', 'icon.png')
+    const dockIcon = nativeImage.createFromPath(pngPath)
+    if (!dockIcon.isEmpty()) {
+      app.dock.setIcon(dockIcon)
+    }
+  }
+
   registerCubismCoreProtocol()
   registerHistoryResourceProtocol()
   initialize().catch(err => {

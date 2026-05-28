@@ -1,10 +1,24 @@
 import { app, Tray, Menu, nativeImage } from 'electron'
+import path from 'path'
+import fs from 'fs'
 import { showSettingsWindow } from '../windows/settingsWindow'
 import { resolveAppIconPath } from './icon'
 import { getDesktopBehaviorCoordinator } from '../desktopBehavior/coordinator'
 import { t } from '../../src/i18n/mainProcess'
 
 let tray: Tray | null = null
+
+function resolveTrayIconPath(): string {
+  // macOS 托盘图标必须使用 PNG，icns 格式无法渲染
+  if (process.platform === 'darwin') {
+    const devPng = path.join(process.cwd(), 'resources', 'icon.png')
+    if (fs.existsSync(devPng)) return devPng
+    const packagedPng = path.join(process.resourcesPath, 'icon.png')
+    if (fs.existsSync(packagedPng)) return packagedPng
+  }
+
+  return resolveAppIconPath()
+}
 
 function revealMainOrOpenModelLibrary(reason: 'tray' | 'manual'): void {
   const coordinator = getDesktopBehaviorCoordinator()
@@ -24,7 +38,7 @@ function revealMainOrOpenModelLibrary(reason: 'tray' | 'manual'): void {
 export function createTray(): Tray | null {
   if (tray) return tray
 
-  const iconPath = resolveAppIconPath()
+  const iconPath = resolveTrayIconPath()
   let icon: Electron.NativeImage
 
   try {
@@ -39,6 +53,10 @@ export function createTray(): Tray | null {
 
   if (!icon.isEmpty() && process.platform === 'win32') {
     icon = icon.resize({ width: 16, height: 16 })
+  }
+
+  if (!icon.isEmpty() && process.platform === 'darwin') {
+    icon = icon.resize({ width: 22, height: 22 })
   }
 
   try {
