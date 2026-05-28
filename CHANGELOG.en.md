@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.2.0] - 2026-05-28
+
+### Added
+- Added "Save and Connect" primary button in connection settings for streamlined first-time setup.
+- Recording mode now supports "Hold to talk" and "Click to toggle", configurable in advanced settings.
+- Model drag now constrained to screen boundaries (at least 20% visible); added "Reset Position" in right-click menu.
+- Settings window opens with always-on-top by default; added Pin button in titlebar to toggle.
+- System tray tooltip now dynamically shows connection status and retry countdown.
+- Log level (info/debug) is now persisted across app restarts.
+- Added theme color picker in model settings with manual override and auto-extraction restore.
+- Added "Download Live2D SDK" button in advanced data settings for re-download after initial skip.
+
+### Fixed
+- Cubism SDK download now retries up to 3 times on failure; cancelling download no longer exits the app.
+- macOS tray icon no longer transparent (uses PNG instead of icns format).
+- macOS app Dock icon now displays correctly in dev mode.
+- macOS settings window title no longer overlaps with traffic light buttons.
+- Fixed syntax errors in toggleSettingsPin and closeCurrent IPC handlers.
+
+### Changed
+- Mouse pass-through settings changed from two independent toggles to a mutually exclusive radio group (None / Smart / Full) for clearer interaction.
+
 ## [1.1.0] - 2026-05-11
 
 ### Changed
