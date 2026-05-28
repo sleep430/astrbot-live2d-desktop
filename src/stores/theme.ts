@@ -70,6 +70,7 @@ export const useThemeStore = defineStore('theme', () => {
   const currentModelPath = ref(persisted.currentModelPath)
   const currentModelName = ref(persisted.currentModelName || getModelNameFromPath(persisted.currentModelPath))
   const sourceColor = ref(persisted.sourceColor)
+  const manualColorOverride = ref(false)
 
   const palette = computed(() => createThemePalette(hexToRgb(sourceColor.value)))
   const cssVars = computed(() => buildThemeCssVars(palette.value, resolvedModelName.value))
@@ -107,8 +108,20 @@ export const useThemeStore = defineStore('theme', () => {
   function applyModelTheme(payload: { modelPath: string; modelName?: string; rgb: ThemeRgb }) {
     currentModelPath.value = payload.modelPath
     currentModelName.value = payload.modelName || getModelNameFromPath(payload.modelPath)
-    sourceColor.value = rgbToHexString(payload.rgb)
+    if (!manualColorOverride.value) {
+      sourceColor.value = rgbToHexString(payload.rgb)
+      persistState()
+    }
+  }
+
+  function setManualColor(hex: string) {
+    sourceColor.value = hex
+    manualColorOverride.value = true
     persistState()
+  }
+
+  function resetToAutoColor() {
+    manualColorOverride.value = false
   }
 
   function setModelName(modelName: string) {
@@ -157,6 +170,9 @@ export const useThemeStore = defineStore('theme', () => {
     setCurrentModel,
     setModelName,
     applyModelTheme,
+    setManualColor,
+    resetToAutoColor,
+    manualColorOverride,
   }
 })
   let storageSyncBound = false

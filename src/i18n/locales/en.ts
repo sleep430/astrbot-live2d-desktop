@@ -416,6 +416,8 @@ const en: I18nMessageSchema = {
   'settings.model.current.themeFollowModel': 'Theme follows current model',
   'settings.model.current.themeFollowFeedback': 'When enabled, the interface theme will follow the current model color scheme; when disabled, manual or existing theme settings will be preserved.',
   'settings.model.current.currentThemeColor': 'Current Theme Color',
+  'settings.model.current.pickColor': 'Pick color',
+  'settings.model.current.resetAutoColor': 'Restore auto extraction',
   'settings.model.current.syncStatus': 'Sync Status',
   'settings.model.current.followingModel': 'Following current model',
   'settings.model.current.waitingForModel': 'Waiting for model to load',

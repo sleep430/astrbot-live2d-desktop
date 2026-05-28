@@ -414,6 +414,8 @@ export default {
   'settings.model.current.themeFollowModel': '主题色跟随当前模型',
   'settings.model.current.themeFollowFeedback': '启用后，界面主题会跟随当前模型配色；关闭后将保留手动或已有主题设置。',
   'settings.model.current.currentThemeColor': '当前主题色',
+  'settings.model.current.pickColor': '选择颜色',
+  'settings.model.current.resetAutoColor': '恢复自动提取',
   'settings.model.current.syncStatus': '同步状态',
   'settings.model.current.followingModel': '跟随当前模型',
   'settings.model.current.waitingForModel': '等待模型加载',

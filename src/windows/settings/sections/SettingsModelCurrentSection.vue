@@ -121,7 +121,25 @@
     <div class="settings-kv-list">
       <div class="settings-kv-list__row">
         <span>{{ $t('settings.model.current.currentThemeColor') }}</span>
-        <strong>{{ sourceColor.toUpperCase() }}</strong>
+        <span class="theme-color-control">
+          <span class="theme-color-swatch" :style="{ backgroundColor: sourceColor }"></span>
+          <strong>{{ sourceColor.toUpperCase() }}</strong>
+          <input
+            type="color"
+            :value="sourceColor"
+            class="theme-color-picker"
+            :aria-label="$t('settings.model.current.pickColor')"
+            @input="handleColorPick"
+          />
+          <n-button
+            v-if="manualColorOverride"
+            size="tiny"
+            secondary
+            @click="handleResetAutoColor"
+          >
+            {{ $t('settings.model.current.resetAutoColor') }}
+          </n-button>
+        </span>
       </div>
       <div class="settings-kv-list__row">
         <span>{{ $t('settings.model.current.syncStatus') }}</span>
@@ -134,7 +152,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
 import { createLive2DExpressionTypeMeta, type Live2DExpressionTypeMeta } from '@/shared/live2dExpressionTypes'
+import { useThemeStore } from '@/stores/theme'
 import { useAdvancedSettingsDomain } from '../domains/createAdvancedSettingsDomain'
 import { useModelSettingsDomain } from '../domains/createModelSettingsDomain'
 
@@ -159,6 +179,20 @@ const {
   sourceColor,
   themeSwatchStyle,
 } = useModelSettingsDomain()
+
+const themeStore = useThemeStore()
+const { manualColorOverride } = storeToRefs(themeStore)
+
+function handleColorPick(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (input?.value) {
+    themeStore.setManualColor(input.value)
+  }
+}
+
+function handleResetAutoColor() {
+  themeStore.resetToAutoColor()
+}
 
 const expressionTypeGroups = computed(() => {
   const groups: Array<{ name: string; items: Live2DExpressionTypeMeta[] }> = []
@@ -291,5 +325,38 @@ const syncStatusLabel = computed(() => {
   font-family: var(--font-mono);
   font-size: 10px;
   word-break: break-all;
+}
+
+.theme-color-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-color-swatch {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.theme-color-picker {
+  width: 28px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.theme-color-picker::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.theme-color-picker::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
 }
 </style>
