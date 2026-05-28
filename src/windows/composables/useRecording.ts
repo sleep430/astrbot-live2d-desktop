@@ -5,6 +5,7 @@ import { AudioRecorder } from '@/utils/AudioRecorder'
 import {
   clampMaxRecordingSeconds,
   type AdvancedSettings,
+  type RecordingMode,
 } from '@/utils/advancedSettings'
 
 type RecordingSource = 'manual' | 'shortcut'
@@ -263,12 +264,24 @@ export function useRecording(options: UseRecordingOptions) {
     }
   }
 
+  async function toggleRecording() {
+    if (isRecording.value) {
+      await stopRecording({ reason: 'manual' })
+    } else {
+      await startRecording({ source: 'manual' })
+    }
+  }
+
+  const recordingMode = computed<RecordingMode>(() => advancedSettings.value.recordingMode)
+
   return {
     isRecording,
     recordingDuration,
     recordingHintText,
+    recordingMode,
     startRecording,
     stopRecording,
+    toggleRecording,
     cancelRecordingIfActive,
     sendAudioMessage,
     cleanup,

@@ -180,12 +180,22 @@
           
           <div class="action-buttons">
             <button
+              v-if="recordingMode === 'hold'"
               class="icon-btn record-btn"
               :class="{ 'recording': isRecording }"
               @mousedown="startRecording"
               @mouseup="stopRecording"
               @mouseleave="cancelRecordingIfActive"
               :title="$t('main.input.holdToRecord')"
+            >
+              <component :is="isRecording ? Disc : Mic" :size="20" />
+            </button>
+            <button
+              v-else
+              class="icon-btn record-btn"
+              :class="{ 'recording': isRecording }"
+              @click="toggleRecording"
+              :title="isRecording ? $t('main.input.clickToStop') : $t('main.input.clickToRecord')"
             >
               <component :is="isRecording ? Disc : Mic" :size="20" />
             </button>
@@ -610,8 +620,10 @@ const {
   isRecording,
   recordingDuration,
   recordingHintText,
+  recordingMode,
   startRecording,
   stopRecording,
+  toggleRecording,
   cancelRecordingIfActive,
   cleanup: cleanupRecording,
 } = useRecording({

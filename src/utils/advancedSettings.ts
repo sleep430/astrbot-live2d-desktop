@@ -15,8 +15,10 @@ const MIN_IMAGE_MAX_SIZE_MB = 1
 const MAX_IMAGE_MAX_SIZE_MB = 50
 
 export type AppLogLevel = 'info' | 'debug'
+export type RecordingMode = 'hold' | 'toggle'
 
 export interface AdvancedSettings {
+  recordingMode: RecordingMode
   recordingShortcut: string
   autoLoadLastModel: boolean
   themeFollowModel: boolean
@@ -31,6 +33,7 @@ export interface AdvancedSettings {
 }
 
 export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
+  recordingMode: 'hold',
   recordingShortcut: 'Alt+R',
   autoLoadLastModel: true,
   themeFollowModel: true,
@@ -42,6 +45,10 @@ export const DEFAULT_ADVANCED_SETTINGS: AdvancedSettings = {
   imageInlineThresholdKb: 256,
   imageMaxSizeMb: 10,
   logLevel: 'info'
+}
+
+export function normalizeRecordingMode(value: unknown): RecordingMode {
+  return value === 'toggle' ? 'toggle' : 'hold'
 }
 
 export function normalizeAppLogLevel(value: unknown): AppLogLevel {
@@ -66,6 +73,7 @@ export function normalizeAdvancedSettings(value: unknown): AdvancedSettings {
     : {}
 
   return {
+    recordingMode: normalizeRecordingMode(raw.recordingMode),
     recordingShortcut: typeof raw.recordingShortcut === 'string'
       ? raw.recordingShortcut
       : DEFAULT_ADVANCED_SETTINGS.recordingShortcut,

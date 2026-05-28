@@ -8,11 +8,20 @@ import {
   clampImageMaxSizeMb,
   clampMaxRecordingSeconds,
   normalizeAdvancedSettings,
+  normalizeRecordingMode,
   loadAdvancedSettings,
   saveAdvancedSettings,
 } from '../src/utils/advancedSettings'
 
 describe('advancedSettings', () => {
+  it('normalizes recording mode to valid values', () => {
+    expect(normalizeRecordingMode('hold')).toBe('hold')
+    expect(normalizeRecordingMode('toggle')).toBe('toggle')
+    expect(normalizeRecordingMode('invalid')).toBe('hold')
+    expect(normalizeRecordingMode(undefined)).toBe('hold')
+    expect(normalizeRecordingMode(null)).toBe('hold')
+  })
+
   it('clamps recording seconds into the supported range', () => {
     expect(clampMaxRecordingSeconds(0)).toBe(1)
     expect(clampMaxRecordingSeconds(999)).toBe(60)
@@ -49,6 +58,7 @@ describe('advancedSettings', () => {
     })
 
     expect(normalized).toEqual({
+      recordingMode: 'hold',
       recordingShortcut: 'Ctrl+Shift+R',
       autoLoadLastModel: false,
       themeFollowModel: false,

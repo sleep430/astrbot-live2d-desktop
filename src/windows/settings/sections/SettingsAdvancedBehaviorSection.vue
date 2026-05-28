@@ -77,6 +77,17 @@
           <span>{{ $t('settings.advanced.behavior.milliseconds') }}</span>
         </n-space>
       </n-form-item>
+      <n-form-item :label="$t('settings.advanced.behavior.recordingMode')">
+        <n-radio-group v-model:value="advancedSettings.recordingMode" @update:value="applyAdvancedSettingChange">
+          <n-space>
+            <n-radio-button value="hold">{{ $t('settings.advanced.behavior.recordingModeHold') }}</n-radio-button>
+            <n-radio-button value="toggle">{{ $t('settings.advanced.behavior.recordingModeToggle') }}</n-radio-button>
+          </n-space>
+        </n-radio-group>
+        <template #feedback>
+          {{ $t('settings.advanced.behavior.recordingModeFeedback') }}
+        </template>
+      </n-form-item>
       <n-form-item :label="$t('settings.advanced.behavior.autoLoadLastModel')">
         <n-switch v-model:value="advancedSettings.autoLoadLastModel" @update:value="applyAdvancedSettingChange" />
       </n-form-item>
