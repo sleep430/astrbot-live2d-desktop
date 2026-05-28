@@ -225,7 +225,7 @@ ipcMain.handle('window:toggleSettingsPin', async (event) => {
   const result = targetWindow.isAlwaysOnTop()
   logger.debug('toggle_settings_pin', { windowId: targetWindow.id, pinned: result })
   return { success: true, pinned: result }
-}))
+})
 
 ipcMain.handle('window:notifyRendererReady', async (event, windowKind?: string) => {
   const targetWindow = getSenderWindow(event)
