@@ -28,8 +28,9 @@ Connects to AstrBot in real time, enabling models to display text, motions, expr
 - Real-time interaction with AstrBot via WebSocket with low-latency message and performance push
 - Text / image / voice input, automatically triggering performance sequence playback
 - Message history, performance records, and statistical analysis
-- Audio recording pipeline and global keyboard shortcuts
-- Tray, always-on-top, mouse passthrough, and other desktop assistant capabilities
+- Audio recording pipeline and global keyboard shortcuts, with hold/toggle recording modes
+- Tray, always-on-top, mouse passthrough (none / smart / full), and other desktop assistant capabilities
+- Theme color auto-extraction with manual override support
 
 ## Model Compatibility Boundaries
 
@@ -61,7 +62,7 @@ Download the appropriate package from the [Releases](https://github.com/lxfight/
 - macOS: `astrbot-live2d-desktop-v<version>-mac-<arch>.dmg`
 - Linux: `astrbot-live2d-desktop-v<version>-linux-<arch>.AppImage`
 
-> On first launch, the app will prompt you to download the Live2D Cubism Core runtime file (~200 KB). Click confirm to download automatically.
+> On first launch, the app will prompt you to download the Live2D Cubism Core runtime file (~200 KB). Click confirm to download automatically; download supports retry on failure, and can also be skipped then manually installed later in settings.
 
 ### 2) Prepare the Server
 
@@ -73,7 +74,7 @@ In the desktop client "Settings → Connection", fill in:
 
 1. Server address (e.g. `ws://127.0.0.1:9090/astrbot/live2d`)
 2. Auth token (required, must match the adapter's `auth_token`)
-3. Click connect
+3. Click "Save and Connect" to save configuration and establish the connection in one step
 
 > The auth token is saved to the main process user config (encrypted when available) and does not need to be re-entered on restart.
 
