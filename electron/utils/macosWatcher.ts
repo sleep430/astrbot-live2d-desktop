@@ -87,7 +87,7 @@ async function getActiveWindowViaAppleScript(): Promise<WindowInfo | null> {
       isMinimized: false,
       isMaximized: false
     }
-  } catch (error) {
+  } catch {
     // AppleScript 可能会失败，静默处理
     return null
   }

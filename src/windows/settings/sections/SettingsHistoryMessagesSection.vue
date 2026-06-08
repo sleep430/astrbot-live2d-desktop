@@ -147,9 +147,9 @@
       :page-size="pageSize"
       show-size-picker
       :page-sizes="[10, 20, 50]"
+      class="history-pagination"
       @update:page="handlePageChange"
       @update:page-size="handlePageSizeChange"
-      class="history-pagination"
     />
 
     <SettingsHistoryMediaViewer

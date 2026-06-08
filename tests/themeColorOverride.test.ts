@@ -87,7 +87,7 @@ describe('Theme color manual override', () => {
     let sourceColor = '#74a5ff'
     const manualOverride = false
 
-    const extractedRgb = { r: 255, g: 128, b: 0 }
+    const _extractedRgb = { r: 255, g: 128, b: 0 }
     const extractedHex = '#ff8000'
 
     if (!manualOverride) {
@@ -99,7 +99,7 @@ describe('Theme color manual override', () => {
 
   it('resetAutoColor clears the manual override flag', () => {
     let manualColorOverride = true
-    const extractedColor = '#6496c8'
+    const _extractedColor = '#6496c8'
 
     // Reset: clear override
     manualColorOverride = false

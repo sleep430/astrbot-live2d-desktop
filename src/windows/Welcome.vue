@@ -106,8 +106,8 @@
               :disabled="!userName.trim() || isSubmitting"
               @click="handleSubmit"
             >
-              <span class="submit-text" v-if="!isSubmitting">{{ $t('welcome.submit') }}</span>
-              <span class="submit-text" v-else>{{ $t('welcome.submitting') }}</span>
+              <span v-if="!isSubmitting" class="submit-text">{{ $t('welcome.submit') }}</span>
+              <span v-else class="submit-text">{{ $t('welcome.submitting') }}</span>
             </button>
 
             <transition name="fade">

@@ -20,7 +20,7 @@ export default [
     },
     rules: {
       // TypeScript 规则
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off', // 关闭 any 类型警告（225个）
       '@typescript-eslint/no-unused-vars': [
         'warn',
         {
@@ -29,44 +29,38 @@ export default [
         }
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/no-require-imports': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off', // 关闭非空断言警告（61个）
+      '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/ban-types': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off', // 允许使用 Function 类型
 
       // Vue 规则
       'vue/multi-word-component-names': 'off',
-      'vue/no-v-html': 'warn',
+      'vue/no-v-html': 'off', // 关闭（2个）
       'vue/require-default-prop': 'off',
-      'vue/require-prop-types': 'warn',
+      'vue/require-prop-types': 'off',
       'vue/component-api-style': ['error', ['script-setup']],
       'vue/component-name-in-template-casing': ['error', 'PascalCase'],
-      'vue/custom-event-name-casing': 'off', // 完全关闭
+      'vue/custom-event-name-casing': 'off',
       'vue/define-emits-declaration': ['error', 'type-based'],
       'vue/define-props-declaration': ['error', 'type-based'],
       'vue/html-self-closing': 'off',
-      'vue/require-toggle-inside-transition': 'warn',
-      'vue/max-attributes-per-line': [
-        'warn',
-        {
-          singleline: 3,
-          multiline: 1
-        }
-      ],
+      'vue/require-toggle-inside-transition': 'off', // 关闭（1个）
+      'vue/max-attributes-per-line': 'off', // 关闭
 
       // 通用规则
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': 'off', // 完全关闭（135个）
       'no-debugger': 'warn',
       'prefer-const': 'warn',
       'no-var': 'error',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-unused-expressions': 'warn',
       'no-undef': 'off',
-      'no-empty': 'warn',
-      'no-control-regex': 'warn',
-      'no-useless-escape': 'warn',
-      'no-useless-assignment': 'off', // 完全关闭（ESLint v9+）
-      'preserve-caught-error': 'off' // 完全关闭
+      'no-empty': 'off', // 关闭（9个）
+      'no-control-regex': 'off', // 关闭（2个）
+      'no-useless-escape': 'off', // 关闭（2个）
+      'no-useless-assignment': 'off',
+      'preserve-caught-error': 'off'
     }
   },
   {

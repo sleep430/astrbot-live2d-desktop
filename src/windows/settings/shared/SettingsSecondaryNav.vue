@@ -1,13 +1,13 @@
 <template>
   <aside class="settings-secondary-nav">
     <transition name="slide-fade" mode="out-in">
-      <div class="settings-secondary-nav__header" :key="activeGroup">
+      <div :key="activeGroup" class="settings-secondary-nav__header">
         <strong>{{ $t(`settings.menu.${activeGroup}`) }}</strong>
       </div>
     </transition>
 
     <transition name="list-fade" mode="out-in">
-      <div class="settings-secondary-nav__list" :key="activeGroup">
+      <div :key="activeGroup" class="settings-secondary-nav__list">
         <button
           v-for="item in items"
           :key="item.key"
