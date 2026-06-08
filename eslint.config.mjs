@@ -31,6 +31,7 @@ export default [
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/no-require-imports': 'warn',
+      '@typescript-eslint/ban-types': 'off', // 允许使用 Function 类型
 
       // Vue 规则
       'vue/multi-word-component-names': 'off',
@@ -63,7 +64,8 @@ export default [
       'no-empty': 'warn',
       'no-control-regex': 'warn',
       'no-useless-escape': 'warn',
-      'no-useless-assignment': 'off' // 完全关闭（ESLint v9+）
+      'no-useless-assignment': 'off', // 完全关闭（ESLint v9+）
+      'preserve-caught-error': 'off' // 完全关闭
     }
   },
   {
