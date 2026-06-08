@@ -88,8 +88,8 @@
         @mouseleave="handleBubbleMouseLeave(entry)"
       >
         <div
-          class="bubble-content"
           :ref="el => setBubbleContentEl(entry.id, el as HTMLElement | null)"
+          class="bubble-content"
         >
           <div
             v-for="item in entry.items"
@@ -164,17 +164,17 @@
 
         <!-- 玻璃拟态输入条 -->
         <div class="glass-input-bar">
-          <button class="icon-btn" @click="handleSelectImage" :title="$t('main.input.sendImage')">
+          <button class="icon-btn" :title="$t('main.input.sendImage')" @click="handleSelectImage">
             <ImageIcon :size="20" />
           </button>
 
           <input
+            :ref="el => (inputPanel.inputRef.value = el as HTMLInputElement | null)"
             v-model="inputText"
             class="transparent-input"
             :placeholder="$t('main.input.placeholder')"
             @keydown.enter.exact="handleSendMessage"
             @paste="handlePasteEvent"
-            :ref="el => (inputPanel.inputRef.value = el as HTMLInputElement | null)"
           />
 
           <div class="action-buttons">
@@ -182,10 +182,10 @@
               v-if="recordingMode === 'hold'"
               class="icon-btn record-btn"
               :class="{ recording: isRecording }"
+              :title="$t('main.input.holdToRecord')"
               @mousedown="startRecording"
               @mouseup="stopRecording"
               @mouseleave="cancelRecordingIfActive"
-              :title="$t('main.input.holdToRecord')"
             >
               <component :is="isRecording ? Disc : Mic" :size="20" />
             </button>
@@ -193,16 +193,16 @@
               v-else
               class="icon-btn record-btn"
               :class="{ recording: isRecording }"
-              @click="toggleRecording"
               :title="isRecording ? $t('main.input.clickToStop') : $t('main.input.clickToRecord')"
+              @click="toggleRecording"
             >
               <component :is="isRecording ? Disc : Mic" :size="20" />
             </button>
 
             <button
               class="icon-btn send-btn"
-              @click="handleSendMessage"
               :title="$t('main.input.send')"
+              @click="handleSendMessage"
             >
               <SendHorizontal :size="20" />
             </button>
@@ -238,6 +238,7 @@ import {
 import Live2DCanvas from '@/components/Live2D/Canvas.vue'
 import MediaPlayer from '@/components/MediaPlayer.vue'
 import { PerformanceQueue } from '@/utils/PerformanceQueue'
+import { getGlobalPerformanceMonitor } from '@/utils/PerformanceMonitor'
 import {
   ADVANCED_SETTINGS_KEY,
   clampMaxRecordingSeconds,
@@ -1178,6 +1179,41 @@ function handleAudioEnd() {
 onMounted(async () => {
   await connectionStore.ensureInitialized()
 
+  // 启用性能监控（开发模式）
+  if (import.meta.env.DEV) {
+    const perfMonitor = getGlobalPerformanceMonitor()
+    perfMonitor.start()
+
+    const unsubscribe = perfMonitor.subscribe(snapshot => {
+      // 低 FPS 警告
+      if (snapshot.fps < 30) {
+        console.warn('[性能监控] FPS 低于 30:', snapshot.fps.toFixed(2))
+      }
+
+      // 内存使用警告
+      const memoryUsagePercent = (snapshot.memory.used / snapshot.memory.limit) * 100
+      if (memoryUsagePercent > 80) {
+        console.warn(
+          '[性能监控] 内存使用过高:',
+          (snapshot.memory.used / 1024 / 1024).toFixed(2) + 'MB',
+          `(${memoryUsagePercent.toFixed(1)}%)`
+        )
+      }
+
+      // 每 60 秒输出一次性能统计
+      if (snapshot.timestamp % 60000 < 1000) {
+        console.log('[性能监控]', {
+          fps: snapshot.fps.toFixed(2),
+          memoryMB: (snapshot.memory.used / 1024 / 1024).toFixed(2),
+          memoryPercent: memoryUsagePercent.toFixed(1) + '%'
+        })
+      }
+    })
+
+    // 存储 unsubscribe 函数以便清理
+    mainWindowDisposers.push(unsubscribe)
+  }
+
   // 获取用户名称
   try {
     const name = await window.electron.user.getUserName()
@@ -1441,6 +1477,12 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  // 停止性能监控
+  if (import.meta.env.DEV) {
+    const perfMonitor = getGlobalPerformanceMonitor()
+    perfMonitor.stop()
+  }
+
   for (const dispose of mainWindowDisposers.splice(0)) {
     dispose()
   }

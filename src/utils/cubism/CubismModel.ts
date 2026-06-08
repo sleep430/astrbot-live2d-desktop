@@ -61,6 +61,7 @@ import {
 import { buildExpressionCatalog } from './expressionCatalog'
 import { parseExp3Text } from './exp3Parser'
 import { loadExpressionProfile } from './expressionProfile'
+import { getGlobalModelResourceCache } from './ModelResourceCache'
 
 // ============================================================================
 // 类型定义
@@ -928,17 +929,20 @@ export class CubismModel {
   }
 
   /**
-   * 加载纹理图像
+   * 加载纹理图像（带缓存）
    */
   private async loadTexture(texturePath: string): Promise<WebGLTexture> {
     if (!this.gl) {
       throw new Error(i18n.global.t('error.webglContextNotInitialized'))
     }
 
-    return new Promise<WebGLTexture>((resolve, reject) => {
-      const image = new Image()
+    const cache = getGlobalModelResourceCache()
 
-      image.onload = () => {
+    return new Promise<WebGLTexture>((resolve, reject) => {
+      // 尝试从缓存获取图像数据
+      const cachedImageData = cache.get(texturePath)
+
+      const createTextureFromImage = (imageSource: HTMLImageElement | ImageBitmap) => {
         try {
           const texture = this.gl!.createTexture()
           if (!texture) {
@@ -954,7 +958,7 @@ export class CubismModel {
             this.gl!.RGBA,
             this.gl!.RGBA,
             this.gl!.UNSIGNED_BYTE,
-            image
+            imageSource
           )
 
           // 设置纹理参数
@@ -968,7 +972,13 @@ export class CubismModel {
             this.gl!.TEXTURE_WRAP_T,
             this.gl!.CLAMP_TO_EDGE
           )
-          const canUseMipmaps = this.canUseMipmaps(image.width, image.height)
+
+          const width =
+            'width' in imageSource ? imageSource.width : (imageSource as ImageBitmap).width
+          const height =
+            'height' in imageSource ? imageSource.height : (imageSource as ImageBitmap).height
+          const canUseMipmaps = this.canUseMipmaps(width, height)
+
           if (canUseMipmaps) {
             this.gl!.generateMipmap(this.gl!.TEXTURE_2D)
             this.gl!.texParameteri(
@@ -992,13 +1002,56 @@ export class CubismModel {
         }
       }
 
-      image.onerror = () => {
-        reject(new Error(i18n.global.t('error.loadTextureFailed', { path: texturePath })))
+      if (cachedImageData) {
+        // 使用缓存的数据创建纹理
+        createImageBitmap(new Blob([cachedImageData]))
+          .then(bitmap => {
+            createTextureFromImage(bitmap)
+          })
+          .catch(error => {
+            console.warn('[CubismModel] 缓存数据解码失败，重新加载:', texturePath, error)
+            cache.remove(texturePath)
+            // 缓存失败，走正常加载流程
+            this.loadTextureFromNetwork(texturePath, cache, createTextureFromImage, reject)
+          })
+      } else {
+        // 从网络加载
+        this.loadTextureFromNetwork(texturePath, cache, createTextureFromImage, reject)
       }
-
-      image.crossOrigin = 'anonymous'
-      image.src = texturePath
     })
+  }
+
+  /**
+   * 从网络加载纹理
+   */
+  private loadTextureFromNetwork(
+    texturePath: string,
+    cache: ReturnType<typeof getGlobalModelResourceCache>,
+    createTexture: (image: HTMLImageElement) => void,
+    reject: (error: Error) => void
+  ): void {
+    const image = new Image()
+
+    image.onload = () => {
+      createTexture(image)
+
+      // 异步缓存图像数据
+      fetch(texturePath)
+        .then(response => response.arrayBuffer())
+        .then(data => {
+          cache.set(texturePath, data)
+        })
+        .catch(error => {
+          console.warn('[CubismModel] 缓存纹理失败:', texturePath, error)
+        })
+    }
+
+    image.onerror = () => {
+      reject(new Error(i18n.global.t('error.loadTextureFailed', { path: texturePath })))
+    }
+
+    image.crossOrigin = 'anonymous'
+    image.src = texturePath
   }
 
   private normalizeExpressionRequest(
