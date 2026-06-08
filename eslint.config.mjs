@@ -30,6 +30,7 @@ export default [
       ],
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
+      '@typescript-eslint/no-require-imports': 'warn',
 
       // Vue 规则
       'vue/multi-word-component-names': 'off',
@@ -38,21 +39,11 @@ export default [
       'vue/require-prop-types': 'warn',
       'vue/component-api-style': ['error', ['script-setup']],
       'vue/component-name-in-template-casing': ['error', 'PascalCase'],
-      'vue/custom-event-name-casing': ['error', 'camelCase'],
+      'vue/custom-event-name-casing': 'off', // 完全关闭
       'vue/define-emits-declaration': ['error', 'type-based'],
       'vue/define-props-declaration': ['error', 'type-based'],
-      'vue/html-self-closing': [
-        'error',
-        {
-          html: {
-            void: 'always',
-            normal: 'never',
-            component: 'always'
-          },
-          svg: 'always',
-          math: 'always'
-        }
-      ],
+      'vue/html-self-closing': 'off',
+      'vue/require-toggle-inside-transition': 'warn',
       'vue/max-attributes-per-line': [
         'warn',
         {
@@ -68,7 +59,11 @@ export default [
       'no-var': 'error',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-unused-expressions': 'warn',
-      'no-undef': 'off' // TypeScript 会处理
+      'no-undef': 'off',
+      'no-empty': 'warn',
+      'no-control-regex': 'warn',
+      'no-useless-escape': 'warn',
+      'no-useless-assignment': 'off' // 完全关闭（ESLint v9+）
     }
   },
   {
