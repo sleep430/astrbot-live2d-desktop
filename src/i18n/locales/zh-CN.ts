@@ -217,6 +217,8 @@ export default {
   'settings.about.autoCheckUpdate': '自动检查更新',
   'settings.about.author': '作者',
   'settings.about.language': '语言',
+  'settings.about.specialThanks': '特别鸣谢',
+  'settings.about.sponsorDesc': '为本项目提供了大量的 AI Token 支持，助力开发进程',
   'settings.about.relatedProjects': '相关项目',
   'settings.about.projectRepo': '本项目仓库',
   'settings.about.adapterPlugin': '平台适配器插件',

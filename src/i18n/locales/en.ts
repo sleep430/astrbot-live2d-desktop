@@ -225,6 +225,9 @@ const en: I18nMessageSchema = {
   'settings.about.autoCheckUpdate': 'Auto-check for updates',
   'settings.about.author': 'Author',
   'settings.about.language': 'Language',
+  'settings.about.specialThanks': 'Special Thanks',
+  'settings.about.sponsorDesc':
+    'Provided substantial AI Token support for this project, accelerating development',
   'settings.about.relatedProjects': 'Related Projects',
   'settings.about.projectRepo': 'Project Repository',
   'settings.about.adapterPlugin': 'Platform Adapter Plugin',

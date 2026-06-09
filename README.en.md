@@ -5,6 +5,17 @@
 
 Group access code: `F7vuG`
 
+---
+
+> ### 🙏 Special Thanks
+> 
+> **[futureppo](https://blog.futureppo.top)** has generously provided substantial AI Token support for this project, accelerating development.  
+> Thank you for your generous sponsorship!
+> 
+> [![Visit futureppo's Blog](https://img.shields.io/badge/🌐_Visit_Blog-blog.futureppo.top-4CAF50?style=for-the-badge)](https://blog.futureppo.top)
+
+---
+
 An Electron + Vue 3 Live2D desktop client.
 Connects to AstrBot in real time, enabling models to display text, motions, expressions, voice, and multimedia content.
 

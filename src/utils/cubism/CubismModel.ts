@@ -486,16 +486,30 @@ export class CubismModel {
   }
 
   /**
-   * 从文件加载 ArrayBuffer
+   * 从文件加载 ArrayBuffer（带缓存）
    */
   private async loadFileAsArrayBuffer(filePath: string): Promise<ArrayBuffer> {
+    const cache = getGlobalModelResourceCache()
+
+    // 先尝试从缓存获取
+    const cached = cache.get(filePath)
+    if (cached) {
+      return cached
+    }
+
+    // 缓存未命中，从网络加载
     const response = await fetch(filePath)
     if (!response.ok) {
       throw new Error(
         i18n.global.t('error.loadFileFailed', { path: filePath, status: response.status })
       )
     }
-    return await response.arrayBuffer()
+    const data = await response.arrayBuffer()
+
+    // 存入缓存
+    cache.set(filePath, data)
+
+    return data
   }
 
   private async loadFileAsText(filePath: string): Promise<string> {

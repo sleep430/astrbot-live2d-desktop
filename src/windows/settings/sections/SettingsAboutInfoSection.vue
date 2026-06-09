@@ -63,6 +63,28 @@
 
   <section class="settings-section">
     <div class="settings-section__header">
+      <h2>{{ $t('settings.about.specialThanks') }}</h2>
+    </div>
+
+    <div class="link-stack">
+      <button
+        class="sponsor-button"
+        type="button"
+        @click="handleOpenLink('https://blog.futureppo.top')"
+      >
+        <div class="sponsor-button__content">
+          <div class="sponsor-button__icon">🙏</div>
+          <div class="sponsor-button__text">
+            <div class="sponsor-button__name">futureppo</div>
+            <div class="sponsor-button__desc">{{ $t('settings.about.sponsorDesc') }}</div>
+          </div>
+        </div>
+      </button>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <div class="settings-section__header">
       <h2>{{ $t('settings.about.relatedProjects') }}</h2>
     </div>
 
@@ -121,6 +143,53 @@ const {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.sponsor-button {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--desktop-radius-control);
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(56, 142, 60, 0.1) 100%);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+  color: var(--color-text-primary);
+  transition: all var(--duration-fast) var(--ease-out);
+  cursor: pointer;
+}
+
+.sponsor-button:hover {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(56, 142, 60, 0.15) 100%);
+  border-color: rgba(76, 175, 80, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.2);
+}
+
+.sponsor-button__content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sponsor-button__icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.sponsor-button__text {
+  flex: 1;
+  text-align: left;
+}
+
+.sponsor-button__name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4caf50;
+  margin-bottom: 4px;
+}
+
+.sponsor-button__desc {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  line-height: 1.4;
 }
 
 .ghost-button {

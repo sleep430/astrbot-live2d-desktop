@@ -5,6 +5,17 @@
 
 入群口令：`F7vuG`
 
+---
+
+> ### 🙏 特别鸣谢
+> 
+> **[futureppo](https://blog.futureppo.top)** 为本项目提供了大量的 AI Token 支持，助力开发进程。  
+> 感谢他的慷慨赞助！
+> 
+> [![访问 futureppo 的博客](https://img.shields.io/badge/🌐_访问博客-blog.futureppo.top-4CAF50?style=for-the-badge)](https://blog.futureppo.top)
+
+---
+
 一个基于 Electron + Vue 3 的 Live2D 桌面客户端。
 可与 AstrBot 实时通信，让模型展示文本、动作、表情、语音与多媒体内容。
 
