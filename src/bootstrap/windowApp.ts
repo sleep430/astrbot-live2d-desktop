@@ -15,16 +15,23 @@ import naive, {
   NDialogProvider,
   NMessageProvider,
   darkTheme,
+  lightTheme,
   zhCN as naiveZhCN,
   enUS as naiveEnUS,
   dateZhCN,
   dateEnUS
 } from 'naive-ui'
 import { useThemeStore } from '@/stores/theme'
+import { useAppearanceStore } from '@/stores/appearance'
 import { useLocaleStore } from '@/stores/locale'
 import { i18n } from '@/i18n'
 import { setupRendererLogging } from '@/utils/rendererLogger'
 import { applyWindowKindClasses, type WindowKind } from '@/utils/windowKind'
+import {
+  applySettingsAppearanceClass,
+  buildSettingsAppearanceCssVars
+} from '@/utils/settingsAppearanceCss'
+import { buildSettingsNaiveThemeOverrides } from '@/utils/settingsNaiveThemeOverrides'
 import '@/styles/global.scss'
 
 const CUBISM_CORE_SCRIPT_ID = 'cubism-core-runtime'
@@ -43,19 +50,22 @@ function applyThemeCssVars(vars: Record<string, string>): void {
   }
 }
 
-function createWindowRoot(component: Component) {
+function createWindowRoot(component: Component, windowKind: WindowKind) {
   const targetComponent = markRaw(component)
 
   return defineComponent({
     name: 'WindowAppRoot',
     setup() {
       const themeStore = useThemeStore()
+      const appearanceStore = useAppearanceStore()
       const localeStore = useLocaleStore()
       const { cssVars, naiveThemeOverrides } = storeToRefs(themeStore)
+      const { resolvedColorScheme } = storeToRefs(appearanceStore)
 
       onMounted(() => {
         themeStore.syncFromStorage()
         themeStore.startStorageSync()
+        appearanceStore.bindSystemSchemeListener()
         localeStore.bindI18n()
         window.electron?.locale?.set(localeStore.locale)
       })
@@ -65,12 +75,32 @@ function createWindowRoot(component: Component) {
       })
 
       watch(
-        cssVars,
-        vars => {
-          applyThemeCssVars(vars)
+        [cssVars, resolvedColorScheme],
+        ([vars, scheme]) => {
+          if (windowKind === 'settings') {
+            applySettingsAppearanceClass(scheme)
+            applyThemeCssVars({
+              ...vars,
+              ...buildSettingsAppearanceCssVars(scheme)
+            })
+          } else {
+            applyThemeCssVars(vars)
+          }
         },
         { immediate: true }
       )
+
+      const naiveTheme = computed(() =>
+        resolvedColorScheme.value === 'light' ? lightTheme : darkTheme
+      )
+
+      const mergedNaiveOverrides = computed(() => {
+        const base = naiveThemeOverrides.value
+        if (windowKind !== 'settings') {
+          return base
+        }
+        return buildSettingsNaiveThemeOverrides(resolvedColorScheme.value, base)
+      })
 
       const naiveLocale = computed(() => (localeStore.locale === 'zh-CN' ? naiveZhCN : naiveEnUS))
       const naiveDateLocale = computed(() => (localeStore.locale === 'zh-CN' ? dateZhCN : dateEnUS))
@@ -79,8 +109,8 @@ function createWindowRoot(component: Component) {
         h(
           NConfigProvider,
           {
-            theme: darkTheme,
-            themeOverrides: naiveThemeOverrides.value,
+            theme: naiveTheme.value,
+            themeOverrides: mergedNaiveOverrides.value,
             locale: naiveLocale.value,
             dateLocale: naiveDateLocale.value
           },
@@ -188,7 +218,7 @@ export async function mountWindowApp(options: MountWindowAppOptions): Promise<vo
     await beforeMount()
   }
 
-  const app = createApp(createWindowRoot(component))
+  const app = createApp(createWindowRoot(component, windowKind))
 
   app.use(createPinia())
   app.use(i18n)
