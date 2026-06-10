@@ -87,6 +87,55 @@ export default {
   'settings.menu.about': '关于',
   'settings.menu.about.info': '关于',
 
+  'settings.menu.groupLabel.connection': '连接',
+  'settings.menu.groupLabel.model': '模型',
+  'settings.menu.groupLabel.history': '历史',
+  'settings.menu.groupLabel.advanced': '高级',
+  'settings.menu.groupLabel.about': '关于',
+
+  'settings.sidebar.collapse': '收起侧栏',
+  'settings.sidebar.expand': '展开侧栏',
+  'settings.sidebar.connected': '已连接',
+  'settings.sidebar.disconnected': '未连接',
+
+  'settings.search.placeholder': '搜索设置',
+  'settings.search.noResults': '没有匹配的设置项',
+
+  'settings.quickMenu.title': '语言与外观',
+
+  'settings.section.loadFailed': '分区加载失败',
+  'settings.section.retry': '重试',
+
+  'settings.page.connection.bridge.desc': '配置 WebSocket 与令牌，与 AstrBot 适配器保持实时通信。',
+  'settings.page.connection.connectionBehavior.desc': '自动连接、重试与握手超时等行为。',
+  'settings.page.connection.workspace.desc': '当前会话、用户与工作区运行状态一览。',
+  'settings.page.model.current.desc': '当前加载模型、行为参数与主题色。',
+  'settings.page.model.library.desc': '导入与管理本地模型库。',
+  'settings.page.model.library.selectHint': '在左侧选择一个模型查看详情与操作。',
+  'settings.model.library.previewLoading': '正在加载预览…',
+  'settings.model.library.previewFailed': '预览加载失败',
+  'settings.model.library.previewSelect': '选择左侧模型以预览 Live2D',
+  'settings.page.history.messages.desc': '浏览与搜索本地消息历史。',
+  'settings.page.history.statistics.desc': '消息趋势与活跃时段统计。',
+  'settings.page.advanced.behavior.desc': '桌面交互、录制、气泡与截图等行为。',
+  'settings.page.advanced.shortcut.desc': '全局录音快捷键与时长限制。',
+  'settings.page.advanced.windowWatcher.desc': '窗口焦点与应用切换监听配置。',
+  'settings.page.advanced.data.desc': '日志、缓存、配置导入导出与重置。',
+  'settings.page.about.info.desc': '版本、语言、外观与相关链接。',
+
+  'settings.connection.bridge.asideTitle': '说明',
+  'settings.connection.bridge.copyUrl': '复制服务器地址',
+  'settings.connection.bridge.copyUrlSuccess': '已复制到剪贴板',
+  'settings.connection.bridge.copyUrlFailed': '复制失败',
+
+  'settings.appearance.colorScheme': '外观',
+  'settings.appearance.colorScheme.light': '浅色',
+  'settings.appearance.colorScheme.dark': '深色',
+  'settings.appearance.colorScheme.system': '跟随系统',
+
+  'settings.about.heroSubtitle': '桌面 Live2D 客户端 · 与 AstrBot 生态协同',
+  'settings.about.protocolVersion': '协议 {version}',
+
   // Settings titlebar
   'settings.titlebar.title': '设置',
   'settings.titlebar.minimize': '最小化',

@@ -92,6 +92,58 @@ const en: I18nMessageSchema = {
   'settings.menu.about': 'About',
   'settings.menu.about.info': 'About',
 
+  'settings.menu.groupLabel.connection': 'Connection',
+  'settings.menu.groupLabel.model': 'Model',
+  'settings.menu.groupLabel.history': 'History',
+  'settings.menu.groupLabel.advanced': 'Advanced',
+  'settings.menu.groupLabel.about': 'About',
+
+  'settings.sidebar.collapse': 'Collapse sidebar',
+  'settings.sidebar.expand': 'Expand sidebar',
+  'settings.sidebar.connected': 'Connected',
+  'settings.sidebar.disconnected': 'Disconnected',
+
+  'settings.search.placeholder': 'Search settings',
+  'settings.search.noResults': 'No matching settings',
+
+  'settings.quickMenu.title': 'Language & appearance',
+
+  'settings.section.loadFailed': 'Failed to load section',
+  'settings.section.retry': 'Retry',
+
+  'settings.page.connection.bridge.desc':
+    'Configure WebSocket URL and token for the AstrBot adapter.',
+  'settings.page.connection.connectionBehavior.desc':
+    'Auto-connect, retry, and handshake timeout behavior.',
+  'settings.page.connection.workspace.desc': 'Session, user, and workspace runtime status.',
+  'settings.page.model.current.desc': 'Loaded model, behavior, and theme color.',
+  'settings.page.model.library.desc': 'Import and manage your local model library.',
+  'settings.page.model.library.selectHint': 'Select a model on the left to inspect and act.',
+  'settings.model.library.previewLoading': 'Loading preview…',
+  'settings.model.library.previewFailed': 'Preview failed to load',
+  'settings.model.library.previewSelect': 'Select a model to preview Live2D',
+  'settings.page.history.messages.desc': 'Browse and search local message history.',
+  'settings.page.history.statistics.desc': 'Message trends and active hours.',
+  'settings.page.advanced.behavior.desc':
+    'Desktop interaction, recording, bubbles, and screenshots.',
+  'settings.page.advanced.shortcut.desc': 'Global recording shortcut and duration limit.',
+  'settings.page.advanced.windowWatcher.desc': 'Window focus and app switch monitoring.',
+  'settings.page.advanced.data.desc': 'Logs, cache, config import/export, and reset.',
+  'settings.page.about.info.desc': 'Version, language, appearance, and links.',
+
+  'settings.connection.bridge.asideTitle': 'Notes',
+  'settings.connection.bridge.copyUrl': 'Copy server URL',
+  'settings.connection.bridge.copyUrlSuccess': 'Copied to clipboard',
+  'settings.connection.bridge.copyUrlFailed': 'Copy failed',
+
+  'settings.appearance.colorScheme': 'Appearance',
+  'settings.appearance.colorScheme.light': 'Light',
+  'settings.appearance.colorScheme.dark': 'Dark',
+  'settings.appearance.colorScheme.system': 'System',
+
+  'settings.about.heroSubtitle': 'Desktop Live2D client · Built for the AstrBot ecosystem',
+  'settings.about.protocolVersion': 'Protocol {version}',
+
   // Settings titlebar
   'settings.titlebar.title': 'Settings',
   'settings.titlebar.minimize': 'Minimize',
