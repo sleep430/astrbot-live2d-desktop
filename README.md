@@ -9,10 +9,10 @@
 
 > ### 🙏 特别鸣谢
 > 
-> **[futureppo](https://blog.futureppo.top)** 为本项目提供了大量的 AI Token 支持，助力开发进程。  
+> **[Futureppo](https://blog.futureppo.top)** 为本项目提供了大量的 AI Token 支持，助力开发进程。  
 > 感谢他的慷慨赞助！
 > 
-> [![访问 futureppo 的博客](https://img.shields.io/badge/🌐_访问博客-blog.futureppo.top-4CAF50?style=for-the-badge)](https://blog.futureppo.top)
+> [![访问 Futureppo 的博客](https://img.shields.io/badge/🌐_访问博客-blog.futureppo.top-4CAF50?style=for-the-badge)](https://blog.futureppo.top)
 
 ---
 

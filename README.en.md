@@ -9,10 +9,10 @@ Group access code: `F7vuG`
 
 > ### 🙏 Special Thanks
 > 
-> **[futureppo](https://blog.futureppo.top)** has generously provided substantial AI Token support for this project, accelerating development.  
+> **[Futureppo](https://blog.futureppo.top)** has generously provided substantial AI Token support for this project, accelerating development.
 > Thank you for your generous sponsorship!
 > 
-> [![Visit futureppo's Blog](https://img.shields.io/badge/🌐_Visit_Blog-blog.futureppo.top-4CAF50?style=for-the-badge)](https://blog.futureppo.top)
+> [![Visit Futureppo's Blog](https://img.shields.io/badge/🌐_Visit_Blog-blog.futureppo.top-4CAF50?style=for-the-badge)](https://blog.futureppo.top)
 
 ---
 
