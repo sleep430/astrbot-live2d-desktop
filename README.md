@@ -1,7 +1,19 @@
-# AstrBot Live2D Desktop
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/readme-hero-title-dark.svg">
+  <img src="./docs/assets/readme-hero-title.svg" alt="AstrBot Live2D Desktop" width="100%">
+</picture>
+
+<p>
+  <strong>v1.4.0</strong> · 协议 <strong>1.0.0</strong>
+</p>
 
 [![QQ Group](https://img.shields.io/badge/QQ群-1101928371-blue?style=flat-square&logo=tencent-qq)](https://qm.qq.com/q/ZaEiwF7vuG)
+
 [English](./README.en.md)
+
+</div>
 
 入群口令：`F7vuG`
 

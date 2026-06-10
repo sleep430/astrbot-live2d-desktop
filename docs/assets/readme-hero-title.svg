@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="152" viewBox="0 0 1200 152" role="img" aria-label="AstrBot Live2D Desktop">
+  <defs>
+    <linearGradient id="bg-wash" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#6b5ce6" stop-opacity="0" />
+      <stop offset="50%" stop-color="#6b5ce6" stop-opacity="0.11" />
+      <stop offset="100%" stop-color="#6b5ce6" stop-opacity="0" />
+    </linearGradient>
+    <radialGradient id="halo" cx="50%" cy="44%" r="48%">
+      <stop offset="0%" stop-color="#b4a0ff" stop-opacity="0.38" />
+      <stop offset="100%" stop-color="#6b5ce6" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="grad-a" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0c12" />
+      <stop offset="100%" stop-color="#4a3f8a" />
+    </linearGradient>
+    <linearGradient id="grad-b" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5a4fd4" />
+      <stop offset="50%" stop-color="#8b7fd4" />
+      <stop offset="100%" stop-color="#6b5ce6" />
+    </linearGradient>
+    <linearGradient id="grad-c" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7c6ef0" />
+      <stop offset="100%" stop-color="#d4c8ff" />
+    </linearGradient>
+    <linearGradient id="ribbon" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6b5ce6" stop-opacity="0" />
+      <stop offset="50%" stop-color="#8b7fd4" stop-opacity="1" />
+      <stop offset="100%" stop-color="#6b5ce6" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="wing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6b5ce6" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#9d8cff" stop-opacity="0.04" />
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" />
+    </filter>
+    <symbol id="spark" viewBox="0 0 24 24">
+      <path fill="currentColor" d="M12 2l1.8 5.5L19 9.2l-5.2 1.7L12 16l-1.8-5.1L5 9.2l5.2-1.7L12 2z" />
+    </symbol>
+    <symbol id="gem" viewBox="0 0 16 20">
+      <path fill="currentColor" d="M8 0 L14 6 L8 20 L2 6 Z" />
+    </symbol>
+  </defs>
+
+  <rect width="1200" height="152" fill="url(#bg-wash)" />
+  <ellipse cx="600" cy="78" rx="540" ry="62" fill="url(#halo)" />
+
+  <rect x="24" y="18" width="1152" height="116" rx="20" fill="none" stroke="#8b7fd4" stroke-width="0.5" opacity="0.25" />
+  <rect x="32" y="26" width="1136" height="100" rx="16" fill="none" stroke="#6b5ce6" stroke-width="0.35" opacity="0.18" stroke-dasharray="3 5" />
+
+  <g stroke="#8b7fd4" fill="none" opacity="0.5" stroke-width="0.9">
+    <path d="M 40 40 L 40 28 L 52 28" />
+    <path d="M 1160 40 L 1160 28 L 1148 28" />
+    <path d="M 40 112 L 40 124 L 52 124" />
+    <path d="M 1160 112 L 1160 124 L 1148 124" />
+  </g>
+
+  <path d="M 32 78 C 100 48, 200 58, 248 76 C 200 88, 120 108, 32 98 Z" fill="url(#wing)" stroke="#8b7fd4" stroke-width="0.5" opacity="0.55" />
+  <path d="M 1168 78 C 1100 48, 1000 58, 952 76 C 1000 88, 1080 108, 1168 98 Z" fill="url(#wing)" stroke="#8b7fd4" stroke-width="0.5" opacity="0.55" />
+
+  <g fill="#6b5ce6" opacity="0.55">
+    <use href="#spark" x="64" y="58" width="14" height="14" />
+    <use href="#spark" x="1122" y="58" width="14" height="14" />
+    <use href="#spark" x="96" y="88" width="11" height="11" />
+    <use href="#spark" x="1093" y="88" width="11" height="11" />
+  </g>
+  <g fill="#9d8cff" opacity="0.45">
+    <use href="#gem" x="128" y="118" width="10" height="12" />
+    <use href="#gem" x="1062" y="118" width="10" height="12" />
+    <use href="#gem" x="148" y="122" width="7" height="9" />
+    <use href="#gem" x="1045" y="122" width="7" height="9" />
+  </g>
+
+  <path d="M 80 76 Q 200 62 320 72" fill="none" stroke="#6b5ce6" stroke-width="0.8" opacity="0.3" />
+  <path d="M 1120 76 Q 1000 62 880 72" fill="none" stroke="#6b5ce6" stroke-width="0.8" opacity="0.3" />
+  <path d="M 100 130 Q 600 142 1100 130" fill="none" stroke="url(#ribbon)" stroke-width="1.8" />
+  <path d="M 140 24 Q 600 8 1060 24" fill="none" stroke="url(#ribbon)" stroke-width="1.1" opacity="0.55" />
+
+  <g fill="#b4a0ff" opacity="0.35">
+    <circle cx="220" cy="52" r="2" />
+    <circle cx="980" cy="52" r="2" />
+    <circle cx="248" cy="100" r="1.5" />
+    <circle cx="952" cy="100" r="1.5" />
+    <circle cx="276" cy="68" r="1.8" />
+    <circle cx="924" cy="68" r="1.8" />
+  </g>
+
+  <g transform="translate(600 30)" opacity="0.88">
+    <circle r="10" fill="none" stroke="#8b7fd4" stroke-width="1" />
+    <circle r="5" fill="none" stroke="#6b5ce6" stroke-width="0.7" />
+    <path d="M0 -14 L0 14 M-14 0 L14 0" stroke="#7c6ef0" stroke-width="1.1" stroke-linecap="round" />
+    <use href="#spark" x="-7" y="-7" width="14" height="14" fill="#9d8cff" />
+  </g>
+
+  <g font-family="Georgia, 'Palatino Linotype', 'Songti SC', serif" font-weight="700" font-style="italic" letter-spacing="-0.02em">
+    <text x="600" y="92" text-anchor="middle" font-size="72" fill="#6b5ce6" opacity="0.2" filter="url(#glow)">
+      <tspan fill="url(#grad-a)">AstrBot</tspan>
+      <tspan dx="14" fill="url(#grad-b)"> Live2D </tspan>
+      <tspan dx="14" fill="url(#grad-c)">Desktop</tspan>
+    </text>
+    <text x="600" y="92" text-anchor="middle" font-size="72">
+      <tspan fill="url(#grad-a)">AstrBot</tspan>
+      <tspan dx="14" fill="url(#grad-b)"> Live2D </tspan>
+      <tspan dx="14" fill="url(#grad-c)">Desktop</tspan>
+    </text>
+    <text x="600" y="91" text-anchor="middle" font-size="72" opacity="0.35" fill="#ffffff">
+      <tspan>AstrBot</tspan>
+      <tspan dx="14"> Live2D </tspan>
+      <tspan dx="14">Desktop</tspan>
+    </text>
+  </g>
+
+  <g fill="#8b7fd4" opacity="0.65">
+    <circle cx="468" cy="108" r="2.5" />
+    <circle cx="600" cy="110" r="3" />
+    <circle cx="732" cy="108" r="2.5" />
+  </g>
+</svg>
