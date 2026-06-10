@@ -47,7 +47,7 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           RELEASE_TAG="v${VERSION}"
           RELEASE_NAME="Release ${RELEASE_TAG}"
-          PREVIOUS_TAG=$(git tag --sort=-version:refname --list 'v*' | head -n 1 || true)
+          PREVIOUS_TAG=$(git tag --sort=-version:refname --list 'v*' | grep -v "^${RELEASE_TAG}$" | head -n 1 || true)
 
           if [[ "$VERSION" == *-* ]]; then
             IS_PRERELEASE=true

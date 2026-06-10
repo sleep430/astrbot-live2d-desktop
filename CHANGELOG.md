@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.3.1] - 2026-06-09
+
+### Fixed
+- 修复 GitHub Release 无法显示代码提交差异的问题（PREVIOUS_TAG 获取逻辑错误）
+
 ## [1.3.0] - 2026-06-09
 
 ### Added
