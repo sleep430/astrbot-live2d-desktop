@@ -5,6 +5,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { CubismModel as Live2DModel } from '@/utils/cubism/CubismModel'
+import { AudioLipSyncAnalyzer } from '@/utils/AudioLipSyncAnalyzer'
 import type {
   CubismCompatibilityManifest,
   CubismExpressionRequest,
@@ -14,6 +15,45 @@ import type {
 const canvasRef = ref<HTMLCanvasElement>()
 let model: Live2DModel | null = null
 let renderFrameId: number | null = null
+const lipSyncAnalyzer = new AudioLipSyncAnalyzer()
+
+// 模型重载后需要重新应用的行为配置
+let pendingIdleActivity: number | null = null
+let pendingPersistentExpressions: string[] = []
+
+function applyLipSyncValue(value: number) {
+  model?.setLipSyncValue(value)
+}
+
+/**
+ * 开始口型同步：分析音频元素的实时音量并驱动模型口型
+ */
+function startLipSync(audioElement: HTMLAudioElement) {
+  lipSyncAnalyzer.start(audioElement, applyLipSyncValue)
+}
+
+/**
+ * 停止口型同步并闭合口型
+ */
+function stopLipSync() {
+  lipSyncAnalyzer.stop()
+}
+
+/**
+ * 设置待机活跃度（0~1）
+ */
+function setIdleActivity(value: number) {
+  pendingIdleActivity = value
+  model?.setIdleActivity(value)
+}
+
+/**
+ * 设置常驻表情（如水印开关）
+ */
+function setPersistentExpressions(names: string[]) {
+  pendingPersistentExpressions = [...names]
+  model?.setPersistentExpressions(names)
+}
 
 function stopRenderLoop() {
   if (renderFrameId !== null) {
@@ -76,12 +116,19 @@ async function loadModel(
     if (model) {
       console.log('[Live2D] 移除旧模型...')
       stopRenderLoop()
+      stopLipSync()
       model.destroy()
       model = null
     }
 
     // 加载新模型
     model = await Live2DModel.from(modelPath, compatibilityManifest)
+
+    // 重新应用行为配置（新实例不保留旧模型状态）
+    if (pendingIdleActivity !== null) {
+      model.setIdleActivity(pendingIdleActivity)
+    }
+    model.setPersistentExpressions(pendingPersistentExpressions)
 
     // 初始化 WebGL 并启动渲染循环，传入初始位置
     model.initWebGL(canvasRef.value, initialPosition, initialScale)
@@ -560,6 +607,7 @@ onMounted(async () => {
 onUnmounted(() => {
   stopRenderLoop()
   stopPassThroughDetection()
+  stopLipSync()
 
   if (model) {
     model.destroy()
@@ -595,6 +643,10 @@ defineExpose({
   setModelScale,
   getModelBounds,
   getModelOverlayBounds,
+  startLipSync,
+  stopLipSync,
+  setIdleActivity,
+  setPersistentExpressions,
   getTextureSource: () => model?.getTextureSource(),
   getTextureSources: () => model?.getTextureSources() || []
 })

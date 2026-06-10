@@ -51,6 +51,46 @@ function normalizeFadeTimeMs(value: unknown): number | undefined {
   return Math.max(0, Math.round(value * 1000))
 }
 
+export type PersistentExpressionSource = {
+  name: string
+  aliases: string[]
+  parsed?: ParsedExpressionFile | null
+}
+
+/**
+ * 按名称/别名从已解析的表情文件中收集常驻表情的参数操作。
+ * 用于"水印开关"这类需要长期生效的开关型表情：参数由模型每帧直接注入，
+ * 不进入表情运行时状态机。未匹配或无解析数据的名称会被静默忽略。
+ */
+export function collectPersistentExpressionOps(
+  sources: PersistentExpressionSource[],
+  selectedNames: string[]
+): ExpressionParameterOp[] {
+  const ops: ExpressionParameterOp[] = []
+
+  for (const rawName of selectedNames) {
+    const normalized = typeof rawName === 'string' ? rawName.trim().toLowerCase() : ''
+    if (!normalized) {
+      continue
+    }
+
+    const entry = sources.find(source => {
+      if (source.name.trim().toLowerCase() === normalized) {
+        return true
+      }
+      return source.aliases.some(alias => alias.trim().toLowerCase() === normalized)
+    })
+
+    if (!entry?.parsed) {
+      continue
+    }
+
+    ops.push(...entry.parsed.parameters)
+  }
+
+  return ops
+}
+
 export function parseExp3Text(text: string, id: string, file: string): ParsedExpressionFile {
   const parseWarnings: string[] = []
   const parameters: ExpressionParameterOp[] = []

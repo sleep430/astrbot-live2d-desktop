@@ -16,7 +16,6 @@ import {
   CubismExpressionMotionManager,
   CubismExpressionMotion,
   CubismEyeBlink,
-  CubismBreath,
   CubismPhysics,
   CubismPose,
   CubismMatrix44,
@@ -29,7 +28,6 @@ import { LogLevel } from '@cubism-framework/live2dcubismframework'
 import type { CubismIdHandle } from '@cubism-framework/id/cubismid'
 import { csmVector } from '@cubism-framework/type/csmvector'
 import { csmMap } from '@cubism-framework/type/csmmap'
-import { BreathParameterData } from '@cubism-framework/effect/cubismbreath'
 import { i18n } from '@/i18n'
 
 import type {
@@ -45,7 +43,7 @@ import type {
   Position
 } from './index'
 import type { ExpressionCatalogEntry, ExpressionCatalogInput } from './expressionCatalog'
-import type { ParsedExpressionFile } from './exp3Parser'
+import type { ParsedExpressionFile, ExpressionBlendType } from './exp3Parser'
 import type { ExpressionProfile } from './expressionProfile'
 import type { CubismModelDiscoverySource } from '@/shared/cubismModelDiscovery'
 
@@ -59,9 +57,10 @@ import {
   getPosePath
 } from './CubismCore'
 import { buildExpressionCatalog } from './expressionCatalog'
-import { parseExp3Text } from './exp3Parser'
+import { parseExp3Text, collectPersistentExpressionOps } from './exp3Parser'
 import { loadExpressionProfile } from './expressionProfile'
 import { getGlobalModelResourceCache } from './ModelResourceCache'
+import { IdleAnimator, DEFAULT_IDLE_ACTIVITY } from './IdleAnimator'
 
 // ============================================================================
 // 类型定义
@@ -215,7 +214,7 @@ export class CubismModel {
 
   // 效果组件
   private eyeBlink: CubismEyeBlink | null = null
-  private breath: CubismBreath | null = null
+  private idleAnimator: IdleAnimator | null = null
   private physics: CubismPhysics | null = null
   private pose: CubismPose | null = null
 
@@ -228,6 +227,14 @@ export class CubismModel {
 
   private eyeBlinkIds: CubismIdHandle[] = []
   private lipSyncIds: CubismIdHandle[] = []
+  private lipSyncValue = 0
+  private idleActivity = DEFAULT_IDLE_ACTIVITY
+  private persistentExpressionNames: string[] = []
+  private persistentParameterOps: Array<{
+    idHandle: CubismIdHandle
+    blend: ExpressionBlendType
+    value: number
+  }> = []
 
   // 动画相关
   private lastUpdateTime: number = 0
@@ -238,6 +245,7 @@ export class CubismModel {
   private modelMatrix: CubismModelMatrix | null = null
   private projectionMatrix: CubismMatrix44 = new CubismMatrix44()
   private dragManager: CubismTargetPoint = new CubismTargetPoint()
+  private focusBoundsCache: { bounds: ModelBounds | null; timestamp: number } | null = null
 
   // 位置相关
   private modelX: number = 0
@@ -264,7 +272,7 @@ export class CubismModel {
   private discoveryInfo: CubismModelInfo['discovery'] | null = null
   private activeExpressionRuntime: ActiveExpressionRuntime | null = null
   private activeLegacyExpressionName: string | null = null
-  private expressionParameterIdHandles: Map<string, CubismIdHandle> = new Map()
+  private parameterIdHandles: Map<string, CubismIdHandle> = new Map()
   private hitAreaNames: string[] = []
 
   // 性能监控
@@ -425,55 +433,9 @@ export class CubismModel {
         }
       }
 
-      // 步骤9：设置呼吸效果
-      this.breath = CubismBreath.create()
-      const breathParameters = new csmVector<BreathParameterData>()
-      breathParameters.pushBack(
-        new BreathParameterData(
-          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamAngleX),
-          0.0,
-          15.0,
-          6.5345,
-          0.5
-        )
-      )
-      breathParameters.pushBack(
-        new BreathParameterData(
-          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamAngleY),
-          0.0,
-          8.0,
-          3.5345,
-          0.5
-        )
-      )
-      breathParameters.pushBack(
-        new BreathParameterData(
-          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamAngleZ),
-          0.0,
-          10.0,
-          5.5345,
-          0.5
-        )
-      )
-      breathParameters.pushBack(
-        new BreathParameterData(
-          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamBodyAngleX),
-          0.0,
-          4.0,
-          15.5345,
-          0.5
-        )
-      )
-      breathParameters.pushBack(
-        new BreathParameterData(
-          CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamBreath),
-          0.5,
-          0.5,
-          3.2345,
-          0.5
-        )
-      )
-      this.breath.setParameters(breathParameters)
+      // 步骤9：程序化待机动画（噪声驱动的轻微姿态漂移 + 呼吸，演出时自动让位）
+      this.idleAnimator = new IdleAnimator()
+      this.idleAnimator.setActivity(this.idleActivity)
 
       this.state = LoadStep.CompleteSetup
       this.isInitialized = true
@@ -541,6 +503,13 @@ export class CubismModel {
       if (id) {
         this.lipSyncIds.push(id)
       }
+    }
+
+    // 模型未在 model3.json 声明 LipSync 组时，回退到标准口型参数
+    if (this.lipSyncIds.length === 0) {
+      this.lipSyncIds.push(
+        CubismFramework.getIdManager().getId(CubismDefaultParameterId.ParamMouthOpenY)
+      )
     }
   }
 
@@ -661,7 +630,7 @@ export class CubismModel {
     this.hasExpressionProfile = false
     this.activeExpressionRuntime = null
     this.activeLegacyExpressionName = null
-    this.expressionParameterIdHandles.clear()
+    this.parameterIdHandles.clear()
     const expressionDefinitions = this.getResolvedExpressionDefinitions()
     if (expressionDefinitions.length === 0) {
       console.log('[CubismModel] 无表情文件')
@@ -894,7 +863,12 @@ export class CubismModel {
       }
     }
 
-    console.log('[CubismModel] 动作加载完成')
+    console.log(
+      '[CubismModel] 动作加载完成:',
+      Array.from(this.motionGroups.entries())
+        .map(([group, motions]) => `${group}(${motions.length})`)
+        .join(', ') || '无'
+    )
   }
 
   /**
@@ -1387,7 +1361,7 @@ export class CubismModel {
     }
 
     for (const parameter of parsed.parameters) {
-      const parameterId = this.getExpressionParameterIdHandle(parameter.parameterId)
+      const parameterId = this.getParameterIdHandle(parameter.parameterId)
       switch (parameter.blend) {
         case 'multiply':
           if (typeof model.multiplyParameterValueById === 'function') {
@@ -1412,14 +1386,14 @@ export class CubismModel {
     }
   }
 
-  private getExpressionParameterIdHandle(parameterId: string): CubismIdHandle {
-    const cached = this.expressionParameterIdHandles.get(parameterId)
+  private getParameterIdHandle(parameterId: string): CubismIdHandle {
+    const cached = this.parameterIdHandles.get(parameterId)
     if (cached) {
       return cached
     }
 
     const handle = CubismFramework.getIdManager().getId(parameterId)
-    this.expressionParameterIdHandles.set(parameterId, handle)
+    this.parameterIdHandles.set(parameterId, handle)
     return handle
   }
 
@@ -1530,6 +1504,9 @@ export class CubismModel {
    */
   private setupModelTransform(initialPosition?: Position): void {
     if (!this.canvas || !this.userModel) return
+
+    // 位置/缩放/视口变化后注视基准失效
+    this.focusBoundsCache = null
 
     const width = this.getViewportWidth()
     const height = this.getViewportHeight()
@@ -1668,6 +1645,47 @@ export class CubismModel {
   // ============================================================================
 
   /**
+   * 设置口型同步值（0~1），由外部音频分析驱动
+   */
+  setLipSyncValue(value: number): void {
+    this.lipSyncValue = Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0
+  }
+
+  /**
+   * 设置待机活跃度（0~1）：越高待机微动越频繁
+   */
+  setIdleActivity(value: number): void {
+    this.idleActivity = value
+    this.idleAnimator?.setActivity(value)
+  }
+
+  /**
+   * 设置常驻表情（如水印开关）：参数每帧注入，不进入表情运行时
+   */
+  setPersistentExpressions(names: string[]): void {
+    this.persistentExpressionNames = Array.isArray(names)
+      ? names.filter(name => typeof name === 'string' && name.trim())
+      : []
+    this.rebuildPersistentParameterOps()
+  }
+
+  private rebuildPersistentParameterOps(): void {
+    const sources = this.expressionFiles.map(entry => ({
+      name: entry.name,
+      aliases: entry.aliases,
+      parsed: entry.parsed
+    }))
+    this.persistentParameterOps = collectPersistentExpressionOps(
+      sources,
+      this.persistentExpressionNames
+    ).map(op => ({
+      idHandle: this.getParameterIdHandle(op.parameterId),
+      blend: op.blend,
+      value: op.value
+    }))
+  }
+
+  /**
    * 更新模型
    */
   update(): void {
@@ -1690,14 +1708,12 @@ export class CubismModel {
 
     let motionUpdated = false
     if (this.motionManager) {
-      if (this.motionManager.isFinished()) {
-        // 播放随机待机动作
-        if (this.motionGroups.has('Idle')) {
-          this.startRandomMotion('Idle', MotionPriority.Idle)
-        }
-      }
       motionUpdated = this.motionManager.updateMotion(model, deltaTimeSeconds)
     }
+
+    // 基础状态到动作输出为止（与官方 LAppModel 一致）：眨眼/表情/待机/视线等
+    // 增量效果都在快照之后注入，避免 add 偏移被写回基础状态而逐帧累积
+    model.saveParameters()
 
     if (!motionUpdated && this.eyeBlink) {
       this.eyeBlink.updateParameters(model, deltaTimeSeconds)
@@ -1707,37 +1723,53 @@ export class CubismModel {
     if (this.expressionManager) {
       this.expressionManager.updateMotion(model, deltaTimeSeconds)
     }
+    this.updateCustomExpressionRuntime(model)
 
-    // 更新呼吸效果
-    if (this.breath) {
-      this.breath.updateParameters(model, deltaTimeSeconds)
+    // 常驻表情参数（如水印开关）
+    for (const op of this.persistentParameterOps) {
+      if (op.blend === 'multiply') {
+        model.multiplyParameterValueById(op.idHandle, op.value)
+      } else if (op.blend === 'overwrite') {
+        model.setParameterValueById(op.idHandle, op.value)
+      } else {
+        model.addParameterValueById(op.idHandle, op.value)
+      }
     }
 
-    // 更新物理
+    // 程序化待机动画：动作演出期间淡出让位，结束后淡入恢复
+    if (this.idleAnimator) {
+      const performing = this.motionManager ? !this.motionManager.isFinished() : false
+      for (const entry of this.idleAnimator.advance(deltaTimeSeconds, performing)) {
+        model.addParameterValueById(this.getParameterIdHandle(entry.parameterId), entry.value)
+      }
+    }
+
+    // 视线/姿态跟随拖拽
+    const dragX = this.dragManager.getX()
+    const dragY = this.dragManager.getY()
+    model.addParameterValueById(this.getParameterIdHandle('ParamAngleX'), dragX * 30)
+    model.addParameterValueById(this.getParameterIdHandle('ParamAngleY'), dragY * 30)
+    model.addParameterValueById(this.getParameterIdHandle('ParamAngleZ'), dragX * dragY * -30)
+    model.addParameterValueById(this.getParameterIdHandle('ParamBodyAngleX'), dragX * 10)
+    model.addParameterValueById(this.getParameterIdHandle('ParamEyeBallX'), dragX)
+    model.addParameterValueById(this.getParameterIdHandle('ParamEyeBallY'), dragY)
+
+    // 口型同步
+    if (this.lipSyncValue > 0 && this.lipSyncIds.length > 0) {
+      for (const id of this.lipSyncIds) {
+        model.addParameterValueById(id, this.lipSyncValue, 0.8)
+      }
+    }
+
+    // 物理与姿势在全部姿态偏移注入之后求值，使头发/饰品自然跟随
     if (this.physics) {
       this.physics.evaluate(model, deltaTimeSeconds)
     }
 
-    // 更新姿势
     if (this.pose) {
       this.pose.updateParameters(model, deltaTimeSeconds)
     }
 
-    // 更新眼睛注视
-    const dragX = this.dragManager.getX()
-    const dragY = this.dragManager.getY()
-
-    // 设置角度参数
-    model.addParameterValueById('ParamAngleX', dragX * 30)
-    model.addParameterValueById('ParamAngleY', dragY * 30)
-    model.addParameterValueById('ParamAngleZ', dragX * dragY * -30)
-    model.addParameterValueById('ParamBodyAngleX', dragX * 10)
-    model.addParameterValueById('ParamEyeBallX', dragX)
-    model.addParameterValueById('ParamEyeBallY', dragY)
-
-    // 保存不含自定义组合表情的基础状态，避免组合参数永久写回
-    model.saveParameters()
-    this.updateCustomExpressionRuntime(model)
     model.update()
 
     // 更新 FPS
@@ -1796,24 +1828,54 @@ export class CubismModel {
 
   /**
    * 让模型注视指定屏幕坐标
+   *
+   * 仅当鼠标位于模型附近（包围盒外扩约 1/5 身高）时跟踪，离开范围后视线缓动回正。
+   * 以模型头部（包围盒上部）为原点计算注视方向：模型可能被拖到屏幕任意位置，
+   * 必须相对模型自身而非视口中心归一化；屏幕 Y 向下而 Live2D 视线参数 Y 向上，需翻转。
    */
   focus(x: number, y: number): void {
-    const viewportWidth = this.getViewportWidth()
-    const viewportHeight = this.getViewportHeight()
-    if (viewportWidth <= 0 || viewportHeight <= 0) return
+    const bounds = this.getFocusBounds()
+    if (!bounds) return
 
-    // 转换为标准化坐标 (-1 到 1)
-    const normalizedX = (x / viewportWidth) * 2 - 1
-    const normalizedY = (y / viewportHeight) * 2 - 1
+    const margin = bounds.height * 0.2
+    const inRange =
+      x >= bounds.left - margin &&
+      x <= bounds.right + margin &&
+      y >= bounds.top - margin &&
+      y <= bounds.bottom + margin
+    if (!inRange) {
+      this.dragManager.set(0, 0)
+      return
+    }
+
+    const headX = (bounds.left + bounds.right) / 2
+    const headY = bounds.top + bounds.height * 0.25
+    // 满偏距离取约一个身位的 60%：鼠标在模型附近时跟随灵敏，远处饱和为注视方向
+    const range = Math.max(1, bounds.height * 0.6)
+    const normalizedX = Math.min(1, Math.max(-1, (x - headX) / range))
+    const normalizedY = Math.min(1, Math.max(-1, -(y - headY) / range))
 
     this.dragManager.set(normalizedX, normalizedY)
+  }
+
+  private getFocusBounds(): ModelBounds | null {
+    const now = performance.now()
+    if (this.focusBoundsCache && now - this.focusBoundsCache.timestamp < 300) {
+      return this.focusBoundsCache.bounds
+    }
+    const bounds = this.getModelBounds()
+    this.focusBoundsCache = { bounds, timestamp: now }
+    return bounds
   }
 
   /**
    * 播放动作
    */
   motion(group: string, index: number = 0, priority: number = MotionPriority.Normal): void {
-    console.log(`[CubismModel] 播放动作: ${group}[${index}] (优先级: ${priority})`)
+    // 待机循环每隔几秒重复触发，不打日志避免刷屏
+    if (priority !== MotionPriority.Idle) {
+      console.log(`[CubismModel] 播放动作: ${group}[${index}] (优先级: ${priority})`)
+    }
 
     if (!this.motionManager) {
       console.warn('[CubismModel] 动作管理器未初始化')
@@ -2334,9 +2396,11 @@ export class CubismModel {
     this.isInitialized = false
     this.modelSetting = null
     this.motionManager = null
+    this.persistentParameterOps = []
+    this.persistentExpressionNames = []
     this.expressionManager = null
     this.eyeBlink = null
-    this.breath = null
+    this.idleAnimator = null
     this.physics = null
     this.pose = null
     this.motionGroups.clear()
@@ -2349,7 +2413,7 @@ export class CubismModel {
     this.discoveryInfo = null
     this.activeExpressionRuntime = null
     this.activeLegacyExpressionName = null
-    this.expressionParameterIdHandles.clear()
+    this.parameterIdHandles.clear()
     this.hitAreaNames = []
     this.gl = null
     this.canvas = null

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseExp3Text } from '../src/utils/cubism/exp3Parser'
+import { collectPersistentExpressionOps, parseExp3Text } from '../src/utils/cubism/exp3Parser'
 
 describe('parseExp3Text', () => {
   it('parses exp3 parameters and normalizes blend types', () => {
@@ -39,5 +39,44 @@ describe('parseExp3Text', () => {
       expect.stringContaining('表情文件解析失败'),
       '表情文件缺少 Parameters 数组'
     ])
+  })
+})
+
+describe('collectPersistentExpressionOps', () => {
+  const watermark = parseExp3Text(
+    JSON.stringify({ Parameters: [{ Id: 'Param85', Value: 1, Blend: 'Add' }] }),
+    '水印开关',
+    'exp/水印开关.exp3.json'
+  )
+  const blush = parseExp3Text(
+    JSON.stringify({ Parameters: [{ Id: 'ParamBlush', Value: 1, Blend: 'Overwrite' }] }),
+    'blush',
+    'blush.exp3.json'
+  )
+  const sources = [
+    { name: '水印开关', aliases: ['watermark'], parsed: watermark },
+    { name: 'blush', aliases: [], parsed: blush },
+    { name: 'broken', aliases: [], parsed: null }
+  ]
+
+  it('collects parameter ops for selected expressions by name', () => {
+    const ops = collectPersistentExpressionOps(sources, ['水印开关'])
+
+    expect(ops).toEqual([{ parameterId: 'Param85', blend: 'add', value: 1 }])
+  })
+
+  it('matches names case-insensitively and via aliases', () => {
+    const ops = collectPersistentExpressionOps(sources, ['WATERMARK', 'BLUSH'])
+
+    expect(ops).toEqual([
+      { parameterId: 'Param85', blend: 'add', value: 1 },
+      { parameterId: 'ParamBlush', blend: 'overwrite', value: 1 }
+    ])
+  })
+
+  it('ignores unknown names, blanks and entries without parsed data', () => {
+    const ops = collectPersistentExpressionOps(sources, ['missing', '', '  ', 'broken'])
+
+    expect(ops).toEqual([])
   })
 })

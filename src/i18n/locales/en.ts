@@ -461,6 +461,16 @@ const en: I18nMessageSchema = {
   'settings.model.current.description':
     'View the currently loaded Live2D model information and confirm whether the theme color comes from the model palette.',
   'settings.model.current.notLoaded': 'No model loaded',
+  'settings.model.current.behavior': 'Model Behavior',
+  'settings.model.current.behaviorDesc':
+    'While idle the model drifts subtly via a built-in procedural animation; motions and expressions are triggered by AstrBot perform commands. Settings are saved per model and applied immediately.',
+  'settings.model.current.idleActivity': 'Idle activity',
+  'settings.model.current.idleActivityFeedback':
+    'Directly scales the idle sway amplitude (0.4x–4x): higher means larger, more visible movement; lower keeps the model calmer. Breathing always stays on.',
+  'settings.model.current.persistentExpressions': 'Persistent expressions',
+  'settings.model.current.persistentExpressionsPlaceholder': 'Select expressions to keep active',
+  'settings.model.current.persistentExpressionsFeedback':
+    'Parameters of the selected expressions stay applied (e.g. watermark or outfit toggles) and are not overridden by performances.',
   'settings.model.current.expressions': 'Expression Types',
   'settings.model.current.saveExpression': 'Save Assignment',
   'settings.model.current.expressionDesc':

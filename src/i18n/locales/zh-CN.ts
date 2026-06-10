@@ -441,6 +441,16 @@ export default {
   'settings.model.current.description':
     '查看当前加载的 Live2D 模型信息，并确认当前主题色是否来自模型配色。',
   'settings.model.current.notLoaded': '当前未加载模型',
+  'settings.model.current.behavior': '模型行为',
+  'settings.model.current.behaviorDesc':
+    '待机时模型由内置算法驱动轻微自然浮动，动作与表情由 AstrBot 演出指令触发。配置按模型独立保存，修改后立即生效。',
+  'settings.model.current.idleActivity': '待机活跃度',
+  'settings.model.current.idleActivityFeedback':
+    '直接控制待机摆动幅度（0.4~4 倍）：越高动作越大越明显，越低越安静；呼吸起伏始终保留。',
+  'settings.model.current.persistentExpressions': '常驻表情',
+  'settings.model.current.persistentExpressionsPlaceholder': '选择需要持续生效的表情',
+  'settings.model.current.persistentExpressionsFeedback':
+    '所选表情的参数将持续生效（适合水印开关、服饰切换等），不会被表演表情覆盖。',
   'settings.model.current.expressions': '表情类型',
   'settings.model.current.saveExpression': '保存分配',
   'settings.model.current.expressionDesc':

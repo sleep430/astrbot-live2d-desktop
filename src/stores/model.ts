@@ -1,6 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { LOCAL_STORAGE_METADATA } from '@/shared/metadata'
+import {
+  buildDefaultModelBehavior,
+  normalizeModelBehavior,
+  normalizeModelBehaviorMap,
+  type ModelBehaviorConfig
+} from '@/shared/modelBehavior'
 import { readJsonStorage, writeJsonStorage } from '@/utils/storage'
 
 const MODEL_POSITIONS_KEY = LOCAL_STORAGE_METADATA.modelPositions.key
@@ -9,7 +15,17 @@ const MODEL_POSITION_WRITE_DELAY_MS = 200
 const MODEL_SCALES_KEY = LOCAL_STORAGE_METADATA.modelScales.key
 const MODEL_SCALES_VERSION = LOCAL_STORAGE_METADATA.modelScales.version
 const MODEL_SCALE_WRITE_DELAY_MS = 200
+const MODEL_BEHAVIORS_KEY = LOCAL_STORAGE_METADATA.modelBehaviors.key
+const MODEL_BEHAVIORS_VERSION = LOCAL_STORAGE_METADATA.modelBehaviors.version
 const LAST_MODEL_PATH_KEY = LOCAL_STORAGE_METADATA.lastModelPath.key
+
+function readModelBehaviors(): Record<string, ModelBehaviorConfig> {
+  return readJsonStorage(MODEL_BEHAVIORS_KEY, {
+    fallback: {},
+    normalize: normalizeModelBehaviorMap,
+    version: MODEL_BEHAVIORS_VERSION
+  })
+}
 
 export const useModelStore = defineStore('model', () => {
   const currentModel = ref<string>('')
@@ -34,6 +50,48 @@ export const useModelStore = defineStore('model', () => {
   )
   let positionPersistTimer: number | null = null
   let scalePersistTimer: number | null = null
+  const modelBehaviors = ref<Record<string, ModelBehaviorConfig>>(readModelBehaviors())
+
+  function persistModelBehaviors() {
+    writeJsonStorage(MODEL_BEHAVIORS_KEY, modelBehaviors.value, {
+      version: MODEL_BEHAVIORS_VERSION
+    })
+  }
+
+  function getModelBehavior(modelPath?: string): ModelBehaviorConfig {
+    const path = modelPath || currentModel.value
+    if (!path) {
+      return buildDefaultModelBehavior()
+    }
+    const stored = modelBehaviors.value[path]
+    return stored ? normalizeModelBehavior(stored) : buildDefaultModelBehavior()
+  }
+
+  function setModelIdleActivity(value: number, modelPath?: string) {
+    const path = modelPath || currentModel.value
+    if (!path) {
+      return
+    }
+    const behavior = getModelBehavior(path)
+    modelBehaviors.value = {
+      ...modelBehaviors.value,
+      [path]: normalizeModelBehavior({ ...behavior, idleActivity: value })
+    }
+    persistModelBehaviors()
+  }
+
+  function setModelPersistentExpressions(names: string[], modelPath?: string) {
+    const path = modelPath || currentModel.value
+    if (!path) {
+      return
+    }
+    const behavior = getModelBehavior(path)
+    modelBehaviors.value = {
+      ...modelBehaviors.value,
+      [path]: normalizeModelBehavior({ ...behavior, persistentExpressions: names })
+    }
+    persistModelBehaviors()
+  }
 
   function persistModelPositions() {
     writeJsonStorage(MODEL_POSITIONS_KEY, modelPositions.value, {
@@ -138,6 +196,8 @@ export const useModelStore = defineStore('model', () => {
           value && typeof value === 'object' ? (value as Record<string, number>) : {},
         version: MODEL_SCALES_VERSION
       })
+    } else if (event.key === MODEL_BEHAVIORS_KEY) {
+      modelBehaviors.value = readModelBehaviors()
     }
   }
 
@@ -162,6 +222,7 @@ export const useModelStore = defineStore('model', () => {
     availableModels,
     modelPositions,
     modelScales,
+    modelBehaviors,
     setCurrentModel,
     getLastModel,
     setModelPosition,
@@ -169,6 +230,9 @@ export const useModelStore = defineStore('model', () => {
     getAllModelPositions,
     setModelScale,
     getModelScale,
+    getModelBehavior,
+    setModelIdleActivity,
+    setModelPersistentExpressions,
     loadModelList,
     startStorageSync,
     stopStorageSync

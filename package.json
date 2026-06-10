@@ -54,6 +54,10 @@
           "key": "modelScales",
           "version": 1
         },
+        "modelBehaviors": {
+          "key": "modelBehaviors",
+          "version": 1
+        },
         "themeState": {
           "key": "rendererThemeState",
           "version": 1

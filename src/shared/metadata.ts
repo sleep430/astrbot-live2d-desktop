@@ -30,6 +30,7 @@ export const LOCAL_STORAGE_METADATA = {
   connectionSettings: localStorageMetadata.connectionSettings,
   modelPositions: localStorageMetadata.modelPositions,
   modelScales: localStorageMetadata.modelScales,
+  modelBehaviors: localStorageMetadata.modelBehaviors,
   themeState: localStorageMetadata.themeState,
   lastModelPath: localStorageMetadata.lastModelPath
 } as const

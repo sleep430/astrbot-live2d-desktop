@@ -10,6 +10,7 @@ import {
   type Live2DExpressionTypeEntry,
   type Live2DExpressionTypePresetMap
 } from '@/shared/live2dExpressionTypes'
+import type { ModelBehaviorConfig } from '@/shared/modelBehavior'
 
 export interface ModelSettingsDomain {
   currentModelDisplay: ComputedRef<string>
@@ -18,6 +19,7 @@ export interface ModelSettingsDomain {
   currentModelScaleValue: ComputedRef<number>
   currentModelStatusClass: ComputedRef<string>
   currentModelStatusLabel: ComputedRef<string>
+  currentModelBehavior: ComputedRef<ModelBehaviorConfig>
   ensureLibraryReady: (force?: boolean) => Promise<void>
   ensureExpressionTypesReady: (force?: boolean) => Promise<void>
   expressionTypeStatus: Ref<'idle' | 'loading' | 'ready' | 'error'>
@@ -28,6 +30,8 @@ export interface ModelSettingsDomain {
   getModelPreviewStyle: (modelPath: string) => Record<string, string>
   handleDeleteModel: (modelName: string) => Promise<void>
   handleExpressionTypeChange: (type: keyof Live2DExpressionTypePresetMap, value: string[]) => void
+  handleIdleActivityChange: (value: number) => void
+  handlePersistentExpressionsChange: (names: string[]) => void
   handleImportModel: () => Promise<void>
   handleLoadModel: (modelPath: string) => Promise<void>
   handleModelScaleChange: (value: number) => void
@@ -179,6 +183,24 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
     expressionTypePresets.value = createEmptyExpressionTypePresets()
   })
 
+  const currentModelBehavior = computed(() =>
+    modelStore.getModelBehavior(currentModelPath.value || undefined)
+  )
+
+  function handleIdleActivityChange(value: number) {
+    if (!currentModelPath.value) {
+      return
+    }
+    modelStore.setModelIdleActivity(value, currentModelPath.value)
+  }
+
+  function handlePersistentExpressionsChange(names: string[]) {
+    if (!currentModelPath.value) {
+      return
+    }
+    modelStore.setModelPersistentExpressions(names, currentModelPath.value)
+  }
+
   function handleExpressionTypeChange(type: keyof Live2DExpressionTypePresetMap, value: string[]) {
     expressionTypePresets.value = {
       ...expressionTypePresets.value,
@@ -297,6 +319,7 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
     currentModelScaleValue,
     currentModelStatusClass,
     currentModelStatusLabel,
+    currentModelBehavior,
     ensureLibraryReady,
     ensureExpressionTypesReady,
     expressionTypeSaving,
@@ -307,6 +330,8 @@ export function createModelSettingsDomain(message: MessageApi): ModelSettingsDom
     getModelPreviewStyle,
     handleDeleteModel,
     handleExpressionTypeChange,
+    handleIdleActivityChange,
+    handlePersistentExpressionsChange,
     handleImportModel,
     handleLoadModel,
     handleModelScaleChange,

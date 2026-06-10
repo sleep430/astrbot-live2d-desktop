@@ -25,6 +25,53 @@
 
   <section class="settings-section">
     <div class="settings-section__header">
+      <h2>{{ $t('settings.model.current.behavior') }}</h2>
+    </div>
+    <p class="settings-section__desc">{{ $t('settings.model.current.behaviorDesc') }}</p>
+
+    <template v-if="currentModelPath">
+      <n-form label-placement="top">
+        <n-form-item :label="$t('settings.model.current.idleActivity')">
+          <n-space align="center" style="width: 100%">
+            <n-slider
+              :value="currentModelBehavior.idleActivity"
+              :min="0"
+              :max="1"
+              :step="0.05"
+              :format-tooltip="formatIdleActivity"
+              style="width: 200px"
+              @update:value="handleIdleActivityChange"
+            />
+            <span class="idle-activity-value">{{
+              formatIdleActivity(currentModelBehavior.idleActivity)
+            }}</span>
+          </n-space>
+          <template #feedback>
+            {{ $t('settings.model.current.idleActivityFeedback') }}
+          </template>
+        </n-form-item>
+        <n-form-item :label="$t('settings.model.current.persistentExpressions')">
+          <n-select
+            multiple
+            clearable
+            filterable
+            size="small"
+            :options="expressionOptions"
+            :value="currentModelBehavior.persistentExpressions"
+            :placeholder="$t('settings.model.current.persistentExpressionsPlaceholder')"
+            @update:value="handlePersistentExpressionsChange"
+          />
+          <template #feedback>
+            {{ $t('settings.model.current.persistentExpressionsFeedback') }}
+          </template>
+        </n-form-item>
+      </n-form>
+    </template>
+    <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
+  </section>
+
+  <section class="settings-section">
+    <div class="settings-section__header">
       <h2>{{ $t('settings.model.current.expressions') }}</h2>
       <n-button
         size="small"
@@ -169,12 +216,15 @@ const {
   currentModelScaleValue,
   currentModelStatusClass,
   currentModelStatusLabel,
+  currentModelBehavior,
   expressionTypeExpressions,
   expressionTypePresets,
   expressionTypeProfilePath,
   expressionTypeSaving,
   expressionTypeStatus,
   handleExpressionTypeChange,
+  handleIdleActivityChange,
+  handlePersistentExpressionsChange,
   handleModelScaleChange,
   handleResetModelScale,
   handleSaveExpressionTypes,
@@ -194,6 +244,10 @@ function handleColorPick(event: Event) {
 
 function handleResetAutoColor() {
   themeStore.resetToAutoColor()
+}
+
+function formatIdleActivity(value: number) {
+  return `${Math.round(value * 100)}%`
 }
 
 const expressionTypeGroups = computed(() => {
@@ -281,6 +335,12 @@ const syncStatusLabel = computed(() => {
 
 .expression-type-alert {
   margin-bottom: 12px;
+}
+
+.idle-activity-value {
+  min-width: 40px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
 }
 
 .expression-type-groups {

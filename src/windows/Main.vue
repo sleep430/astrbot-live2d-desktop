@@ -35,7 +35,7 @@
     />
 
     <!-- 媒体播放器 -->
-    <MediaPlayer ref="mediaPlayerRef" @audio-end="handleAudioEnd" />
+    <MediaPlayer ref="mediaPlayerRef" @audio-start="handleAudioStart" @audio-end="handleAudioEnd" />
 
     <!-- 圆形交互菜单 -->
     <Transition name="radial-menu">
@@ -689,6 +689,9 @@ async function loadModelWithState(modelPath: string, options: { showWarnings?: b
     }
   }
 
+  // 在加载前预设行为配置（待机动作/常驻表情），loadModel 内部会应用到新模型实例
+  applyModelBehavior(descriptor.modelPath)
+
   await live2dCanvasRef.value?.loadModel(
     descriptor.modelPath,
     savedPosition || undefined,
@@ -700,6 +703,24 @@ async function loadModelWithState(modelPath: string, options: { showWarnings?: b
   themeStore.setCurrentModel(descriptor.modelPath)
   applyModelPositionState(savedPosition)
 }
+
+function applyModelBehavior(modelPath?: string) {
+  const path = modelPath || modelStore.currentModel
+  const behavior = modelStore.getModelBehavior(path || undefined)
+  live2dCanvasRef.value?.setIdleActivity(behavior.idleActivity)
+  live2dCanvasRef.value?.setPersistentExpressions(behavior.persistentExpressions)
+}
+
+// 设置窗口修改行为配置后（storage 同步整体替换 modelBehaviors），即时应用到当前模型
+watch(
+  () => modelStore.modelBehaviors,
+  () => {
+    if (hasModel.value) {
+      applyModelBehavior()
+    }
+  },
+  { deep: true }
+)
 
 function interruptPerformance() {
   performQueue.interrupt()
@@ -989,8 +1010,13 @@ watch(lastError, (error, previousError) => {
   showModelStatus(t('main.status.connectionError', { message: error.message }), 'error', 4200)
 })
 
+function handleAudioStart(audioElement: HTMLAudioElement) {
+  live2dCanvasRef.value?.startLipSync(audioElement)
+}
+
 function handleAudioEnd() {
   console.log('[主窗口] 音频播放结束')
+  live2dCanvasRef.value?.stopLipSync()
   resolveNextAudioWaiter()
 }
 
