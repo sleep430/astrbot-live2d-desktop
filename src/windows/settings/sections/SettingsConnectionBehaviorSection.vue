@@ -1,174 +1,174 @@
 <template>
-  <section class="settings-section">
-    <div class="settings-section__header">
-      <h2>{{ $t('settings.connection.behavior.title') }}</h2>
-    </div>
+  <SettingsPageScaffold>
+    <SettingsSubsection>
+      <n-form label-placement="top">
+        <n-form-item>
+          <template #label>
+            <div class="form-label-with-tag">
+              {{ $t('settings.connection.behavior.autoConnectOnAppLaunch') }}
+              <n-tag v-if="!behaviorSettings.autoConnectOnAppLaunch" size="small" type="warning">
+                {{ $t('settings.about.disabled') }}
+              </n-tag>
+            </div>
+          </template>
+          <n-switch v-model:value="behaviorSettings.autoConnectOnAppLaunch" />
+          <template #feedback>
+            {{ $t('settings.connection.behavior.autoConnectOnAppLaunchDesc') }}
+          </template>
+        </n-form-item>
 
-    <n-form label-placement="top">
-      <n-form-item>
-        <template #label>
-          <div class="form-label-with-tag">
-            {{ $t('settings.connection.behavior.autoConnectOnAppLaunch') }}
-            <n-tag v-if="!behaviorSettings.autoConnectOnAppLaunch" size="small" type="warning">
-              {{ $t('settings.about.disabled') }}
-            </n-tag>
-          </div>
-        </template>
-        <n-switch v-model:value="behaviorSettings.autoConnectOnAppLaunch" />
-        <template #feedback>
-          {{ $t('settings.connection.behavior.autoConnectOnAppLaunchDesc') }}
-        </template>
-      </n-form-item>
+        <n-form-item>
+          <template #label>
+            <div class="form-label-with-tag">
+              {{ $t('settings.connection.behavior.resumeDesiredConnectionOnWake') }}
+              <n-tag
+                v-if="!behaviorSettings.resumeDesiredConnectionOnWake"
+                size="small"
+                type="warning"
+              >
+                {{ $t('settings.about.disabled') }}
+              </n-tag>
+            </div>
+          </template>
+          <n-switch v-model:value="behaviorSettings.resumeDesiredConnectionOnWake" />
+          <template #feedback>
+            {{ $t('settings.connection.behavior.resumeDesiredConnectionOnWakeDesc') }}
+          </template>
+        </n-form-item>
 
-      <n-form-item>
-        <template #label>
-          <div class="form-label-with-tag">
-            {{ $t('settings.connection.behavior.resumeDesiredConnectionOnWake') }}
-            <n-tag
-              v-if="!behaviorSettings.resumeDesiredConnectionOnWake"
+        <n-form-item>
+          <template #label>
+            <div class="form-label-with-tag">
+              {{ $t('settings.connection.behavior.retryEnabled') }}
+              <n-tag v-if="!behaviorSettings.retryEnabled" size="small" type="warning">
+                {{ $t('settings.about.disabled') }}
+              </n-tag>
+            </div>
+          </template>
+          <n-switch v-model:value="behaviorSettings.retryEnabled" />
+          <template #feedback>
+            {{ $t('settings.connection.behavior.retryEnabledDesc') }}
+          </template>
+        </n-form-item>
+
+        <n-form-item :label="$t('settings.connection.behavior.retryBaseDelayMs')">
+          <div class="slider-container">
+            <n-slider
+              v-model:value="behaviorSettings.retryBaseDelayMs"
+              :min="250"
+              :max="10000"
+              :step="250"
+              :disabled="!behaviorSettings.retryEnabled"
+            />
+            <span class="slider-value">{{ formatDelay(behaviorSettings.retryBaseDelayMs) }}</span>
+            <n-button
+              v-if="behaviorSettings.retryBaseDelayMs !== 1000"
+              text
               size="small"
-              type="warning"
+              @click="behaviorSettings.retryBaseDelayMs = 1000"
             >
-              {{ $t('settings.about.disabled') }}
-            </n-tag>
+              {{ $t('settings.connection.behavior.reset') }}
+            </n-button>
           </div>
-        </template>
-        <n-switch v-model:value="behaviorSettings.resumeDesiredConnectionOnWake" />
-        <template #feedback>
-          {{ $t('settings.connection.behavior.resumeDesiredConnectionOnWakeDesc') }}
-        </template>
-      </n-form-item>
+          <template #feedback>
+            {{ $t('settings.connection.behavior.retryBaseDelayMsDesc') }}
+          </template>
+        </n-form-item>
 
-      <n-form-item>
-        <template #label>
-          <div class="form-label-with-tag">
-            {{ $t('settings.connection.behavior.retryEnabled') }}
-            <n-tag v-if="!behaviorSettings.retryEnabled" size="small" type="warning">
-              {{ $t('settings.about.disabled') }}
-            </n-tag>
+        <n-form-item :label="$t('settings.connection.behavior.retryMaxDelayMs')">
+          <div class="slider-container">
+            <n-slider
+              v-model:value="behaviorSettings.retryMaxDelayMs"
+              :min="1000"
+              :max="60000"
+              :step="1000"
+              :disabled="!behaviorSettings.retryEnabled"
+            />
+            <span class="slider-value">{{ formatDelay(behaviorSettings.retryMaxDelayMs) }}</span>
+            <n-button
+              v-if="behaviorSettings.retryMaxDelayMs !== 30000"
+              text
+              size="small"
+              @click="behaviorSettings.retryMaxDelayMs = 30000"
+            >
+              {{ $t('settings.connection.behavior.reset') }}
+            </n-button>
           </div>
-        </template>
-        <n-switch v-model:value="behaviorSettings.retryEnabled" />
-        <template #feedback>
-          {{ $t('settings.connection.behavior.retryEnabledDesc') }}
-        </template>
-      </n-form-item>
+          <template #feedback>
+            {{ $t('settings.connection.behavior.retryMaxDelayMsDesc') }}
+          </template>
+        </n-form-item>
 
-      <n-form-item :label="$t('settings.connection.behavior.retryBaseDelayMs')">
-        <div class="slider-container">
-          <n-slider
-            v-model:value="behaviorSettings.retryBaseDelayMs"
-            :min="250"
-            :max="10000"
-            :step="250"
-            :disabled="!behaviorSettings.retryEnabled"
-          />
-          <span class="slider-value">{{ formatDelay(behaviorSettings.retryBaseDelayMs) }}</span>
-          <n-button
-            v-if="behaviorSettings.retryBaseDelayMs !== 1000"
-            text
-            size="small"
-            @click="behaviorSettings.retryBaseDelayMs = 1000"
-          >
-            {{ $t('settings.connection.behavior.reset') }}
-          </n-button>
-        </div>
-        <template #feedback>
-          {{ $t('settings.connection.behavior.retryBaseDelayMsDesc') }}
-        </template>
-      </n-form-item>
+        <n-form-item :label="$t('settings.connection.behavior.retryMaxAttempts')">
+          <div class="slider-container">
+            <n-switch
+              :value="behaviorSettings.retryMaxAttempts !== null"
+              :disabled="!behaviorSettings.retryEnabled"
+              @update:value="handleToggleMaxAttempts"
+            />
+            <span class="slider-label">
+              {{
+                behaviorSettings.retryMaxAttempts === null
+                  ? $t('settings.connection.behavior.unlimited')
+                  : $t('settings.connection.behavior.limited')
+              }}
+            </span>
+          </div>
+          <div v-if="behaviorSettings.retryMaxAttempts !== null" class="slider-container">
+            <n-slider
+              v-model:value="behaviorSettings.retryMaxAttempts"
+              :min="1"
+              :max="100"
+              :step="1"
+              :disabled="!behaviorSettings.retryEnabled"
+            />
+            <span class="slider-value">{{ behaviorSettings.retryMaxAttempts }}</span>
+          </div>
+          <template #feedback>
+            {{ $t('settings.connection.behavior.retryMaxAttemptsDesc') }}
+          </template>
+        </n-form-item>
 
-      <n-form-item :label="$t('settings.connection.behavior.retryMaxDelayMs')">
-        <div class="slider-container">
-          <n-slider
-            v-model:value="behaviorSettings.retryMaxDelayMs"
-            :min="1000"
-            :max="60000"
-            :step="1000"
-            :disabled="!behaviorSettings.retryEnabled"
-          />
-          <span class="slider-value">{{ formatDelay(behaviorSettings.retryMaxDelayMs) }}</span>
-          <n-button
-            v-if="behaviorSettings.retryMaxDelayMs !== 30000"
-            text
-            size="small"
-            @click="behaviorSettings.retryMaxDelayMs = 30000"
-          >
-            {{ $t('settings.connection.behavior.reset') }}
-          </n-button>
-        </div>
-        <template #feedback>
-          {{ $t('settings.connection.behavior.retryMaxDelayMsDesc') }}
-        </template>
-      </n-form-item>
+        <n-form-item :label="$t('settings.connection.behavior.handshakeTimeoutMs')">
+          <div class="slider-container">
+            <n-slider
+              v-model:value="behaviorSettings.handshakeTimeoutMs"
+              :min="1000"
+              :max="60000"
+              :step="1000"
+            />
+            <span class="slider-value">{{ formatDelay(behaviorSettings.handshakeTimeoutMs) }}</span>
+            <n-button
+              v-if="behaviorSettings.handshakeTimeoutMs !== 8000"
+              text
+              size="small"
+              @click="behaviorSettings.handshakeTimeoutMs = 8000"
+            >
+              {{ $t('settings.connection.behavior.reset') }}
+            </n-button>
+          </div>
+          <template #feedback>
+            {{ $t('settings.connection.behavior.handshakeTimeoutMsDesc') }}
+          </template>
+        </n-form-item>
+      </n-form>
 
-      <n-form-item :label="$t('settings.connection.behavior.retryMaxAttempts')">
-        <div class="slider-container">
-          <n-switch
-            :value="behaviorSettings.retryMaxAttempts !== null"
-            :disabled="!behaviorSettings.retryEnabled"
-            @update:value="handleToggleMaxAttempts"
-          />
-          <span class="slider-label">
-            {{
-              behaviorSettings.retryMaxAttempts === null
-                ? $t('settings.connection.behavior.unlimited')
-                : $t('settings.connection.behavior.limited')
-            }}
-          </span>
-        </div>
-        <div v-if="behaviorSettings.retryMaxAttempts !== null" class="slider-container">
-          <n-slider
-            v-model:value="behaviorSettings.retryMaxAttempts"
-            :min="1"
-            :max="100"
-            :step="1"
-            :disabled="!behaviorSettings.retryEnabled"
-          />
-          <span class="slider-value">{{ behaviorSettings.retryMaxAttempts }}</span>
-        </div>
-        <template #feedback>
-          {{ $t('settings.connection.behavior.retryMaxAttemptsDesc') }}
-        </template>
-      </n-form-item>
-
-      <n-form-item :label="$t('settings.connection.behavior.handshakeTimeoutMs')">
-        <div class="slider-container">
-          <n-slider
-            v-model:value="behaviorSettings.handshakeTimeoutMs"
-            :min="1000"
-            :max="60000"
-            :step="1000"
-          />
-          <span class="slider-value">{{ formatDelay(behaviorSettings.handshakeTimeoutMs) }}</span>
-          <n-button
-            v-if="behaviorSettings.handshakeTimeoutMs !== 8000"
-            text
-            size="small"
-            @click="behaviorSettings.handshakeTimeoutMs = 8000"
-          >
-            {{ $t('settings.connection.behavior.reset') }}
-          </n-button>
-        </div>
-        <template #feedback>
-          {{ $t('settings.connection.behavior.handshakeTimeoutMsDesc') }}
-        </template>
-      </n-form-item>
-    </n-form>
-
-    <div class="settings-section__actions">
-      <n-button type="primary" :loading="saving" :disabled="!hasChanges" @click="handleSave">
-        {{ $t('settings.connection.behavior.save') }}
-      </n-button>
-      <n-button :disabled="!hasChanges" @click="handleReset">
-        {{ $t('settings.connection.behavior.cancel') }}
-      </n-button>
-    </div>
-  </section>
+      <div class="settings-section__actions">
+        <n-button type="primary" :loading="saving" :disabled="!hasChanges" @click="handleSave">
+          {{ $t('settings.connection.behavior.save') }}
+        </n-button>
+        <n-button :disabled="!hasChanges" @click="handleReset">
+          {{ $t('settings.connection.behavior.cancel') }}
+        </n-button>
+      </div>
+    </SettingsSubsection>
+  </SettingsPageScaffold>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import SettingsPageScaffold from '../shared/SettingsPageScaffold.vue'
+import SettingsSubsection from '../shared/SettingsSubsection.vue'
 import { useI18n } from 'vue-i18n'
 import { useMessage } from 'naive-ui'
 import type { ConnectionBehaviorSettingsPersistedV1 } from '@/shared/connectionBehaviorSettings'

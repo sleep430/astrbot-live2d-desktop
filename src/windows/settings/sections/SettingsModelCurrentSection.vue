@@ -1,202 +1,212 @@
 <template>
-  <section class="settings-section">
-    <div class="settings-section__header">
-      <h2>{{ $t('settings.menu.model.current') }}</h2>
-      <span class="status-pill" :class="currentModelStatusClass">
-        {{ currentModelStatusLabel }}
-      </span>
-    </div>
-    <p class="settings-section__desc">{{ $t('settings.model.current.description') }}</p>
+  <SettingsPageScaffold>
+    <SettingsSubsection>
+      <template #actions>
+        <span class="status-pill" :class="currentModelStatusClass">
+          {{ currentModelStatusLabel }}
+        </span>
+      </template>
 
-    <template v-if="currentModelPath">
-      <div class="current-model-info">
-        <div class="current-model-info__preview" :style="themeSwatchStyle">
-          <span>{{ currentModelInitial }}</span>
+      <template v-if="currentModelPath">
+        <div class="current-model-info">
+          <div class="current-model-info__preview" :style="themeSwatchStyle">
+            <span>{{ currentModelInitial }}</span>
+          </div>
+          <div class="current-model-info__meta">
+            <strong>{{ currentModelDisplay }}</strong>
+            <span class="current-model-info__color">{{ sourceColor.toUpperCase() }}</span>
+            <code class="settings-inline-path">{{ currentModelPath }}</code>
+          </div>
         </div>
-        <div class="current-model-info__meta">
-          <strong>{{ currentModelDisplay }}</strong>
-          <span class="current-model-info__color">{{ sourceColor.toUpperCase() }}</span>
-          <code class="settings-inline-path">{{ currentModelPath }}</code>
-        </div>
-      </div>
-    </template>
-    <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
-  </section>
+      </template>
+      <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
+    </SettingsSubsection>
 
-  <section class="settings-section">
-    <div class="settings-section__header">
-      <h2>{{ $t('settings.model.current.behavior') }}</h2>
-    </div>
-    <p class="settings-section__desc">{{ $t('settings.model.current.behaviorDesc') }}</p>
-
-    <template v-if="currentModelPath">
-      <n-form label-placement="top">
-        <n-form-item :label="$t('settings.model.current.idleActivity')">
-          <n-space align="center" style="width: 100%">
-            <n-slider
-              :value="currentModelBehavior.idleActivity"
-              :min="0"
-              :max="1"
-              :step="0.05"
-              :format-tooltip="formatIdleActivity"
-              style="width: 200px"
-              @update:value="handleIdleActivityChange"
-            />
-            <span class="idle-activity-value">{{
-              formatIdleActivity(currentModelBehavior.idleActivity)
-            }}</span>
-          </n-space>
-          <template #feedback>
-            {{ $t('settings.model.current.idleActivityFeedback') }}
-          </template>
-        </n-form-item>
-        <n-form-item :label="$t('settings.model.current.persistentExpressions')">
-          <n-select
-            multiple
-            clearable
-            filterable
-            size="small"
-            :options="expressionOptions"
-            :value="currentModelBehavior.persistentExpressions"
-            :placeholder="$t('settings.model.current.persistentExpressionsPlaceholder')"
-            @update:value="handlePersistentExpressionsChange"
-          />
-          <template #feedback>
-            {{ $t('settings.model.current.persistentExpressionsFeedback') }}
-          </template>
-        </n-form-item>
-      </n-form>
-    </template>
-    <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
-  </section>
-
-  <section class="settings-section">
-    <div class="settings-section__header">
-      <h2>{{ $t('settings.model.current.expressions') }}</h2>
-      <n-button
-        size="small"
-        type="primary"
-        :disabled="!currentModelPath || expressionTypeStatus === 'loading' || expressionTypeSaving"
-        :loading="expressionTypeSaving"
-        @click="handleSaveExpressionTypes"
-      >
-        {{ $t('settings.model.current.saveExpression') }}
-      </n-button>
-    </div>
-    <p class="settings-section__desc">{{ $t('settings.model.current.expressionDesc') }}</p>
-
-    <template v-if="currentModelPath">
-      <n-alert
-        v-if="expressionTypeProfilePath"
-        type="info"
-        :show-icon="false"
-        class="expression-type-alert"
-      >
-        {{
-          $t('settings.model.current.expressionProfilePath', { path: expressionTypeProfilePath })
-        }}
-      </n-alert>
-
-      <div v-if="expressionTypeExpressions.length > 0" class="expression-type-groups">
-        <div v-for="group in expressionTypeGroups" :key="group.name" class="expression-type-group">
-          <h3>{{ group.name }}</h3>
-          <div class="expression-type-grid">
-            <div v-for="type in group.items" :key="type.key" class="expression-type-row">
-              <div class="expression-type-row__meta">
-                <strong>{{ type.label }}</strong>
-                <code>{{ type.key }}</code>
-              </div>
-              <n-select
-                multiple
-                clearable
-                filterable
-                size="small"
-                :options="expressionOptions"
-                :value="expressionTypePresets[type.key]"
-                :placeholder="$t('settings.model.current.unassigned')"
-                @update:value="(value: string[]) => handleExpressionTypeChange(type.key, value)"
+    <SettingsSubsection
+      :title="$t('settings.model.current.behavior')"
+      :description="$t('settings.model.current.behaviorDesc')"
+    >
+      <template v-if="currentModelPath">
+        <n-form label-placement="top">
+          <n-form-item :label="$t('settings.model.current.idleActivity')">
+            <n-space align="center" style="width: 100%">
+              <n-slider
+                :value="currentModelBehavior.idleActivity"
+                :min="0"
+                :max="1"
+                :step="0.05"
+                :format-tooltip="formatIdleActivity"
+                style="width: 200px"
+                @update:value="handleIdleActivityChange"
               />
+              <span class="idle-activity-value">{{
+                formatIdleActivity(currentModelBehavior.idleActivity)
+              }}</span>
+            </n-space>
+            <template #feedback>
+              {{ $t('settings.model.current.idleActivityFeedback') }}
+            </template>
+          </n-form-item>
+          <n-form-item :label="$t('settings.model.current.persistentExpressions')">
+            <n-select
+              multiple
+              clearable
+              filterable
+              size="small"
+              :options="expressionOptions"
+              :value="currentModelBehavior.persistentExpressions"
+              :placeholder="$t('settings.model.current.persistentExpressionsPlaceholder')"
+              @update:value="handlePersistentExpressionsChange"
+            />
+            <template #feedback>
+              {{ $t('settings.model.current.persistentExpressionsFeedback') }}
+            </template>
+          </n-form-item>
+        </n-form>
+      </template>
+      <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
+    </SettingsSubsection>
+
+    <SettingsSubsection
+      :title="$t('settings.model.current.expressions')"
+      :description="$t('settings.model.current.expressionDesc')"
+    >
+      <template #actions>
+        <n-button
+          size="small"
+          type="primary"
+          :disabled="
+            !currentModelPath || expressionTypeStatus === 'loading' || expressionTypeSaving
+          "
+          :loading="expressionTypeSaving"
+          @click="handleSaveExpressionTypes"
+        >
+          {{ $t('settings.model.current.saveExpression') }}
+        </n-button>
+      </template>
+
+      <template v-if="currentModelPath">
+        <n-alert
+          v-if="expressionTypeProfilePath"
+          type="info"
+          :show-icon="false"
+          class="expression-type-alert"
+        >
+          {{
+            $t('settings.model.current.expressionProfilePath', { path: expressionTypeProfilePath })
+          }}
+        </n-alert>
+
+        <div v-if="expressionTypeExpressions.length > 0" class="expression-type-groups">
+          <div
+            v-for="group in expressionTypeGroups"
+            :key="group.name"
+            class="expression-type-group"
+          >
+            <h3>{{ group.name }}</h3>
+            <div class="expression-type-grid">
+              <div v-for="type in group.items" :key="type.key" class="expression-type-row">
+                <div class="expression-type-row__meta">
+                  <strong>{{ type.label }}</strong>
+                  <code>{{ type.key }}</code>
+                </div>
+                <n-select
+                  multiple
+                  clearable
+                  filterable
+                  size="small"
+                  :options="expressionOptions"
+                  :value="expressionTypePresets[type.key]"
+                  :placeholder="$t('settings.model.current.unassigned')"
+                  @update:value="(value: string[]) => handleExpressionTypeChange(type.key, value)"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <n-empty v-else :description="$t('settings.model.current.noExpressions')" />
-    </template>
-    <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
-  </section>
+        <n-empty v-else :description="$t('settings.model.current.noExpressions')" />
+      </template>
+      <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
+    </SettingsSubsection>
 
-  <section class="settings-section">
-    <div class="settings-section__header">
-      <h2>{{ $t('settings.model.current.preferences') }}</h2>
-    </div>
-    <p class="settings-section__desc">{{ $t('settings.model.current.preferencesDesc') }}</p>
-
-    <n-form label-placement="top">
-      <n-form-item :label="$t('settings.model.current.scale')">
-        <n-space align="center" style="width: 100%">
-          <n-slider
-            :value="currentModelScaleValue"
-            :min="0.1"
-            :max="5.0"
-            :step="0.05"
-            style="width: 200px"
-            @update:value="handleModelScaleChange"
+    <SettingsSubsection
+      :title="$t('settings.model.current.preferences')"
+      :description="$t('settings.model.current.preferencesDesc')"
+    >
+      <n-form label-placement="top">
+        <n-form-item :label="$t('settings.model.current.scale')">
+          <n-space align="center" style="width: 100%">
+            <n-slider
+              :value="currentModelScaleValue"
+              :min="0.1"
+              :max="5.0"
+              :step="0.05"
+              style="width: 200px"
+              @update:value="handleModelScaleChange"
+            />
+            <n-input-number
+              :value="currentModelScaleValue"
+              :min="0.1"
+              :max="5.0"
+              :step="0.05"
+              size="small"
+              style="width: 110px"
+              @update:value="(value: number | null) => handleModelScaleChange(value || 1.0)"
+            >
+              <template #suffix>x</template>
+            </n-input-number>
+            <n-button size="small" @click="handleResetModelScale">{{
+              $t('settings.model.current.resetScale')
+            }}</n-button>
+          </n-space>
+        </n-form-item>
+        <n-form-item :label="$t('settings.model.current.themeFollowModel')">
+          <n-switch
+            v-model:value="advancedSettings.themeFollowModel"
+            @update:value="handleThemeFollowChange"
           />
-          <n-input-number
-            :value="currentModelScaleValue"
-            :min="0.1"
-            :max="5.0"
-            :step="0.05"
-            size="small"
-            style="width: 110px"
-            @update:value="(value: number | null) => handleModelScaleChange(value || 1.0)"
-          >
-            <template #suffix>x</template>
-          </n-input-number>
-          <n-button size="small" @click="handleResetModelScale">{{
-            $t('settings.model.current.resetScale')
-          }}</n-button>
-        </n-space>
-      </n-form-item>
-      <n-form-item :label="$t('settings.model.current.themeFollowModel')">
-        <n-switch
-          v-model:value="advancedSettings.themeFollowModel"
-          @update:value="handleThemeFollowChange"
-        />
-        <template #feedback>
-          {{ $t('settings.model.current.themeFollowFeedback') }}
-        </template>
-      </n-form-item>
-    </n-form>
+          <template #feedback>
+            {{ $t('settings.model.current.themeFollowFeedback') }}
+          </template>
+        </n-form-item>
+      </n-form>
 
-    <div class="settings-kv-list">
-      <div class="settings-kv-list__row">
-        <span>{{ $t('settings.model.current.currentThemeColor') }}</span>
-        <span class="theme-color-control">
-          <span class="theme-color-swatch" :style="{ backgroundColor: sourceColor }"></span>
-          <strong>{{ sourceColor.toUpperCase() }}</strong>
-          <input
-            type="color"
-            :value="sourceColor"
-            class="theme-color-picker"
-            :aria-label="$t('settings.model.current.pickColor')"
-            @input="handleColorPick"
-          />
-          <n-button v-if="manualColorOverride" size="tiny" secondary @click="handleResetAutoColor">
-            {{ $t('settings.model.current.resetAutoColor') }}
-          </n-button>
-        </span>
+      <div class="settings-kv-list">
+        <div class="settings-kv-list__row">
+          <span>{{ $t('settings.model.current.currentThemeColor') }}</span>
+          <span class="theme-color-control">
+            <span class="theme-color-swatch" :style="{ backgroundColor: sourceColor }"></span>
+            <strong>{{ sourceColor.toUpperCase() }}</strong>
+            <input
+              type="color"
+              :value="sourceColor"
+              class="theme-color-picker"
+              :aria-label="$t('settings.model.current.pickColor')"
+              @input="handleColorPick"
+            />
+            <n-button
+              v-if="manualColorOverride"
+              size="tiny"
+              secondary
+              @click="handleResetAutoColor"
+            >
+              {{ $t('settings.model.current.resetAutoColor') }}
+            </n-button>
+          </span>
+        </div>
+        <div class="settings-kv-list__row">
+          <span>{{ $t('settings.model.current.syncStatus') }}</span>
+          <strong>{{ syncStatusLabel }}</strong>
+        </div>
       </div>
-      <div class="settings-kv-list__row">
-        <span>{{ $t('settings.model.current.syncStatus') }}</span>
-        <strong>{{ syncStatusLabel }}</strong>
-      </div>
-    </div>
-  </section>
+    </SettingsSubsection>
+  </SettingsPageScaffold>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import SettingsPageScaffold from '../shared/SettingsPageScaffold.vue'
+import SettingsSubsection from '../shared/SettingsSubsection.vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import {
