@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.4.0] - 2026-06-10
+
+### Added
+- Redesigned settings window: grouped sidebar navigation, title-bar quick menu, command palette (`Ctrl/Cmd+K`), and light/dark appearance.
+- Advanced **Data management** local storage overview: database size, embedded media, model library, logs, Cubism Core, session/performance stats, and media-type breakdown.
+- Config import/export restored under data management maintenance, backing up connection and behavior settings together.
+- Audio lip-sync analyzer and procedural idle animation; per-model behavior configuration.
+- More reliable theme color extraction from model texture source images.
+
+### Changed
+- Settings sections use a unified page scaffold and subsections; refreshed history, about, and model library layouts.
+- Settings window no longer opens pinned by default; use the title-bar Pin control.
+- Removed redundant explanatory copy in settings UI.
+
+### Fixed
+- Model theme color extraction improvements.
+
+### Docs
+- Updated README and usage tutorials for the new settings layout, data management, and history/statistics.
+
 ## [1.3.1] - 2026-06-09
 
 ### Fixed

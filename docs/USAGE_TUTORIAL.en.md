@@ -15,7 +15,7 @@ Please confirm:
 
 ## 2. First Connection (Required)
 
-1. Launch the desktop client and open "Settings → Connection".
+1. Launch the desktop client, open **Settings** (tray or main UI), and select **Connection** in the sidebar.
 2. Fill in the server address, e.g.:
    - Local: `ws://127.0.0.1:9090/astrbot/live2d`
    - Remote server: `ws://<server_ip>:9090/astrbot/live2d`
@@ -90,7 +90,13 @@ If this file is missing, unreadable, or invalid, the model will still load succe
 
 ### 4.4 History & Statistics
 
-- Right-click the model → "History" to view chat records, resource usage, and statistical charts.
+- **Settings → History**: use **Messages** to browse and search local chat; **Statistics** for trends, content mix, and active hours.
+- Some older builds also expose history from the model context menu; prefer the settings sidebar in current versions.
+
+### 4.5 Data & Config Maintenance
+
+- **Settings → Advanced → Data management**: local storage overview (database, embedded media, models, logs), cache clear, log export, config import/export, and Cubism Core download.
+- Press `Ctrl/Cmd+K` inside settings to jump to any page quickly.
 
 ## 5. FAQ
 

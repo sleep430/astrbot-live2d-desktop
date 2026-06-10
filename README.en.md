@@ -42,6 +42,7 @@ Connects to AstrBot in real time, enabling models to display text, motions, expr
 - Audio recording pipeline and global keyboard shortcuts, with hold/toggle recording modes
 - Tray, always-on-top, mouse passthrough (none / smart / full), and other desktop assistant capabilities
 - Theme color auto-extraction with manual override support
+- Settings with grouped navigation, quick jump (`Ctrl/Cmd+K`), and light/dark appearance; **Advanced → Data management** shows local storage usage and config import/export
 
 ## Model Compatibility Boundaries
 
@@ -81,7 +82,7 @@ Install and enable `astrbot-live2d-adapter` in AstrBot, and ensure the server is
 
 ### 3) Configure Connection
 
-In the desktop client "Settings → Connection", fill in:
+Open **Settings** (tray or main UI), go to the **Connection** group, and fill in:
 
 1. Server address (e.g. `ws://127.0.0.1:9090/astrbot/live2d`)
 2. Auth token (required, must match the adapter's `auth_token`)
@@ -170,6 +171,8 @@ pnpm run rebuild
 - UserConfig (Electron Store, supports token encryption): connection configuration
 - LocalStorage: UI preferences, theme state, model position, and other non-sensitive data
 - Filesystem: imported models and cached resources
+
+Under **Settings → Advanced → Data management** you can review database size, embedded media, model library, logs, and run maintenance (cache, log export, config import/export). Message trends and content breakdown are under **History → Statistics**.
 
 Common directories:
 
