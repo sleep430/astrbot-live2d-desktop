@@ -724,21 +724,6 @@ const en: I18nMessageSchema = {
   'error.recordingNotStarted': 'Recording not started',
   'error.recordingAlreadyStopped': 'Recording already stopped',
   'error.saveOfflineHistoryFailed': 'Failed to save offline history messages',
-  'error.wakeWordEmpty': 'Wake word is empty, stopped listening',
-  'error.missingPorcupineAccessKey':
-    'Missing Porcupine AccessKey, please set VITE_PORCUPINE_ACCESS_KEY in configuration',
-  'error.wakeWordResourceMissing': 'Wake word resources missing: {files}',
-  'error.porcupineModuleLoadFailed':
-    'Failed to load local Porcupine module ({path}). Please confirm the file exists and is accessible offline. Original error: {message}',
-  'error.porcupineCreateNotFound':
-    'Porcupine.create interface not found, please check local Porcupine SDK file',
-  'error.porcupineNoBuiltinKeyword':
-    'Current Porcupine module does not support built-in keywords, please use local .ppn file instead',
-  'error.builtinKeywordNotFound': 'Built-in keyword not found: {name}',
-  'error.porcupineInitFailed': 'Porcupine initialization failed: {error}',
-  'error.porcupineInstanceUnavailable': 'Porcupine instance unavailable, missing process() method',
-  'error.wakeWordAudioPipelineFailed': 'Wake word audio pipeline startup failed: {error}',
-  'error.noAudioContext': 'Current environment does not support AudioContext',
   'error.createTextureFailed': 'Failed to create texture',
   'error.loadTextureFailed': 'Failed to load texture: {path}',
   'error.loadFileFailed': 'Failed to load file: {path} ({status})',
@@ -748,9 +733,6 @@ const en: I18nMessageSchema = {
   'error.domainNotInjected': '{name} not injected',
   'error.textureLoadAllFailed': 'Texture loading failed: {textures}',
   'error.webglContextNotInitialized': 'WebGL context not initialized',
-  'error.porcupineModuleMissingCreate': 'Local Porcupine module missing create() interface',
-  'error.wakeWordProcessFailed': 'Wake word recognition processing failed: {error}',
-  'error.porcupineRuntimeError': 'Porcupine runtime error: {error}',
 
   // Settings — History media viewer
   'settings.history.mediaViewer.imageAlt': 'History message image enlarged preview',

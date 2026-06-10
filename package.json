@@ -249,7 +249,6 @@
       "!dist/models/**/{test,tests,__tests__,example,examples}/**",
       "!dist/models/package.json/**",
       "!dist/models/temp/**",
-      "!dist/wakeword/**",
       "!**/*.map",
       "!**/*.ts",
       "!**/*.tsx",

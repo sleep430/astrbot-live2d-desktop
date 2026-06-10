@@ -690,19 +690,6 @@ export default {
   'error.recordingNotStarted': '录音未开始',
   'error.recordingAlreadyStopped': '录音已停止',
   'error.saveOfflineHistoryFailed': '保存离线历史消息失败',
-  'error.wakeWordEmpty': '唤醒词为空，已停止监听',
-  'error.missingPorcupineAccessKey':
-    '缺少 Porcupine AccessKey，请在配置中设置 VITE_PORCUPINE_ACCESS_KEY',
-  'error.wakeWordResourceMissing': '唤醒词资源缺失: {files}',
-  'error.porcupineModuleLoadFailed':
-    '无法加载本地 Porcupine 模块 ({path})。请确认文件存在且可离线访问。原始错误: {message}',
-  'error.porcupineCreateNotFound': '未找到 Porcupine.create 接口，请检查本地 Porcupine SDK 文件',
-  'error.porcupineNoBuiltinKeyword': '当前 Porcupine 模块不支持内置关键词，请改为本地 .ppn 文件',
-  'error.builtinKeywordNotFound': '未找到内置唤醒词: {name}',
-  'error.porcupineInitFailed': 'Porcupine 初始化失败: {error}',
-  'error.porcupineInstanceUnavailable': 'Porcupine 实例不可用，缺少 process() 方法',
-  'error.wakeWordAudioPipelineFailed': '唤醒监听音频管线启动失败: {error}',
-  'error.noAudioContext': '当前环境不支持 AudioContext',
   'error.createTextureFailed': '创建纹理失败',
   'error.loadTextureFailed': '无法加载纹理: {path}',
   'error.loadFileFailed': '无法加载文件: {path} ({status})',
@@ -711,9 +698,6 @@ export default {
   'error.domainNotInjected': '{name} 未注入',
   'error.textureLoadAllFailed': '纹理加载失败: {textures}',
   'error.webglContextNotInitialized': 'WebGL 上下文未初始化',
-  'error.porcupineModuleMissingCreate': '本地 Porcupine 模块缺少 create() 接口',
-  'error.wakeWordProcessFailed': '唤醒词识别处理失败: {error}',
-  'error.porcupineRuntimeError': 'Porcupine 运行错误: {error}',
 
   // Settings — History media viewer
   'settings.history.mediaViewer.imageAlt': '历史消息图片放大预览',
