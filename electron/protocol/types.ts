@@ -165,10 +165,15 @@ export interface ModelDiscoveryInfo {
 }
 
 export interface StateModelPayload {
-  name: string
-  motionGroups: Record<string, Array<{ index: number; file: string }>>
-  expressions: string[]
-  capabilities: ModelExpressionCapabilities
+  version?: string
+  name?: string
+  modelName?: string
+  motionGroups?: Record<string, Array<{ index: number; file: string }>>
+  motions?: Array<{ id: string; name: string; category: string; duration: number }>
+  expressions?: string[] | Array<{ id: string; name: string }>
+  capabilities?:
+    | ModelExpressionCapabilities
+    | { idleMode: string; llmControlled: boolean; expressionCombo?: boolean }
   expressionCatalog?: ModelExpressionCatalogItem[]
   semanticPresets?: Record<string, string[]>
   discovery?: ModelDiscoveryInfo
@@ -192,7 +197,8 @@ export interface PerformElement {
   volume?: number
   speed?: number
 
-  // 动作
+  // 动作（v1 group/index，v2 name）
+  name?: string
   group?: string
   index?: number
   priority?: number

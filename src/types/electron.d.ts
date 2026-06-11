@@ -299,6 +299,44 @@ declare global {
         prepareLoad: (
           modelPath: string
         ) => Promise<{ success: boolean; descriptor?: CubismModelLoadDescriptor; error?: string }>
+        getCatalog: (modelPath: string) => Promise<{
+          success: boolean
+          catalog?: import('../shared/modelConfigFactory').ModelCatalogPayload
+          error?: string
+        }>
+        previewMotion: (payload: {
+          group: string
+          index: number
+          priority?: number
+          loop?: boolean
+        }) => Promise<{ success: boolean; error?: string }>
+        previewExpression: (payload: {
+          id: string
+          fade?: number
+          holdMs?: number
+          resetPolicy?: string
+        }) => Promise<{ success: boolean; error?: string }>
+        captureThumbnail: () => Promise<{
+          success: boolean
+          dataUrl?: string
+          error?: string
+        }>
+        onPreviewMotion: (
+          callback: (payload: {
+            group: string
+            index: number
+            priority?: number
+            loop?: boolean
+          }) => void
+        ) => Unsubscribe
+        onPreviewExpression: (
+          callback: (payload: {
+            id: string
+            fade?: number
+            holdMs?: number
+            resetPolicy?: string
+          }) => void
+        ) => Unsubscribe
         getExpressionTypes: (modelPath: string) => Promise<Live2DExpressionTypesLoadResult>
         saveExpressionTypes: (
           modelPath: string,
@@ -306,6 +344,20 @@ declare global {
         ) => Promise<Live2DExpressionTypesSaveResult>
         load: (modelPath: string) => Promise<{ success: boolean; error?: string }>
         onLoad: (callback: (modelPath: string) => void) => Unsubscribe
+      }
+      modelConfig: {
+        load: (modelPath: string) => Promise<{ success: boolean; config?: any; error?: string }>
+        save: (config: any) => Promise<{ success: boolean; error?: string }>
+        delete: (modelPath: string) => Promise<{ success: boolean; error?: string }>
+        ensure: (payload: {
+          modelPath: string
+          motionDurations?: Record<string, number>
+        }) => Promise<{
+          success: boolean
+          config?: any
+          created?: boolean
+          error?: string
+        }>
       }
       shortcut: {
         register: (accelerator: string) => Promise<{ success: boolean; error?: string }>

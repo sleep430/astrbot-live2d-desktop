@@ -63,10 +63,13 @@ export interface ModelDiscoveryInfo {
 }
 
 export interface StateModelPayload {
-  name: string
-  motionGroups: Record<string, Array<{ index: number; file: string }>>
-  expressions: string[]
-  capabilities: ModelExpressionCapabilities
+  version?: string // v2.0 新增
+  name?: string // v1.0
+  modelName?: string // v2.0
+  motionGroups?: Record<string, Array<{ index: number; file: string }>> // v1.0
+  motions?: Array<{ id: string; name: string; category: string; duration: number }> // v2.0
+  expressions?: string[] | Array<{ id: string; name: string }> // v1.0 string[], v2.0 object[]
+  capabilities?: ModelExpressionCapabilities | { idleMode: string; llmControlled: boolean } // v2.0 扩展
   expressionCatalog?: ModelExpressionCatalogItem[]
   semanticPresets?: Record<string, string[]>
   discovery?: ModelDiscoveryInfo
@@ -89,7 +92,8 @@ export interface PerformElement {
   volume?: number
   speed?: number
 
-  // 动作
+  // 动作（v1.0 使用 group/index，v2.0 使用 name）
+  name?: string // v2.0: 别名
   group?: string
   index?: number
   priority?: number
@@ -98,13 +102,13 @@ export interface PerformElement {
   fadeOut?: number
   motionType?: string
 
-  // 表情
+  // 表情（v1.0 使用 id，v2.0 使用 name）
   id?: string | number
   combo?: PerformExpressionComboItem[]
   semantic?: PerformExpressionSemanticItem[]
   fade?: number
   holdMs?: number
-  resetPolicy?: PerformExpressionResetPolicy
+  resetPolicy?: PerformExpressionResetPolicy | 'fadeOut' | 'default' | 'hold' // v2.0 扩展
 
   // 图片/视频
   autoplay?: boolean
