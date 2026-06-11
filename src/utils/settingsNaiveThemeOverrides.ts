@@ -108,6 +108,18 @@ export function buildSettingsNaiveThemeOverrides(
     Alert: {
       ...base.Alert,
       color: isLight ? '#f8f7f5' : '#222a38'
+    },
+    DataTable: {
+      ...base.DataTable,
+      thColor: isLight ? '#f4f2ef' : '#283244',
+      thColorHover: isLight ? '#ebe9e4' : '#2f3a4d',
+      tdColor: isLight ? '#ffffff' : '#1e2634',
+      tdColorHover: isLight ? '#f8f7f5' : '#222a38',
+      tdColorStriped: isLight ? '#faf9f7' : '#1a2230',
+      borderColor: border,
+      thTextColor: text1,
+      tdTextColor: text1,
+      thFontWeight: '600'
     }
   }
 }

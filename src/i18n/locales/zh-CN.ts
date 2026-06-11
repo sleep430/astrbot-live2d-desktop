@@ -76,6 +76,7 @@ export default {
   'settings.menu.model': '模型',
   'settings.menu.model.current': '当前模型',
   'settings.menu.model.library': '模型库',
+  'settings.menu.model.config': '别名配置',
   'settings.menu.history': '历史',
   'settings.menu.history.messages': '消息列表',
   'settings.menu.history.statistics': '统计概览',
@@ -111,6 +112,7 @@ export default {
   'settings.page.connection.workspace.desc': '当前会话、用户与工作区运行状态一览。',
   'settings.page.model.current.desc': '当前加载模型、行为参数与主题色。',
   'settings.page.model.library.desc': '导入与管理本地模型库。',
+  'settings.page.model.config.desc': '配置模型动作和表情的别名，用于 LLM 控制。',
   'settings.page.model.library.selectHint': '在左侧选择一个模型查看详情与操作。',
   'settings.model.library.previewLoading': '正在加载预览…',
   'settings.model.library.previewFailed': '预览加载失败',
@@ -784,5 +786,33 @@ export default {
 
   // Settings — History media viewer
   'settings.history.mediaViewer.imageAlt': '历史消息图片放大预览',
-  'settings.history.mediaViewer.closeHint': '按 ESC 键或点击空白区域关闭'
+  'settings.history.mediaViewer.closeHint': '按 ESC 键或点击空白区域关闭',
+
+  // Settings — Model config
+  'settings.modelConfig.noModel': '当前未加载模型，请先在主窗口加载模型',
+  'settings.modelConfig.motions': '动作别名配置',
+  'settings.modelConfig.motionsDesc': '为模型的动作定义易记的别名，便于协议调用',
+  'settings.modelConfig.expressions': '表情别名配置',
+  'settings.modelConfig.expressionsDesc': '为模型的表情定义易记的别名，便于协议调用',
+  'settings.modelConfig.autoGenerate': '自动生成别名',
+  'settings.modelConfig.enabled': '启用',
+  'settings.modelConfig.motionId': '动作 ID',
+  'settings.modelConfig.expressionId': '表情 ID',
+  'settings.modelConfig.alias': '别名',
+  'settings.modelConfig.category': '类别',
+  'settings.modelConfig.idle': '待机',
+  'settings.modelConfig.action': '动作',
+  'settings.modelConfig.description': '描述',
+  'settings.modelConfig.save': '保存配置',
+  'settings.modelConfig.reload': '重新加载',
+  'settings.modelConfig.saved': '配置已保存',
+  'settings.modelConfig.saveFailed': '保存失败',
+  'settings.modelConfig.generated': '别名已自动生成',
+  'settings.modelConfig.motionCount':
+    '共 {count} 个动作（与 model3.json / 扫描目录一致；同文件只保留一条）',
+  'settings.modelConfig.preview': '预览',
+  'settings.modelConfig.previewFailed': '预览失败（请确认主窗口已加载模型）',
+  'settings.modelConfig.captureThumbnail': '捕获缩略图',
+  'settings.modelConfig.thumbnailCaptured': '已捕获主窗口画面',
+  'settings.modelConfig.thumbnailFailed': '捕获缩略图失败'
 }

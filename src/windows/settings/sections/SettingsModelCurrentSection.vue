@@ -48,7 +48,7 @@
             </template>
           </n-form-item>
           <n-form-item :label="$t('settings.model.current.persistentExpressions')">
-            <n-select
+            <NSelect
               multiple
               clearable
               filterable
@@ -63,68 +63,6 @@
             </template>
           </n-form-item>
         </n-form>
-      </template>
-      <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
-    </SettingsSubsection>
-
-    <SettingsSubsection
-      :title="$t('settings.model.current.expressions')"
-      :description="$t('settings.model.current.expressionDesc')"
-    >
-      <template #actions>
-        <n-button
-          size="small"
-          type="primary"
-          :disabled="
-            !currentModelPath || expressionTypeStatus === 'loading' || expressionTypeSaving
-          "
-          :loading="expressionTypeSaving"
-          @click="handleSaveExpressionTypes"
-        >
-          {{ $t('settings.model.current.saveExpression') }}
-        </n-button>
-      </template>
-
-      <template v-if="currentModelPath">
-        <n-alert
-          v-if="expressionTypeProfilePath"
-          type="info"
-          :show-icon="false"
-          class="expression-type-alert"
-        >
-          {{
-            $t('settings.model.current.expressionProfilePath', { path: expressionTypeProfilePath })
-          }}
-        </n-alert>
-
-        <div v-if="expressionTypeExpressions.length > 0" class="expression-type-groups">
-          <div
-            v-for="group in expressionTypeGroups"
-            :key="group.name"
-            class="expression-type-group"
-          >
-            <h3>{{ group.name }}</h3>
-            <div class="expression-type-grid">
-              <div v-for="type in group.items" :key="type.key" class="expression-type-row">
-                <div class="expression-type-row__meta">
-                  <strong>{{ type.label }}</strong>
-                  <code>{{ type.key }}</code>
-                </div>
-                <n-select
-                  multiple
-                  clearable
-                  filterable
-                  size="small"
-                  :options="expressionOptions"
-                  :value="expressionTypePresets[type.key]"
-                  :placeholder="$t('settings.model.current.unassigned')"
-                  @update:value="(value: string[]) => handleExpressionTypeChange(type.key, value)"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-        <n-empty v-else :description="$t('settings.model.current.noExpressions')" />
       </template>
       <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
     </SettingsSubsection>
@@ -155,13 +93,13 @@
             >
               <template #suffix>x</template>
             </n-input-number>
-            <n-button size="small" @click="handleResetModelScale">{{
+            <NButton size="small" @click="handleResetModelScale">{{
               $t('settings.model.current.resetScale')
-            }}</n-button>
+            }}</NButton>
           </n-space>
         </n-form-item>
         <n-form-item :label="$t('settings.model.current.themeFollowModel')">
-          <n-switch
+          <NSwitch
             v-model:value="advancedSettings.themeFollowModel"
             @update:value="handleThemeFollowChange"
           />
@@ -184,14 +122,9 @@
               :aria-label="$t('settings.model.current.pickColor')"
               @input="handleColorPick"
             />
-            <n-button
-              v-if="manualColorOverride"
-              size="tiny"
-              secondary
-              @click="handleResetAutoColor"
-            >
+            <NButton v-if="manualColorOverride" size="tiny" secondary @click="handleResetAutoColor">
               {{ $t('settings.model.current.resetAutoColor') }}
-            </n-button>
+            </NButton>
           </span>
         </div>
         <div class="settings-kv-list__row">
@@ -200,24 +133,93 @@
         </div>
       </div>
     </SettingsSubsection>
+
+    <SettingsSubsection
+      :title="$t('settings.modelConfig.motions')"
+      :description="$t('settings.modelConfig.motionsDesc')"
+    >
+      <template #actions>
+        <NButton v-if="currentModelPath" size="small" @click="autoGenerateAliases">
+          {{ $t('settings.modelConfig.autoGenerate') }}
+        </NButton>
+      </template>
+
+      <template v-if="currentModelPath">
+        <p v-if="motionAliases.length" class="model-alias-table-hint">
+          {{ $t('settings.modelConfig.motionCount', { count: motionAliases.length }) }}
+        </p>
+        <div class="model-alias-table-wrap">
+          <n-data-table
+            :columns="motionColumns"
+            :data="motionAliases"
+            :pagination="false"
+            :single-line="false"
+            :bordered="false"
+            striped
+            max-height="400px"
+          />
+        </div>
+      </template>
+      <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
+    </SettingsSubsection>
+
+    <SettingsSubsection
+      :title="$t('settings.modelConfig.expressions')"
+      :description="$t('settings.modelConfig.expressionsDesc')"
+    >
+      <template v-if="currentModelPath">
+        <div class="model-alias-table-wrap">
+          <n-data-table
+            :columns="expressionColumns"
+            :data="expressionAliases"
+            :pagination="false"
+            :single-line="false"
+            :bordered="false"
+            striped
+            max-height="300px"
+          />
+        </div>
+      </template>
+      <n-empty v-else :description="$t('settings.model.current.notLoaded')" />
+    </SettingsSubsection>
+
+    <SettingsSubsection v-if="currentModelPath">
+      <n-space>
+        <NButton type="primary" :loading="saving" @click="saveConfig">
+          {{ $t('settings.modelConfig.save') }}
+        </NButton>
+        <NButton @click="loadConfig">
+          {{ $t('settings.modelConfig.reload') }}
+        </NButton>
+        <NButton @click="captureModelThumbnail">
+          {{ $t('settings.modelConfig.captureThumbnail') }}
+        </NButton>
+      </n-space>
+    </SettingsSubsection>
   </SettingsPageScaffold>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, onMounted, watch, h } from 'vue'
+import { NButton, NInput, NSelect, NSwitch, useMessage } from 'naive-ui'
+import type { DataTableColumns } from 'naive-ui'
 import SettingsPageScaffold from '../shared/SettingsPageScaffold.vue'
 import SettingsSubsection from '../shared/SettingsSubsection.vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import {
-  createLive2DExpressionTypeMeta,
-  type Live2DExpressionTypeMeta
-} from '@/shared/live2dExpressionTypes'
 import { useThemeStore } from '@/stores/theme'
 import { useAdvancedSettingsDomain } from '../domains/createAdvancedSettingsDomain'
 import { useModelSettingsDomain } from '../domains/createModelSettingsDomain'
+import {
+  buildModelConfigFromCatalog,
+  generateExpressionAliasFromId,
+  generateMotionAliasFromId,
+  type ModelCatalogPayload
+} from '@/shared/modelConfigFactory'
+import { mergeAliasConfigWithCatalog, parseMotionIdParts } from '@/shared/modelAliasMerge'
 
 const { t } = useI18n()
+const message = useMessage()
 const { advancedSettings, handleThemeFollowChange } = useAdvancedSettingsDomain()
 const {
   currentModelDisplay,
@@ -227,23 +229,20 @@ const {
   currentModelStatusClass,
   currentModelStatusLabel,
   currentModelBehavior,
-  expressionTypeExpressions,
-  expressionTypePresets,
-  expressionTypeProfilePath,
-  expressionTypeSaving,
-  expressionTypeStatus,
-  handleExpressionTypeChange,
   handleIdleActivityChange,
   handlePersistentExpressionsChange,
   handleModelScaleChange,
   handleResetModelScale,
-  handleSaveExpressionTypes,
   sourceColor,
   themeSwatchStyle
 } = useModelSettingsDomain()
 
 const themeStore = useThemeStore()
 const { manualColorOverride } = storeToRefs(themeStore)
+
+const saving = ref(false)
+const motionAliases = ref<any[]>([])
+const expressionAliases = ref<any[]>([])
 
 function handleColorPick(event: Event) {
   const input = event.target as HTMLInputElement
@@ -260,29 +259,6 @@ function formatIdleActivity(value: number) {
   return `${Math.round(value * 100)}%`
 }
 
-const expressionTypeGroups = computed(() => {
-  const groups: Array<{ name: string; items: Live2DExpressionTypeMeta[] }> = []
-  for (const item of createLive2DExpressionTypeMeta(t)) {
-    let group = groups.find(candidate => candidate.name === item.group)
-    if (!group) {
-      group = { name: item.group, items: [] }
-      groups.push(group)
-    }
-    group.items.push(item)
-  }
-  return groups
-})
-
-const expressionOptions = computed(() =>
-  expressionTypeExpressions.value.map(entry => ({
-    label:
-      entry.aliases.length > 1
-        ? `${entry.id}（${entry.aliases.slice(1, 3).join('、')}）`
-        : entry.id,
-    value: entry.id
-  }))
-)
-
 const syncStatusLabel = computed(() => {
   if (!advancedSettings.value.themeFollowModel) {
     return t('settings.model.current.syncDisabled')
@@ -290,6 +266,250 @@ const syncStatusLabel = computed(() => {
   return currentModelPath.value
     ? t('settings.model.current.followingModel')
     : t('settings.model.current.waitingForModel')
+})
+
+const expressionOptions = computed(() =>
+  expressionAliases.value.map(row => ({
+    label: row.name || row.id,
+    value: row.id
+  }))
+)
+
+async function previewMotionRow(row: { id: string }) {
+  const { group, index } = parseMotionIdParts(row.id)
+  const result = await window.electron.model.previewMotion({
+    group,
+    index,
+    priority: 2,
+    loop: false
+  })
+  if (!result.success) {
+    message.warning(result.error || t('settings.modelConfig.previewFailed'))
+  }
+}
+
+async function previewExpressionRow(row: { id: string }) {
+  const result = await window.electron.model.previewExpression({
+    id: row.id,
+    holdMs: 2500,
+    resetPolicy: 'neutral',
+    fade: 200
+  })
+  if (!result.success) {
+    message.warning(result.error || t('settings.modelConfig.previewFailed'))
+  }
+}
+
+async function captureModelThumbnail() {
+  const result = await window.electron.model.captureThumbnail()
+  if (!result.success || !result.dataUrl) {
+    message.warning(result.error || t('settings.modelConfig.thumbnailFailed'))
+    return
+  }
+  message.success(t('settings.modelConfig.thumbnailCaptured'))
+  console.log('[别名配置] 缩略图 dataUrl 长度:', result.dataUrl.length)
+}
+
+const motionColumns = computed<DataTableColumns<any>>(() => [
+  {
+    key: 'enabled',
+    title: t('settings.modelConfig.enabled'),
+    width: 80,
+    render: row => h(NSwitch, { value: row.enabled, onUpdateValue: v => (row.enabled = v) })
+  },
+  { key: 'id', title: t('settings.modelConfig.motionId'), width: 120 },
+  {
+    key: 'name',
+    title: t('settings.modelConfig.alias'),
+    width: 150,
+    render: row => h(NInput, { value: row.name, onUpdateValue: v => (row.name = v), size: 'small' })
+  },
+  {
+    key: 'category',
+    title: t('settings.modelConfig.category'),
+    width: 120,
+    render: row =>
+      h(NSelect, {
+        value: row.category,
+        onUpdateValue: v => (row.category = v),
+        options: [
+          { label: t('settings.modelConfig.idle'), value: 'idle' },
+          { label: t('settings.modelConfig.action'), value: 'action' }
+        ],
+        size: 'small'
+      })
+  },
+  {
+    key: 'description',
+    title: t('settings.modelConfig.description'),
+    render: row =>
+      h(NInput, {
+        value: row.description,
+        onUpdateValue: v => (row.description = v),
+        size: 'small'
+      })
+  },
+  {
+    key: 'preview',
+    title: t('settings.modelConfig.preview'),
+    width: 90,
+    render: row =>
+      h(
+        NButton,
+        { size: 'tiny', secondary: true, onClick: () => void previewMotionRow(row) },
+        { default: () => t('settings.modelConfig.preview') }
+      )
+  }
+])
+
+const expressionColumns = computed<DataTableColumns<any>>(() => [
+  {
+    key: 'enabled',
+    title: t('settings.modelConfig.enabled'),
+    width: 80,
+    render: row => h(NSwitch, { value: row.enabled, onUpdateValue: v => (row.enabled = v) })
+  },
+  { key: 'id', title: t('settings.modelConfig.expressionId'), width: 120 },
+  {
+    key: 'name',
+    title: t('settings.modelConfig.alias'),
+    width: 150,
+    render: row => h(NInput, { value: row.name, onUpdateValue: v => (row.name = v), size: 'small' })
+  },
+  {
+    key: 'description',
+    title: t('settings.modelConfig.description'),
+    render: row =>
+      h(NInput, {
+        value: row.description,
+        onUpdateValue: v => (row.description = v),
+        size: 'small'
+      })
+  },
+  {
+    key: 'preview',
+    title: t('settings.modelConfig.preview'),
+    width: 90,
+    render: row =>
+      h(
+        NButton,
+        { size: 'tiny', secondary: true, onClick: () => void previewExpressionRow(row) },
+        { default: () => t('settings.modelConfig.preview') }
+      )
+  }
+])
+
+async function loadFromModelCatalog() {
+  const modelPath = currentModelPath.value
+  if (!modelPath) return
+
+  const catalogResult = await window.electron.model.getCatalog(modelPath)
+  if (!catalogResult.success || !catalogResult.catalog) {
+    console.log('[别名配置] 无法从主进程获取模型目录:', catalogResult.error)
+    return
+  }
+
+  const config = buildModelConfigFromCatalog(catalogResult.catalog as ModelCatalogPayload)
+  motionAliases.value = config.motionAliases
+  expressionAliases.value = config.expressionAliases
+  console.log(
+    '[别名配置] 从模型目录生成:',
+    motionAliases.value.length,
+    '个动作,',
+    expressionAliases.value.length,
+    '个表情'
+  )
+}
+
+async function loadConfig() {
+  const modelPath = currentModelPath.value
+  if (!modelPath) {
+    console.log('[别名配置] 没有当前模型')
+    return
+  }
+
+  console.log('[别名配置] 开始加载配置:', modelPath)
+  try {
+    const result = await window.electron.modelConfig.load(modelPath)
+
+    if (result.success && result.config) {
+      const catalogResult = await window.electron.model.getCatalog(modelPath)
+      if (catalogResult.success && catalogResult.catalog) {
+        const merged = mergeAliasConfigWithCatalog(
+          result.config,
+          catalogResult.catalog as ModelCatalogPayload
+        )
+        motionAliases.value = merged.motionAliases
+        expressionAliases.value = merged.expressionAliases
+        console.log(
+          '[别名配置] 已合并配置与目录:',
+          motionAliases.value.length,
+          '动作,',
+          expressionAliases.value.length,
+          '表情'
+        )
+      } else {
+        motionAliases.value = result.config.motionAliases
+        expressionAliases.value = result.config.expressionAliases
+      }
+    } else {
+      console.log('[别名配置] 无配置文件，从模型信息生成')
+      await loadFromModelCatalog()
+    }
+  } catch (error) {
+    console.error('[别名配置] 加载失败:', error)
+    await loadFromModelCatalog()
+  }
+}
+
+function autoGenerateAliases() {
+  motionAliases.value.forEach(m => {
+    if (!m.name || m.name === m.id) {
+      m.name = generateMotionAliasFromId(m.id)
+    }
+  })
+  expressionAliases.value.forEach(e => {
+    if (!e.name || e.name === e.id) {
+      e.name = generateExpressionAliasFromId(e.id)
+    }
+  })
+  message.success(t('settings.modelConfig.generated'))
+}
+
+async function saveConfig() {
+  const modelPath = currentModelPath.value
+  if (!modelPath) return
+
+  saving.value = true
+  try {
+    const config = {
+      modelPath,
+      version: '2.0',
+      motionAliases: motionAliases.value,
+      expressionAliases: expressionAliases.value
+    }
+
+    const result = await window.electron.modelConfig.save(config)
+    if (result.success) {
+      message.success(t('settings.modelConfig.saved'))
+    } else {
+      message.error(result.error || t('settings.modelConfig.saveFailed'))
+    }
+  } catch (error: any) {
+    message.error(error.message)
+  } finally {
+    saving.value = false
+  }
+}
+
+onMounted(() => {
+  console.log('[别名配置] 组件挂载, currentModelPath:', currentModelPath.value)
+  void loadConfig()
+})
+
+watch(currentModelPath, newPath => {
+  console.log('[别名配置] 模型切换:', newPath)
+  void loadConfig()
 })
 </script>
 
@@ -334,7 +554,7 @@ const syncStatusLabel = computed(() => {
   display: block;
   padding: 8px 10px;
   border-radius: var(--desktop-radius-control);
-  background: rgba(0, 0, 0, 0.14);
+  background: var(--settings-bg-surface);
   border: 1px solid var(--desktop-panel-border);
   color: var(--color-text-secondary);
   font-family: var(--font-mono);
@@ -351,6 +571,27 @@ const syncStatusLabel = computed(() => {
   min-width: 40px;
   color: var(--color-text-secondary);
   font-size: 12px;
+}
+
+.model-alias-table-hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+}
+
+.model-alias-table-wrap {
+  /* 外框与表色见 settings-shell.scss，随浅色/深色 --settings-* 切换 */
+}
+
+.model-alias-table-wrap :deep(.n-data-table-th),
+.model-alias-table-wrap :deep(.n-data-table-td) {
+  font-size: 12px;
+}
+
+.model-alias-table-wrap :deep(.n-input),
+.model-alias-table-wrap :deep(.n-base-selection) {
+  --n-color: var(--settings-control-bg);
+  --n-border: 1px solid var(--settings-control-border);
 }
 
 .expression-type-groups {

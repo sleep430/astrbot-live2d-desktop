@@ -26,6 +26,36 @@
   color: var(--color-text-primary);
 }
 
+.settings-window :deep(.n-data-table) {
+  --n-th-color: var(--settings-bg-surface-hover);
+  --n-td-color: var(--settings-bg-surface);
+  --n-td-color-striped: var(--settings-bg-content);
+  --n-border-color: var(--settings-border);
+  --n-th-text-color: var(--color-text-primary);
+  --n-td-text-color: var(--color-text-primary);
+}
+
+.settings-window :deep(.n-data-table .n-data-table-th) {
+  background-color: var(--settings-bg-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.settings-window :deep(.n-data-table .n-data-table-td) {
+  background-color: var(--settings-bg-surface);
+  color: var(--color-text-primary);
+}
+
+.settings-window :deep(.n-data-table-tr--striped .n-data-table-td) {
+  background-color: var(--settings-bg-content);
+}
+
+.settings-window :deep(.model-alias-table-wrap) {
+  border: 1px solid var(--settings-border);
+  border-radius: var(--desktop-radius-control, 10px);
+  overflow: hidden;
+  background: var(--settings-bg-surface);
+}
+
 .settings-shell-titlebar {
   display: grid;
   grid-template-columns: 1fr minmax(200px, 360px) auto;

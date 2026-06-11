@@ -113,7 +113,6 @@ export function createSettingsSectionRegistry(
       loader: () => import('./sections/SettingsModelCurrentSection.vue'),
       prepare: async force => {
         await advancedDomain.ensureBaseReady(force)
-        await modelDomain.ensureExpressionTypesReady(force)
       }
     },
     'model/library': {

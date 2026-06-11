@@ -81,6 +81,7 @@ const en: I18nMessageSchema = {
   'settings.menu.model': 'Model',
   'settings.menu.model.current': 'Current Model',
   'settings.menu.model.library': 'Model Library',
+  'settings.menu.model.config': 'Alias Config',
   'settings.menu.history': 'History',
   'settings.menu.history.messages': 'Messages',
   'settings.menu.history.statistics': 'Statistics',
@@ -118,6 +119,7 @@ const en: I18nMessageSchema = {
   'settings.page.connection.workspace.desc': 'Session, user, and workspace runtime status.',
   'settings.page.model.current.desc': 'Loaded model, behavior, and theme color.',
   'settings.page.model.library.desc': 'Import and manage your local model library.',
+  'settings.page.model.config.desc': 'Configure motion and expression aliases for LLM control.',
   'settings.page.model.library.selectHint': 'Select a model on the left to inspect and act.',
   'settings.model.library.previewLoading': 'Loading preview…',
   'settings.model.library.previewFailed': 'Preview failed to load',
@@ -822,7 +824,37 @@ const en: I18nMessageSchema = {
 
   // Settings — History media viewer
   'settings.history.mediaViewer.imageAlt': 'History message image enlarged preview',
-  'settings.history.mediaViewer.closeHint': 'Press ESC or click empty area to close'
+  'settings.history.mediaViewer.closeHint': 'Press ESC or click empty area to close',
+
+  // Settings — Model config
+  'settings.modelConfig.noModel': 'No model loaded, please load a model in the main window first',
+  'settings.modelConfig.motions': 'Motion Alias Configuration',
+  'settings.modelConfig.motionsDesc':
+    'Define memorable aliases for model motions for protocol calls',
+  'settings.modelConfig.expressions': 'Expression Alias Configuration',
+  'settings.modelConfig.expressionsDesc':
+    'Define memorable aliases for model expressions for protocol calls',
+  'settings.modelConfig.autoGenerate': 'Auto-generate Aliases',
+  'settings.modelConfig.enabled': 'Enabled',
+  'settings.modelConfig.motionId': 'Motion ID',
+  'settings.modelConfig.expressionId': 'Expression ID',
+  'settings.modelConfig.alias': 'Alias',
+  'settings.modelConfig.category': 'Category',
+  'settings.modelConfig.idle': 'Idle',
+  'settings.modelConfig.action': 'Action',
+  'settings.modelConfig.description': 'Description',
+  'settings.modelConfig.save': 'Save Config',
+  'settings.modelConfig.reload': 'Reload',
+  'settings.modelConfig.saved': 'Configuration saved',
+  'settings.modelConfig.saveFailed': 'Save failed',
+  'settings.modelConfig.generated': 'Aliases auto-generated',
+  'settings.modelConfig.motionCount':
+    '{count} motion(s) (from model3.json / scan; duplicate files deduped)',
+  'settings.modelConfig.preview': 'Preview',
+  'settings.modelConfig.previewFailed': 'Preview failed (load the model in the main window first)',
+  'settings.modelConfig.captureThumbnail': 'Capture thumbnail',
+  'settings.modelConfig.thumbnailCaptured': 'Main window captured',
+  'settings.modelConfig.thumbnailFailed': 'Failed to capture thumbnail'
 }
 
 export default en

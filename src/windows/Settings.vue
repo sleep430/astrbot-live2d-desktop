@@ -171,6 +171,11 @@ onMounted(async () => {
   await connectionStore.ensureInitialized()
   modelStore.startStorageSync()
   themeStore.startStorageSync()
+  themeStore.syncFromStorage()
+  const lastModelPath = modelStore.getLastModel()
+  if (lastModelPath) {
+    modelStore.setCurrentModel(lastModelPath)
+  }
 
   if (window.electron.settings?.onNavigateTo) {
     settingsWindowDisposers.push(
