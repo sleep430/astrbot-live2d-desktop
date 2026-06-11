@@ -1282,6 +1282,40 @@ export class CubismModel {
     )
   }
 
+  private scheduleLegacyExpressionHold(
+    request: CubismExpressionRequest,
+    legacyExpressionBefore: string | null
+  ): void {
+    const holdMs =
+      typeof request.holdMs === 'number' && Number.isFinite(request.holdMs)
+        ? Math.max(0, Math.floor(request.holdMs))
+        : 0
+    if (holdMs <= 0) {
+      return
+    }
+
+    const resetPolicy = request.resetPolicy ?? 'neutral'
+    const fadeOutMs = this.normalizeExpressionFadeMs(request.fade, 300)
+    const now = Date.now()
+
+    this.activeExpressionRuntime = {
+      members: [],
+      previous: null,
+      previousLegacyExpressionName: resetPolicy === 'previous' ? legacyExpressionBefore : null,
+      holdUntil: now + holdMs,
+      startedAt: now,
+      fadeInMs: 0,
+      fadeOutMs,
+      fadeOutStartedAt: null,
+      resetPolicy
+    }
+  }
+
+  private stopLegacyExpressionMotion(): void {
+    this.expressionManager?.stopAllMotions()
+    this.activeLegacyExpressionName = null
+  }
+
   private beginCustomExpressionRuntime(
     members: ResolvedExpressionMember[],
     request: CubismExpressionRequest
@@ -1353,6 +1387,10 @@ export class CubismModel {
       runtime.holdUntil = null
       runtime.previous = null
       runtime.previousLegacyExpressionName = null
+      if (runtime.members.length === 0) {
+        this.stopLegacyExpressionMotion()
+        this.activeExpressionRuntime = null
+      }
       return
     }
 
@@ -1367,6 +1405,8 @@ export class CubismModel {
   }
 
   private finishActiveExpressionRuntime(runtime: ActiveExpressionRuntime): void {
+    const hadLegacyOnly = runtime.members.length === 0 && Boolean(this.activeLegacyExpressionName)
+
     if (runtime.resetPolicy === 'previous' && runtime.previous?.length) {
       const now = Date.now()
       this.activeExpressionRuntime = {
@@ -1388,6 +1428,10 @@ export class CubismModel {
       this.activeExpressionRuntime = null
       this.playLegacyExpressionByName(previousLegacyExpressionName)
       return
+    }
+
+    if (hadLegacyOnly || this.activeLegacyExpressionName) {
+      this.stopLegacyExpressionMotion()
     }
 
     this.activeExpressionRuntime = null
@@ -1725,6 +1769,27 @@ export class CubismModel {
   }
 
   /**
+   * 是否处于「表演级」动作（会压制程序化待机噪声与自动眨眼）。
+   * 低优先级 Idle 循环待机不算表演，应与 noise+motion 并存。
+   */
+  private shouldSuppressIdleNoiseAndBlink(): boolean {
+    if (!this.motionManager) {
+      return false
+    }
+
+    const priority =
+      typeof this.motionManager.getCurrentPriority === 'function'
+        ? this.motionManager.getCurrentPriority()
+        : MotionPriority.None
+
+    if (priority <= MotionPriority.Idle) {
+      return false
+    }
+
+    return !this.motionManager.isFinished()
+  }
+
+  /**
    * 更新模型
    */
   update(): void {
@@ -1754,7 +1819,7 @@ export class CubismModel {
     // 增量效果都在快照之后注入，避免 add 偏移被写回基础状态而逐帧累积
     model.saveParameters()
 
-    if (!motionUpdated && this.eyeBlink) {
+    if (this.eyeBlink && (!motionUpdated || !this.shouldSuppressIdleNoiseAndBlink())) {
       this.eyeBlink.updateParameters(model, deltaTimeSeconds)
     }
 
@@ -1777,8 +1842,8 @@ export class CubismModel {
 
     // 程序化待机动画：动作演出期间淡出让位，结束后淡入恢复
     if (this.idleAnimator) {
-      const performing = this.motionManager ? !this.motionManager.isFinished() : false
-      for (const entry of this.idleAnimator.advance(deltaTimeSeconds, performing)) {
+      const suppressed = this.shouldSuppressIdleNoiseAndBlink()
+      for (const entry of this.idleAnimator.advance(deltaTimeSeconds, suppressed)) {
         model.addParameterValueById(this.getParameterIdHandle(entry.parameterId), entry.value)
       }
     }
@@ -1910,10 +1975,15 @@ export class CubismModel {
   /**
    * 播放动作
    */
-  motion(group: string, index: number = 0, priority: number = MotionPriority.Normal): void {
+  motion(
+    group: string,
+    index: number = 0,
+    priority: number = MotionPriority.Normal,
+    loop: boolean = false
+  ): void {
     // 待机循环每隔几秒重复触发，不打日志避免刷屏
     if (priority !== MotionPriority.Idle) {
-      console.log(`[CubismModel] 播放动作: ${group}[${index}] (优先级: ${priority})`)
+      console.log(`[CubismModel] 播放动作: ${group}[${index}] (优先级: ${priority}, 循环: ${loop})`)
     }
 
     if (!this.motionManager) {
@@ -1933,8 +2003,61 @@ export class CubismModel {
       return
     }
 
-    // 开始播放动作
-    this.motionManager.startMotion(motionData.motion, false, priority)
+    if (typeof (motionData.motion as { setLoop?: (v: boolean) => void }).setLoop === 'function') {
+      ;(motionData.motion as { setLoop: (v: boolean) => void }).setLoop(loop)
+    }
+
+    if (typeof this.motionManager.startMotionPriority === 'function') {
+      this.motionManager.startMotionPriority(motionData.motion, false, priority)
+    } else {
+      this.motionManager.startMotion(motionData.motion, false, priority)
+    }
+  }
+
+  /**
+   * 停止身体动作（保留表情等），用于结束待机循环
+   */
+  stopBodyMotions(): void {
+    this.motionManager?.stopAllMotions()
+  }
+
+  /**
+   * 获取已加载动作的时长（毫秒），无法读取时返回 0
+   */
+  getMotionDurationMs(group: string, index: number): number {
+    const motions = this.motionGroups.get(group)
+    if (!motions || index >= motions.length) {
+      return 0
+    }
+    const motionData = motions[index]
+    if (!motionData.motion) {
+      return 0
+    }
+    const durationSec = motionData.motion.getDuration()
+    if (!Number.isFinite(durationSec) || durationSec <= 0) {
+      return 0
+    }
+    return Math.round(durationSec * 1000)
+  }
+
+  /**
+   * 导出动作时长映射（motionId -> ms），供别名配置生成使用
+   */
+  getMotionDurationMap(): Record<string, number> {
+    const result: Record<string, number> = {}
+    this.motionGroups.forEach((motions, groupName) => {
+      motions.forEach((motion, index) => {
+        if (!motion.motion) {
+          return
+        }
+        const motionId = `${groupName}_${String(index).padStart(2, '0')}`
+        const ms = this.getMotionDurationMs(groupName, index)
+        if (ms > 0) {
+          result[motionId] = ms
+        }
+      })
+    })
+    return result
   }
 
   /**
@@ -1973,7 +2096,9 @@ export class CubismModel {
       return
     }
 
+    const legacyExpressionBefore = this.activeLegacyExpressionName
     if (this.playLegacyExpressionByName(expressionName)) {
+      this.scheduleLegacyExpressionHold(request, legacyExpressionBefore)
       return
     }
 

@@ -17,9 +17,7 @@ export type PerformElementType =
   | 'delay'
   | 'wait'
 
-export interface PerformElement extends Omit<ProtocolPerformElement, 'type'> {
-  type: PerformElementType | ProtocolPerformElement['type'] | string
-}
+export type PerformElement = ProtocolPerformElement
 
 export interface PerformSequence {
   sequence: PerformElement[]
@@ -34,7 +32,7 @@ type MaybePromise<T> = T | Promise<T>
 
 type TextCallback = (content: string, position: string, duration: number) => MaybePromise<void>
 
-type MotionCallback = (group: string, index: number, priority: number) => MaybePromise<void>
+type MotionCallback = (element: PerformElement) => MaybePromise<void>
 
 type ExpressionCallback = (element: PerformElement) => MaybePromise<void>
 
@@ -207,6 +205,7 @@ export class PerformanceQueue {
   private onAudioCallback?: AudioCallback
   private onImageCallback?: ImageCallback
   private onVideoCallback?: VideoCallback
+  private onIdleCallback?: () => void
 
   /**
    * 设置文字显示回调
@@ -248,6 +247,13 @@ export class PerformanceQueue {
    */
   onVideo(callback: VideoCallback) {
     this.onVideoCallback = callback
+  }
+
+  /**
+   * 设置队列空闲回调
+   */
+  onIdle(callback: () => void) {
+    this.onIdleCallback = callback
   }
 
   /**
@@ -327,6 +333,11 @@ export class PerformanceQueue {
       this.sequenceStates.splice(completedIndex, 1)
     }
     this.activeInterruptible = this.sequenceStates[0]?.interruptible ?? true
+
+    // 所有序列完成，触发空闲回调
+    if (this.sequenceStates.length === 0 && this.onIdleCallback) {
+      this.onIdleCallback()
+    }
   }
 
   private async dispatchElement(
@@ -387,14 +398,11 @@ export class PerformanceQueue {
               return
             }
 
-            if (!this.onMotionCallback || !element.group) {
+            if (!this.onMotionCallback) {
               return
             }
 
-            await withAbort(
-              this.onMotionCallback(element.group, element.index ?? 0, element.priority ?? 2),
-              taskSignal
-            )
+            await withAbort(this.onMotionCallback(element), taskSignal)
           } finally {
             this.completeSequenceElement(sequenceState)
           }
@@ -514,6 +522,13 @@ export class PerformanceQueue {
         console.warn('[表演队列] 未知的元素类型:', element.type)
         this.completeSequenceElement(sequenceState)
     }
+  }
+
+  /**
+   * 是否没有待完成的表演序列
+   */
+  hasPendingSequences(): boolean {
+    return this.sequenceStates.length > 0
   }
 
   /**

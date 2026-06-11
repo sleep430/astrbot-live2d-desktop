@@ -184,9 +184,17 @@ function getModelInfo(): CubismModelInfo {
 /**
  * 播放动作
  */
-function playMotion(group: string, index: number = 0, priority?: number) {
+function playMotion(group: string, index: number = 0, priority?: number, loop?: boolean) {
   if (!model) return
-  model.motion(group, index, priority)
+  model.motion(group, index, priority, loop ?? false)
+}
+
+function stopBodyMotions() {
+  model?.stopBodyMotions()
+}
+
+function getMotionDurationMap(): Record<string, number> {
+  return model?.getMotionDurationMap() ?? {}
 }
 
 /**
@@ -636,6 +644,8 @@ defineExpose({
   loadModel,
   getModelInfo,
   playMotion,
+  stopBodyMotions,
+  getMotionDurationMap,
   setExpression,
   playRandomMotion,
   getModelPosition,
