@@ -141,7 +141,7 @@ export function useBubbleStack(options: UseBubbleStackOptions) {
     const data = stack.map((entry, i) => {
       const el = bubbleElMap.get(entry.id)
       const contentEl = bubbleContentElMap.get(entry.id)
-      const tier = stack.length - 1 - i
+      const tier = Math.min(stack.length - 1 - i, 2)
       const cssMaxH = getTierCSSMaxHeight(tier, viewportHeight)
       const contentScrollH = contentEl?.scrollHeight ?? 56
       const naturalH = Math.min(contentScrollH + 24, cssMaxH)
@@ -381,10 +381,13 @@ export function useBubbleStack(options: UseBubbleStackOptions) {
       clearAllBubbles()
     }
 
+    // 移除强制删除逻辑，改为依赖每个气泡的自然生命周期
+    // 当超过配置的最大值时，加速最老气泡的生命周期
     if (bubbleStack.value.length >= getBubbleStackMax()) {
-      const oldest = bubbleStack.value[0]
-      freezeEntry(oldest)
-      bubbleStack.value.splice(0, 1)
+      const oldest = bubbleStack.value.find(e => e.typingDone && !e.pinned && !e.hideTimerId)
+      if (oldest) {
+        startEntryHideTimer(oldest)
+      }
     }
 
     const runtimeItems = createBubbleItems(bubbleItems)

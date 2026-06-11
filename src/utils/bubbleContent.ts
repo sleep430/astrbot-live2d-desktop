@@ -136,12 +136,5 @@ export function splitPerformSequenceForBubble(
 }
 
 export function computeBubbleAutoHideDelay(items: BubbleRenderableItem[]): number {
-  const textLength = items.reduce((total, item) => {
-    return item.type === 'text' ? total + item.text.length : total
-  }, 0)
-  const imageCount = items.reduce((total, item) => {
-    return item.type === 'image' ? total + 1 : total
-  }, 0)
-
-  return Math.max(5000, textLength * 100, imageCount * 2500)
+  return 5000
 }
