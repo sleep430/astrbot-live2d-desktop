@@ -1,36 +1,36 @@
-# Getting Started
+# 快速开始
 
-## Install The Pieces
+## 安装组件
 
-1. Install AstrBot and enable `astrbot_plugin_live2d_adapter`.
-2. Launch AstrBot with the adapter enabled.
-3. Open AstrBot Live2D Desktop.
-4. In desktop settings, set the bridge URL to `ws://127.0.0.1:9090/astrbot/live2d`.
-5. Use the same auth token on both sides.
+1. 安装 AstrBot，并启用 `astrbot_plugin_live2d_adapter`。
+2. 启动 AstrBot，确认适配器已加载。
+3. 打开 AstrBot Live2D Desktop。
+4. 在桌面端设置中，将桥接地址设为 `ws://127.0.0.1:9090/astrbot/live2d`。
+5. 确保桌面端和适配器使用同一个认证 token。
 
-## Import A Model
+## 导入模型
 
-The desktop client supports Cubism 3/4 `.model3.json` entries. Import a model directory from the model library. After import, the client scans motions and expressions from:
+桌面端支持 Cubism 3/4 的 `.model3.json` 入口。你可以从模型库导入一个模型目录。导入后，桌面端会从这些来源扫描动作和表情：
 
-1. `.model3.json` standard declarations.
-2. `.vtube.json` companion declarations.
-3. Directory scan fallback for `.motion3.json` and `.exp3.json`.
+1. `.model3.json` 标准声明。
+2. `.vtube.json` 伴随声明。
+3. 目录扫描兜底，查找 `.motion3.json` 和 `.exp3.json`。
 
-## Verify Connection
+## 验证连接
 
-After connecting, the desktop client sends:
+连接成功后，桌面端会发送：
 
 - `sys.handshake`
 - `state.ready`
 - `state.model`
 
-For v1.5.0, `state.model` uses the v2 alias extension by default. The adapter stores the payload and uses it when converting AstrBot replies or planner follow-up sequences.
+从 v1.5.0 开始，`state.model` 默认使用 v2 别名扩展。适配器会保存这份 payload，并在转换 AstrBot 回复或规划器后续序列时使用它。
 
-## Recommended Smoke Test
+## 推荐冒烟测试
 
-Send a normal AstrBot message and confirm:
+发送一条普通 AstrBot 消息，并确认：
 
-- A text bubble appears.
-- Audio/media elements play if present.
-- The adapter log shows a `perform.show` sequence.
-- The model info log includes v2 motions and expressions when aliases are available.
+- 桌面端出现文本气泡。
+- 如果消息包含音频或媒体资源，能正常播放。
+- 适配器日志出现 `perform.show` 序列。
+- 如果模型存在别名，模型信息日志包含 v2 motions 与 expressions。

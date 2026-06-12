@@ -1,22 +1,22 @@
-# Release Compatibility
+# 发布兼容性
 
-## Version Matrix
+## 版本矩阵
 
-| Desktop | Adapter | Status |
+| 桌面端 | 适配器 | 状态 |
 | --- | --- | --- |
-| 1.5.0 | `9689fd3` or newer | Recommended for v2 alias payloads. |
-| 1.5.0 | older adapter | Basic v1 behavior may work, alias planner behavior may be incomplete. |
-| 1.4.x | current adapter | v1 protocol path remains compatible. |
+| 1.5.0 | `9689fd3` 或更新 | 推荐组合，可完整使用 v2 alias payload。 |
+| 1.5.0 | 旧适配器 | 基础 v1 行为可能可用，但别名规划器行为可能不完整。 |
+| 1.4.x | 当前适配器 | v1 协议路径仍保持兼容。 |
 
-## Release Checklist
+## 发布检查清单
 
-Before publishing a desktop release:
+发布桌面端版本前：
 
 1. Run `pnpm test`.
 2. Run `pnpm run typecheck`.
 3. Run `pnpm run docs:build`.
-4. Confirm GitHub `Cross-Platform Smoke` is green on `master`.
-5. Bump `package.json` to a new version.
-6. Push a matching `vX.Y.Z` tag.
+4. 确认 GitHub `Cross-Platform Smoke` 在 `master` 上是绿色。
+5. 将 `package.json` 升到新版本。
+6. 推送匹配的 `vX.Y.Z` tag。
 
-The build workflow validates that the pushed tag matches `package.json`.
+构建 workflow 会校验推送的 tag 是否与 `package.json` 版本一致。

@@ -1,36 +1,36 @@
-# Model Alias Configuration
+# 模型别名配置
 
-Model aliases translate model-specific files into names that are useful to users and LLM planners.
+模型别名用于把模型内部文件转换成用户和 LLM 规划器都容易理解的名称。
 
-## Motion Aliases
+## 动作别名
 
-Each motion alias contains:
+每个动作别名包含：
 
-| Field | Meaning |
+| 字段 | 含义 |
 | --- | --- |
-| `id` | Stable motion ID such as `TapBody_00`. |
-| `name` | Alias used by `perform.show` v2. |
-| `category` | `idle` or `action`. |
-| `duration` | Estimated duration in milliseconds. |
-| `enabled` | Whether the alias is exposed to the adapter. |
+| `id` | 稳定动作 ID，例如 `TapBody_00`。 |
+| `name` | `perform.show` v2 使用的别名。 |
+| `category` | `idle` 或 `action`。 |
+| `duration` | 预估动作时长，单位毫秒。 |
+| `enabled` | 是否向适配器暴露该别名。 |
 
-## Expression Aliases
+## 表情别名
 
-Each expression alias contains:
+每个表情别名包含：
 
-| Field | Meaning |
+| 字段 | 含义 |
 | --- | --- |
-| `id` | Runtime expression ID. |
-| `name` | Alias used by `perform.show` v2. |
-| `thumbnail` | Optional captured thumbnail. |
-| `enabled` | Whether the alias is exposed to the adapter. |
+| `id` | 运行时表情 ID。 |
+| `name` | `perform.show` v2 使用的别名。 |
+| `thumbnail` | 可选的表情缩略图。 |
+| `enabled` | 是否向适配器暴露该别名。 |
 
-## Recommended Workflow
+## 推荐流程
 
-1. Load a model.
-2. Open the model settings page.
-3. Auto-generate aliases from the scanned catalog.
-4. Preview motions and expressions.
-5. Rename aliases into stable, readable labels.
-6. Save the model config.
-7. Reconnect or reload the model so the adapter receives the new `state.model`.
+1. 加载模型。
+2. 打开模型设置页。
+3. 基于扫描目录自动生成别名。
+4. 预览动作和表情。
+5. 将别名改成稳定、可读的标签。
+6. 保存模型配置。
+7. 重新连接或重新加载模型，让适配器收到新的 `state.model`。

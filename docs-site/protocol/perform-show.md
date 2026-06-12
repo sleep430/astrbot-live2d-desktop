@@ -1,6 +1,6 @@
 # Perform Show
 
-`perform.show` asks the desktop client to display a sequence.
+`perform.show` 用来请求桌面端执行一段展示序列。
 
 ```json
 {
@@ -16,28 +16,28 @@
 }
 ```
 
-## Element Types
+## 元素类型
 
-| Type | Important Fields |
+| 类型 | 关键字段 |
 | --- | --- |
 | `text` | `content`, `position` |
 | `tts` / `audio` | `text`, `url`, `rid`, `inline`, `volume` |
 | `image` / `video` | `url`, `rid`, `inline`, `autoplay` |
-| `motion` | v2 `name`, or v1 `group` + `index` |
-| `expression` | v2 `name`, v1 `id`, `combo`, `semantic`, `holdMs`, `resetPolicy` |
+| `motion` | v2 `name`，或 v1 `group` + `index` |
+| `expression` | v2 `name`、v1 `id`、`combo`、`semantic`、`holdMs`、`resetPolicy` |
 | `wait` / `delay` | `duration` |
 
-## Interrupt Rules
+## 打断规则
 
-- `interrupt: true`: clear current performance unless the desktop treats it as a follow-up.
-- `interrupt: false`: append or enqueue without clearing current bubbles.
-- `interruptible: true`: allows a later sequence to replace this follow-up safely.
+- `interrupt: true`：清除当前表演，除非桌面端将其视为 follow-up。
+- `interrupt: false`：不清除当前气泡，追加或排队执行。
+- `interruptible: true`：允许后续序列安全替换这段 follow-up。
 
-## Expression Reset
+## 表情重置
 
-The desktop runtime currently supports practical reset policies including:
+桌面端运行时目前支持这些常用重置策略：
 
-- `previous`: return to the previous expression state.
-- `neutral`: fade back to neutral.
-- `keep`: leave the expression applied.
-- `fadeOut` / `default` / `hold`: accepted by the v2 adapter path for compatibility with planner prompts.
+- `previous`：回到之前的表情状态。
+- `neutral`：淡出并回到中性状态。
+- `keep`：保持当前表情。
+- `fadeOut` / `default` / `hold`：v2 适配器路径会接受这些值，以兼容规划器 prompt。
