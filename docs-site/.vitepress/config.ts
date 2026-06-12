@@ -29,8 +29,13 @@ const zhSidebar = [
     text: '协议',
     items: [
       { text: '协议总览', link: '/protocol/overview' },
+      { text: '连接与握手', link: '/protocol/connection' },
+      { text: '输入事件', link: '/protocol/input-events' },
       { text: 'State Model v2', link: '/protocol/state-model-v2' },
-      { text: 'Perform Show', link: '/protocol/perform-show' }
+      { text: 'Perform Show', link: '/protocol/perform-show' },
+      { text: '资源协议', link: '/protocol/resources' },
+      { text: '桌面感知 RPC', link: '/protocol/desktop-rpc' },
+      { text: '错误码', link: '/protocol/errors' }
     ]
   },
   {
@@ -56,8 +61,13 @@ const enSidebar = [
     text: 'Protocol',
     items: [
       { text: 'Overview', link: '/en/protocol/overview' },
+      { text: 'Connection', link: '/en/protocol/connection' },
+      { text: 'Input Events', link: '/en/protocol/input-events' },
       { text: 'State Model v2', link: '/en/protocol/state-model-v2' },
-      { text: 'Perform Show', link: '/en/protocol/perform-show' }
+      { text: 'Perform Show', link: '/en/protocol/perform-show' },
+      { text: 'Resources', link: '/en/protocol/resources' },
+      { text: 'Desktop RPC', link: '/en/protocol/desktop-rpc' },
+      { text: 'Errors', link: '/en/protocol/errors' }
     ]
   },
   {

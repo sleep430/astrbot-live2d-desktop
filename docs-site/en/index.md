@@ -10,8 +10,8 @@ hero:
       text: Get Started
       link: /en/guide/getting-started
     - theme: alt
-      text: Protocol v2
-      link: /en/protocol/state-model-v2
+      text: Protocol Reference
+      link: /en/protocol/overview
 
 features:
   - title: Desktop Client
@@ -35,6 +35,10 @@ features:
 - [Getting Started](./guide/getting-started.md): install, connect, import a model, and verify the bridge.
 - [Architecture](./guide/architecture.md): how the desktop app, adapter, AstrBot, and model runtime cooperate.
 - [Protocol Overview](./protocol/overview.md): packet layers and compatibility rules.
+- [Connection](./protocol/connection.md): WebSocket, token, handshake response, heartbeat, and resource config.
+- [Input Events](./protocol/input-events.md): message chains, touches, shortcuts, and desktop notifications.
 - [State Model v2](./protocol/state-model-v2.md): model alias payload sent by the desktop client.
 - [Perform Show](./protocol/perform-show.md): text, media, motion, expression, and alias execution.
+- [Resources](./protocol/resources.md): `url` / `rid` / `inline` references and resource upload flow.
+- [Desktop RPC](./protocol/desktop-rpc.md): window list, active window, screenshots, and tool calls.
 - [Model Aliases](./model-config/overview.md): how to configure motion and expression names.

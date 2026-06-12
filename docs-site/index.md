@@ -10,8 +10,8 @@ hero:
       text: 快速开始
       link: /guide/getting-started
     - theme: alt
-      text: 协议 v2
-      link: /protocol/state-model-v2
+      text: 协议参考
+      link: /protocol/overview
 
 features:
   - title: 桌面端
@@ -35,6 +35,10 @@ features:
 - [快速开始](./guide/getting-started.md)：安装、连接、导入模型并验证桥接链路。
 - [架构](./guide/architecture.md)：桌面端、适配器、AstrBot 与模型运行时如何协作。
 - [协议总览](./protocol/overview.md)：包结构、协议分层与兼容性规则。
+- [连接与握手](./protocol/connection.md)：WebSocket、token、握手响应、心跳与资源配置。
+- [输入事件](./protocol/input-events.md)：消息链、触摸、快捷键与桌面主动通知。
 - [State Model v2](./protocol/state-model-v2.md)：桌面端上报的模型别名能力 payload。
 - [Perform Show](./protocol/perform-show.md)：文本、媒体、动作、表情与别名执行。
+- [资源协议](./protocol/resources.md)：`url` / `rid` / `inline` 引用和资源上传流程。
+- [桌面感知 RPC](./protocol/desktop-rpc.md)：窗口列表、活跃窗口、截图和工具调用。
 - [模型别名](./model-config/overview.md)：如何配置动作和表情名称。
