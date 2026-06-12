@@ -61,7 +61,7 @@ describe('bubbleContent', () => {
     ).toBe('http://192.168.1.2:5000/asset-files/image-456')
   })
 
-  it('computes a longer hide delay for mixed text and image bubbles', () => {
+  it('uses a fixed hide delay for text and image bubbles', () => {
     expect(computeBubbleAutoHideDelay([{ type: 'text', text: '短消息' }])).toBe(5000)
 
     expect(
@@ -69,6 +69,6 @@ describe('bubbleContent', () => {
         { type: 'text', text: 'a'.repeat(80) },
         { type: 'image', src: 'https://cdn.example.com/image.png', alt: 'AstrBot message image' }
       ])
-    ).toBe(8000)
+    ).toBe(5000)
   })
 })

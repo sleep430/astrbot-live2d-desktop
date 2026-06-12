@@ -255,16 +255,6 @@ export function useBubbleStack(options: UseBubbleStackOptions) {
     }
   }
 
-  function freezeEntry(entry: BubbleEntry) {
-    entry.typingVer++
-    for (const item of entry.items) {
-      if (item.type === 'text') {
-        ;(item as BubbleTextItem).renderedText = (item as BubbleTextItem).fullText
-      }
-    }
-    entry.typingDone = true
-  }
-
   // ─── 自动隐藏 ──────────────────────────────────────────────
 
   function computeEntryAutoHideDelay(entry: BubbleEntry): number {

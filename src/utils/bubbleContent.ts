@@ -135,6 +135,6 @@ export function splitPerformSequenceForBubble(
   }
 }
 
-export function computeBubbleAutoHideDelay(items: BubbleRenderableItem[]): number {
+export function computeBubbleAutoHideDelay(_items: BubbleRenderableItem[]): number {
   return 5000
 }

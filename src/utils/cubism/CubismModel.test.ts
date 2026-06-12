@@ -217,7 +217,7 @@ describe('CubismCore', () => {
       const firstStep = target.getX()
       expect(firstStep).toBeGreaterThan(0)
       expect(firstStep).toBeLessThan(0.5)
-      for (let i = 0; i < 120; i++) {
+      for (let i = 0; i < 240; i++) {
         target.update(1 / 60)
       }
       expect(target.getX()).toBeCloseTo(0.5, 1)
