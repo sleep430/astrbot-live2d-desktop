@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { ref, watch, getCurrentInstance } from 'vue'
 import type { SupportedLocale } from '@/i18n'
 
 const STORAGE_KEY = 'app_locale'
@@ -38,16 +37,19 @@ export const useLocaleStore = defineStore('locale', () => {
   // Sync with vue-i18n instance (called after i18n plugin is installed)
   function bindI18n() {
     try {
-      const i18nInstance = useI18n()
-      watch(
-        locale,
-        val => {
-          i18nInstance.locale.value = val as 'en' | 'zh-CN'
-        },
-        { immediate: true }
-      )
+      const instance = getCurrentInstance()
+      const i18n = instance?.appContext.config.globalProperties.$i18n
+      if (i18n && i18n.locale) {
+        watch(
+          locale,
+          val => {
+            i18n.locale = val as 'en' | 'zh-CN'
+          },
+          { immediate: true }
+        )
+      }
     } catch {
-      // useI18n may not be available yet during initial app setup
+      // i18n may not be available yet during initial app setup
     }
   }
 
