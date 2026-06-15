@@ -1,4 +1,4 @@
-import { BrowserWindow, screen } from 'electron'
+import { BrowserWindow, screen, app } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { resolveAppIconPath } from '../utils/icon'
@@ -40,7 +40,7 @@ export function createMainWindow(): BrowserWindow {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
+      preload: path.join(app.getAppPath(), 'dist-electron', 'preload.js'),
       backgroundThrottling: false
     }
   })

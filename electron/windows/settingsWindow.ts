@@ -1,4 +1,4 @@
-import { BrowserWindow, ipcMain } from 'electron'
+import { BrowserWindow, ipcMain, app } from 'electron'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { resolveAppIconPath } from '../utils/icon'
@@ -57,7 +57,7 @@ export function createSettingsWindow(page?: string): BrowserWindow {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js')
+      preload: path.join(app.getAppPath(), 'dist-electron', 'preload.js')
     }
   })
 
@@ -68,13 +68,41 @@ export function createSettingsWindow(page?: string): BrowserWindow {
 
   const isDev = isRendererDevMode()
 
-  void loadRendererEntry(settingsWindow, 'settings')
-  if (isDev) {
-    settingsWindow.webContents.openDevTools({ mode: 'detach' })
-  }
+  console.log('[设置窗口] 开发模式:', isDev)
+  console.log('[设置窗口] app.isPackaged:', app.isPackaged)
+  console.log('[设置窗口] NODE_ENV:', process.env.NODE_ENV)
+  console.log('[设置窗口] app.getAppPath():', app.getAppPath())
 
-  settingsWindow.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
-    console.error('[设置窗口] 页面加载失败:', errorCode, errorDescription)
+  // 强制打开开发者工具以查看渲染进程错误
+  settingsWindow.webContents.openDevTools({ mode: 'detach' })
+
+  // 监听渲染进程的控制台消息
+  settingsWindow.webContents.on('console-message', (_event, level, message, line, sourceId) => {
+    console.log(`[设置窗口渲染进程] [${level}] ${message} (${sourceId}:${line})`)
+  })
+
+  // 监听渲染进程崩溃
+  settingsWindow.webContents.on('render-process-gone', (_event, details) => {
+    console.error('[设置窗口] 渲染进程崩溃:', details)
+  })
+
+  void loadRendererEntry(settingsWindow, 'settings')
+    .then(() => {
+      console.log('[设置窗口] loadRendererEntry 完成')
+    })
+    .catch(err => {
+      console.error('[设置窗口] loadRendererEntry 失败:', err)
+    })
+
+  settingsWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL) => {
+      console.error('[设置窗口] 页面加载失败:', errorCode, errorDescription, validatedURL)
+    }
+  )
+
+  settingsWindow.webContents.on('did-finish-load', () => {
+    console.log('[设置窗口] 页面加载完成')
   })
 
   rendererReady = false
