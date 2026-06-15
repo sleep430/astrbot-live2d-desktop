@@ -89,25 +89,7 @@ export default defineConfig({
             return 'echarts'
           }
 
-          // Vue 核心库
-          if (
-            id.includes('node_modules/vue') ||
-            id.includes('node_modules/@vue') ||
-            id.includes('node_modules/pinia')
-          ) {
-            return 'vue-vendor'
-          }
-
-          // 工具库
-          if (
-            id.includes('node_modules/axios') ||
-            id.includes('node_modules/date-fns') ||
-            id.includes('node_modules/uuid')
-          ) {
-            return 'utils'
-          }
-
-          // 其他 node_modules - 通用 vendor
+          // 所有 node_modules 打包到 vendor（不再细分 vue-vendor）
           if (id.includes('node_modules')) {
             return 'vendor'
           }
