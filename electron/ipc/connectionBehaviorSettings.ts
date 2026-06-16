@@ -77,7 +77,9 @@ ipcMain.handle('connectionBehaviorSettings:migrateLegacy', async (event, rawLega
   })
   const result = migrateLegacyConnectionBehaviorSettings(rawLegacyJson)
   if (result.success) {
-    await getBridgeConnectionController()?.handleBehaviorSettingsUpdated(result.data, {
+    // 迁移保存后，启动连接决策异步执行（fire-and-forget），不阻塞渲染进程 ready。
+    // 避免设置页 onMounted 等待自动连接 WebSocket 握手/超时。
+    void getBridgeConnectionController()?.handleBehaviorSettingsUpdated(result.data, {
       resolveStartupDecision: true
     })
     broadcastBehaviorSettingsChanged(result.data, getSourceWindowId(event))
