@@ -19,6 +19,9 @@ import {
 const logger = createScopedLogger('ipc.model')
 const EXPRESSION_PROFILE_FILE_NAME = 'astrbot.live2d.profile.json'
 
+// 主进程维护 pending model path，避免设置页发送 model:load 时主窗口未就绪丢消息
+let pendingModelPath: string | null = null
+
 type ExpressionProfilePayload = {
   version?: unknown
   modelId?: unknown
@@ -678,11 +681,13 @@ ipcMain.handle(
 )
 
 /**
- * 加载模型到主窗口
+ * 加载模型到主窗口（设置页请求）
+ * 改为主进程保存 pending model path，由渲染进程 ready 后主动拉取，避免消息丢失
  */
 ipcMain.handle('model:load', async (_event, modelPath: string) => {
   const timer = logger.timer('load', { modelPath })
   try {
+    pendingModelPath = modelPath
     const mainWindow = getMainWindow()
     if (mainWindow) {
       mainWindow.webContents.send('model:load', modelPath)
@@ -694,6 +699,15 @@ ipcMain.handle('model:load', async (_event, modelPath: string) => {
     timer.fail(error)
     return { success: false, error: error.message }
   }
+})
+
+/**
+ * 渲染进程 ready 后拉取 pending model path
+ */
+ipcMain.handle('model:getPendingLoad', async () => {
+  const path = pendingModelPath
+  pendingModelPath = null
+  return { success: true, modelPath: path }
 })
 
 async function copyDirectory(source: string, target: string): Promise<void> {

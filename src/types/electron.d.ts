@@ -343,6 +343,7 @@ declare global {
           presets: Live2DExpressionTypePresetMap
         ) => Promise<Live2DExpressionTypesSaveResult>
         load: (modelPath: string) => Promise<{ success: boolean; error?: string }>
+        getPendingLoad: () => Promise<{ success: boolean; modelPath?: string | null }>
         onLoad: (callback: (modelPath: string) => void) => Unsubscribe
       }
       modelConfig: {
