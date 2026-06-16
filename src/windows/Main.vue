@@ -1328,6 +1328,7 @@ onMounted(async () => {
   )
 
   // 主窗口 ready 后，拉取可能在 onLoad 注册前发送的 pending model path
+  let consumedPendingLoad = false
   try {
     const pendingResult = await window.electron.model.getPendingLoad()
     if (pendingResult.success && pendingResult.modelPath) {
@@ -1337,6 +1338,7 @@ onMounted(async () => {
         modelLoadInFlight = true
         try {
           await loadModelWithState(pendingResult.modelPath)
+          consumedPendingLoad = true
         } catch (error: any) {
           loadingModelPath.value = ''
           hasModel.value = false
@@ -1421,7 +1423,10 @@ onMounted(async () => {
   )
 
   const lastModelPath = modelStore.getLastModel()
-  if (advancedSettings.value.autoLoadLastModel && lastModelPath) {
+  // 如果 pending 模型加载成功，跳过自动加载（避免重复加载）
+  if (consumedPendingLoad) {
+    console.log('[主窗口] 已加载 pending 模型，跳过自动加载')
+  } else if (advancedSettings.value.autoLoadLastModel && lastModelPath) {
     console.log('[主窗口] 自动加载上次模型:', lastModelPath)
 
     try {
