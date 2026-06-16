@@ -3,12 +3,16 @@ import path from 'node:path'
 import { getAppDataPathContext } from './appPaths'
 
 export const APP_DATA_MIGRATION_MARKER_FILE = '.app-data-migration-v1.json'
+export const APP_DATA_MIGRATION_CRITICAL_MARKER_FILE = '.app-data-migration-critical-v1.json'
+export const APP_DATA_MIGRATION_BACKGROUND_MARKER_FILE = '.app-data-migration-background-v1.json'
 
 // 关键数据：必须在 initDatabase 前同步迁移（避免目标已存在导致跳过）
+// lib 必须同步（Core 检查依赖），history.db/配置/存储（DB 初始化依赖）
 export const APP_DATA_MIGRATION_CRITICAL_ENTRIES = [
   'history.db',
   'history.db-shm',
   'history.db-wal',
+  'lib',
   'window-watcher-config.json',
   'Local Storage',
   'Session Storage',
@@ -21,8 +25,8 @@ export const APP_DATA_MIGRATION_CRITICAL_ENTRIES = [
   path.join('Network', 'Cookies-journal')
 ] as const
 
-// 非关键数据：可后台迁移（模型、日志、lib 等大目录）
-export const APP_DATA_MIGRATION_BACKGROUND_ENTRIES = ['models', 'logs', 'lib'] as const
+// 非关键数据：可后台迁移（模型、日志等大目录）
+export const APP_DATA_MIGRATION_BACKGROUND_ENTRIES = ['models', 'logs'] as const
 
 export const APP_DATA_MIGRATION_ENTRIES = [
   ...APP_DATA_MIGRATION_CRITICAL_ENTRIES,
@@ -217,7 +221,10 @@ export async function migrateLegacyAppDataIfNeeded(): Promise<AppDataMigrationRe
  */
 export async function migrateCriticalAppDataIfNeeded(): Promise<AppDataMigrationResult> {
   const context = getAppDataPathContext()
-  const markerPath = path.join(context.resolvedUserDataPath, APP_DATA_MIGRATION_MARKER_FILE)
+  const markerPath = path.join(
+    context.resolvedUserDataPath,
+    APP_DATA_MIGRATION_CRITICAL_MARKER_FILE
+  )
 
   if (!context.isPortable) {
     return {
@@ -234,7 +241,7 @@ export async function migrateCriticalAppDataIfNeeded(): Promise<AppDataMigration
   return migrateAppDataByCopy({
     sourceRoot: context.originalUserDataPath,
     targetRoot: context.resolvedUserDataPath,
-    markerFileName: APP_DATA_MIGRATION_MARKER_FILE,
+    markerFileName: APP_DATA_MIGRATION_CRITICAL_MARKER_FILE,
     entries: APP_DATA_MIGRATION_CRITICAL_ENTRIES
   })
 }
@@ -245,7 +252,10 @@ export async function migrateCriticalAppDataIfNeeded(): Promise<AppDataMigration
  */
 export async function migrateBackgroundAppDataIfNeeded(): Promise<AppDataMigrationResult> {
   const context = getAppDataPathContext()
-  const markerPath = path.join(context.resolvedUserDataPath, APP_DATA_MIGRATION_MARKER_FILE)
+  const markerPath = path.join(
+    context.resolvedUserDataPath,
+    APP_DATA_MIGRATION_BACKGROUND_MARKER_FILE
+  )
 
   if (!context.isPortable) {
     return {
@@ -262,7 +272,7 @@ export async function migrateBackgroundAppDataIfNeeded(): Promise<AppDataMigrati
   return migrateAppDataByCopy({
     sourceRoot: context.originalUserDataPath,
     targetRoot: context.resolvedUserDataPath,
-    markerFileName: APP_DATA_MIGRATION_MARKER_FILE,
+    markerFileName: APP_DATA_MIGRATION_BACKGROUND_MARKER_FILE,
     entries: APP_DATA_MIGRATION_BACKGROUND_ENTRIES
   })
 }
