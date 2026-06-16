@@ -171,28 +171,37 @@ export function initBridgeConnectionController() {
 async function initialize() {
   const timer = logger.timer('initialize')
   logger.info('initialize.start')
-  const migrationResult = await migrateLegacyAppDataIfNeeded()
-  logger.info('app_data_migration.completed', {
-    copiedCount: migrationResult.copiedEntries.length,
-    errorCount: migrationResult.errors.length
-  })
-  if (migrationResult.copiedEntries.length > 0) {
-    console.log(
-      `[主进程] 已复制 ${migrationResult.copiedEntries.length} 个旧数据条目到当前数据目录`
-    )
-  }
-  if (migrationResult.errors.length > 0) {
-    const displayedErrors = migrationResult.errors.slice(0, 5)
-    const remainingErrorCount = migrationResult.errors.length - displayedErrors.length
-    const truncatedSuffix =
-      remainingErrorCount > 0 ? ` | 另外 ${remainingErrorCount} 个问题未展开` : ''
 
-    console.warn(
-      `[主进程] 数据迁移存在 ${migrationResult.errors.length} 个问题: ${displayedErrors.join(' | ')}${truncatedSuffix}`
-    )
-  }
+  // 旧数据迁移改后台执行（失败仅 log，不阻塞窗口显示）
+  void migrateLegacyAppDataIfNeeded().then(
+    migrationResult => {
+      logger.info('app_data_migration.completed', {
+        copiedCount: migrationResult.copiedEntries.length,
+        errorCount: migrationResult.errors.length
+      })
+      if (migrationResult.copiedEntries.length > 0) {
+        console.log(
+          `[主进程] 已复制 ${migrationResult.copiedEntries.length} 个旧数据条目到当前数据目录`
+        )
+      }
+      if (migrationResult.errors.length > 0) {
+        const displayedErrors = migrationResult.errors.slice(0, 5)
+        const remainingErrorCount = migrationResult.errors.length - displayedErrors.length
+        const truncatedSuffix =
+          remainingErrorCount > 0 ? ` | 另外 ${remainingErrorCount} 个问题未展开` : ''
 
-  // 初始化数据库
+        console.warn(
+          `[主进程] 数据迁移存在 ${migrationResult.errors.length} 个问题: ${displayedErrors.join(' | ')}${truncatedSuffix}`
+        )
+      }
+    },
+    error => {
+      console.warn('[主进程] 旧数据迁移失败:', error)
+      logger.warn('app_data_migration.failed', { error })
+    }
+  )
+
+  // 初始化数据库（必须同步，后续依赖）
   try {
     initDatabase()
     applyPersistedLogLevel()
@@ -221,9 +230,36 @@ async function initialize() {
     timer.fail(new Error('连接控制器初始化失败'))
     throw new Error('连接控制器初始化失败')
   }
-  await controller.initialize()
 
-  // 检查 Cubism Core 是否存在
+  // controller.initialize 改后台（启动自动连接已改 fire-and-forget）
+  void controller.initialize().catch(error => {
+    console.warn('[主进程] 连接控制器初始化失败:', error)
+    logger.warn('bridge_controller.init.failed', { error })
+  })
+
+  // 检查是否是首次启动（没有用户名）
+  const userName = getUserName()
+  if (!userName) {
+    // 首次启动，显示欢迎窗口
+    logger.info('startup.first_launch')
+    createWelcomeWindow()
+  } else {
+    // 非首次启动，直接创建主窗口
+    logger.info('startup.normal', { hasUserName: true })
+    createMainWindow()
+    createTray()
+  }
+
+  // Cubism Core 检查移到窗口创建后（弹窗时窗口已可见，不阻塞首窗）
+  void checkAndDownloadCubismCoreIfNeeded()
+
+  timer.done({ firstLaunch: !userName })
+}
+
+/**
+ * 检查并下载 Cubism Core（窗口创建后执行，不阻塞启动）
+ */
+async function checkAndDownloadCubismCoreIfNeeded() {
   if (!checkCubismCoreExists()) {
     console.log('[主进程] Live2D SDK 不存在，提示用户下载')
     logger.warn('cubism_core.missing')
@@ -243,20 +279,6 @@ async function initialize() {
       logger.warn('cubism_core.download.skipped')
     }
   }
-
-  // 检查是否是首次启动（没有用户名）
-  const userName = getUserName()
-  if (!userName) {
-    // 首次启动，显示欢迎窗口
-    logger.info('startup.first_launch')
-    createWelcomeWindow()
-  } else {
-    // 非首次启动，直接创建主窗口
-    logger.info('startup.normal', { hasUserName: true })
-    createMainWindow()
-    createTray()
-  }
-  timer.done({ firstLaunch: !userName })
 }
 
 /**
