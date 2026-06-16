@@ -19,8 +19,9 @@ import {
 const logger = createScopedLogger('ipc.model')
 const EXPRESSION_PROFILE_FILE_NAME = 'astrbot.live2d.profile.json'
 
-// 主进程维护 pending model path，避免设置页发送 model:load 时主窗口未就绪丢消息
+// 主进程维护 pending model path 和 main window ready 状态，避免消息丢失或重放旧模型
 let pendingModelPath: string | null = null
+let mainWindowReady = false
 
 type ExpressionProfilePayload = {
   version?: unknown
@@ -682,17 +683,27 @@ ipcMain.handle(
 
 /**
  * 加载模型到主窗口（设置页请求）
- * 改为主进程保存 pending model path，由渲染进程 ready 后主动拉取，避免消息丢失
+ * ready 前写 pending，ready 后直接发送，避免消息丢失或 reload 重放旧模型
  */
 ipcMain.handle('model:load', async (_event, modelPath: string) => {
-  const timer = logger.timer('load', { modelPath })
+  const timer = logger.timer('load', { modelPath, mainWindowReady })
   try {
-    pendingModelPath = modelPath
+    if (!mainWindowReady) {
+      // 主窗口未 ready，保存 pending
+      pendingModelPath = modelPath
+      timer.done({ dispatched: false, reason: 'window_not_ready' })
+      return { success: true }
+    }
+
+    // 主窗口已 ready，直接发送（清空 pending 避免 reload 重放）
+    pendingModelPath = null
     const mainWindow = getMainWindow()
     if (mainWindow) {
       mainWindow.webContents.send('model:load', modelPath)
+      timer.done({ dispatched: true, windowId: mainWindow.id })
+    } else {
+      timer.done({ dispatched: false, reason: 'window_missing' })
     }
-    timer.done({ dispatched: Boolean(mainWindow), windowId: mainWindow?.id })
     return { success: true }
   } catch (error: any) {
     console.error('[IPC] 加载模型失败:', error)
@@ -702,9 +713,10 @@ ipcMain.handle('model:load', async (_event, modelPath: string) => {
 })
 
 /**
- * 渲染进程 ready 后拉取 pending model path
+ * 渲染进程 ready 后拉取 pending model path 并标记 ready
  */
 ipcMain.handle('model:getPendingLoad', async () => {
+  mainWindowReady = true
   const path = pendingModelPath
   pendingModelPath = null
   return { success: true, modelPath: path }
