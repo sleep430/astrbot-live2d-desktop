@@ -149,6 +149,12 @@ function waitForScriptLoad(script: HTMLScriptElement): Promise<void> {
       return
     }
 
+    // 检查是否已失败（Core 404 时避免永久等待）
+    if (script.dataset.failed === 'true') {
+      reject(new Error(`Cubism Core 加载失败（已标记）: ${CUBISM_CORE_SCRIPT_SRC}`))
+      return
+    }
+
     if (scriptReadyState === 'complete' || scriptReadyState === 'loaded') {
       script.dataset.loaded = 'true'
       resolve()
@@ -162,12 +168,16 @@ function waitForScriptLoad(script: HTMLScriptElement): Promise<void> {
 
     const handleLoad = () => {
       script.dataset.loaded = 'true'
+      delete script.dataset.failed
       cleanup()
       resolve()
     }
 
     const handleError = () => {
+      script.dataset.failed = 'true'
       cleanup()
+      // 移除失败的 script 节点，下次重试会重新创建
+      script.remove()
       reject(new Error(`Cubism Core 加载失败: ${CUBISM_CORE_SCRIPT_SRC}`))
     }
 
