@@ -98,8 +98,12 @@ export function convertModelInfoToV2(v1Info: StateModelPayload): StateModelPaylo
     expressions,
     capabilities: {
       idleMode: 'noise+motion',
-      llmControlled: true
-    }
+      llmControlled: true,
+      ...v1Info.capabilities
+    },
+    expressionCatalog: v1Info.expressionCatalog,
+    semanticPresets: v1Info.semanticPresets,
+    discovery: v1Info.discovery
   }
 }
 

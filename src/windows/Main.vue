@@ -258,6 +258,7 @@ import { useInputPanel, type FloatingOverlayStyle } from './composables/useInput
 import { useAudioWaiters } from './composables/useAudioWaiters'
 import { summarizePerformPayloadForLog } from './composables/performElementSummary'
 import { recordPerformanceHistory } from './composables/performanceHistoryRecorder'
+import { createPerformExpressionRequest } from './composables/performExpressionRequest'
 
 import { convertModelInfoToV2, shouldUseV2Protocol } from '@/utils/modelInfoConverter'
 import { parseMotionIdParts } from '@/shared/modelAliasMerge'
@@ -300,6 +301,8 @@ const loadingModelPath = ref('')
 let themeExtractionRevision = 0
 let modelLoadInFlight = false
 let hasOpenedModelLibraryWindow = false
+let aliasConfigReloadInFlight = false
+let aliasConfigReloadPending = false
 
 const advancedSettings = ref<AdvancedSettings>(loadAdvancedSettings())
 
@@ -308,27 +311,6 @@ const aliasMapper = new AliasMapper()
 
 // ─── 待机管理器 ─────────────────────────────────────────────────
 let idleManager: IdleManager | null = null
-
-const expressionResetTimers = new Set<ReturnType<typeof setTimeout>>()
-
-function clearExpressionResetTimers() {
-  for (const timer of expressionResetTimers) {
-    clearTimeout(timer)
-  }
-  expressionResetTimers.clear()
-}
-
-function scheduleExpressionReset(element: PerformElement, holdMs: number) {
-  const timer = setTimeout(() => {
-    expressionResetTimers.delete(timer)
-    if (element.resetPolicy === 'fadeOut') {
-      live2dCanvasRef.value?.setExpression({ id: '' })
-    } else if (element.resetPolicy === 'default') {
-      live2dCanvasRef.value?.setExpression({ id: 'default' })
-    }
-  }, holdMs)
-  expressionResetTimers.add(timer)
-}
 
 function startIdleManagerFromConfig(motionIds: string[]) {
   if (motionIds.length === 0) {
@@ -340,6 +322,16 @@ function startIdleManagerFromConfig(motionIds: string[]) {
     live2dCanvasRef.value?.playMotion(group, index, priority, loop)
   })
   console.log('[主窗口] 待机管理器已启动，idle 动作数量:', motionIds.length)
+}
+
+function resetIdleManager() {
+  if (!idleManager) {
+    return
+  }
+  idleManager.stop(() => {
+    live2dCanvasRef.value?.stopBodyMotions()
+  })
+  idleManager = null
 }
 
 function restoreIdleIfNeeded() {
@@ -679,34 +671,7 @@ performQueue.onMotion((element: PerformElement) => {
 })
 
 performQueue.onExpression((element: PerformElement) => {
-  // v2.0: 支持 name 字段 + holdMs + resetPolicy
-  if (element.name) {
-    const exprId = aliasMapper.getExpressionId(element.name) || element.name
-
-    live2dCanvasRef.value?.setExpression({
-      id: exprId,
-      fade: element.fade,
-      holdMs: element.holdMs,
-      resetPolicy: (element.resetPolicy as any) || 'previous'
-    })
-
-    if (element.holdMs && element.resetPolicy !== 'hold') {
-      scheduleExpressionReset(element, element.holdMs)
-    }
-    return
-  }
-
-  // v1.0: 使用 id
-  const expressionRequest: CubismExpressionRequest = {
-    id: element.id,
-    combo: element.combo,
-    semantic: element.semantic,
-    fade: element.fade,
-    holdMs: element.holdMs,
-    resetPolicy: (element.resetPolicy as any) || 'previous',
-    motionType: element.motionType
-  }
-  live2dCanvasRef.value?.setExpression(expressionRequest)
+  live2dCanvasRef.value?.setExpression(createPerformExpressionRequest(element, aliasMapper))
 })
 
 performQueue.onAudio((source, volume) => {
@@ -820,6 +785,47 @@ function applyModelBehavior(modelPath?: string) {
   live2dCanvasRef.value?.setPersistentExpressions(behavior.persistentExpressions)
 }
 
+async function reloadAliasConfigForCurrentModel(reason: string) {
+  if (aliasConfigReloadInFlight) {
+    aliasConfigReloadPending = true
+    return
+  }
+
+  aliasConfigReloadInFlight = true
+  const activeModelPath =
+    loadingModelPath.value || modelStore.currentModel || modelStore.getLastModel() || ''
+  if (!activeModelPath) {
+    aliasConfigReloadInFlight = false
+    return
+  }
+
+  try {
+    const motionDurations = live2dCanvasRef.value?.getMotionDurationMap?.() ?? {}
+    const result = await window.electron.modelConfig.ensure({
+      modelPath: activeModelPath,
+      motionDurations
+    })
+    if (!result.success || !result.config) {
+      console.warn('[主窗口] 重新加载别名配置失败:', result.error)
+      return
+    }
+
+    aliasMapper.loadFromConfig(result.config)
+    const idleMotions = result.config.motionAliases
+      .filter((m: { enabled: boolean; category: string }) => m.enabled && m.category === 'idle')
+      .map((m: { id: string }) => m.id)
+    resetIdleManager()
+    startIdleManagerFromConfig(idleMotions)
+    await syncCurrentModelInfoToBridge(reason)
+  } finally {
+    aliasConfigReloadInFlight = false
+    if (aliasConfigReloadPending) {
+      aliasConfigReloadPending = false
+      void reloadAliasConfigForCurrentModel(reason)
+    }
+  }
+}
+
 // 设置窗口修改行为配置后（storage 同步整体替换 modelBehaviors），即时应用到当前模型
 watch(
   () => modelStore.modelBehaviors,
@@ -833,7 +839,6 @@ watch(
 
 function interruptPerformance() {
   performQueue.interrupt()
-  clearExpressionResetTimers()
   latestBubbleEntryId = null
 
   clearAllBubbles()
@@ -916,7 +921,7 @@ async function handleModelLoaded() {
     themeStore.setCurrentModel(activeModelPath)
   }
 
-  idleManager = null
+  resetIdleManager()
 
   // 加载或自动生成别名配置
   if (activeModelPath) {
@@ -985,7 +990,7 @@ async function syncModelInfoToBridge(
     if (shouldUseV2Protocol()) {
       // 如果有配置文件，使用 aliasMapper 导出
       if (aliasMapper.hasConfig()) {
-        payload = aliasMapper.exportForAdapter(modelInfo.name || '未命名模型')
+        payload = aliasMapper.exportForAdapter(modelInfo.name || '未命名模型', modelInfo)
         console.log('[主窗口] 使用 AliasMapper 导出 v2.0 格式')
       } else {
         // 否则使用自动转换
@@ -1300,6 +1305,17 @@ onMounted(async () => {
         holdMs,
         resetPolicy
       })
+    })
+  )
+
+  mainWindowDisposers.push(
+    window.electron.modelConfig.onChanged(payload => {
+      const activeModelPath =
+        loadingModelPath.value || modelStore.currentModel || modelStore.getLastModel() || ''
+      if (!payload.modelPath || payload.modelPath !== activeModelPath) {
+        return
+      }
+      void reloadAliasConfigForCurrentModel('模型别名配置变更')
     })
   )
 
