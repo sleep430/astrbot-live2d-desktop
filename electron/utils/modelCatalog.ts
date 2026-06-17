@@ -41,7 +41,12 @@ export async function ensureModelAliasConfig(
   modelPath: string,
   modelAbsolutePath: string,
   motionDurations?: Record<string, number>
-): Promise<{ config: ModelAliasConfigV2; created: boolean }> {
+): Promise<{
+  config: ModelAliasConfigV2
+  created: boolean
+  changed: boolean
+  configPath?: string
+}> {
   const catalog = applyMotionDurationOverrides(
     await buildCatalogForAbsoluteModel(modelPath, modelAbsolutePath),
     motionDurations
@@ -54,13 +59,13 @@ export async function ensureModelAliasConfig(
       merged.motionAliases.length > existing.motionAliases.length ||
       merged.expressionAliases.length > existing.expressionAliases.length
     if (expanded) {
-      await writeModelConfigFile(merged)
-      return { config: merged, created: false }
+      const configPath = await writeModelConfigFile(merged)
+      return { config: merged, created: false, changed: true, configPath }
     }
-    return { config: existing, created: false }
+    return { config: existing, created: false, changed: false }
   }
 
   const config = buildModelConfigFromCatalog(catalog)
-  await writeModelConfigFile(config)
-  return { config, created: true }
+  const configPath = await writeModelConfigFile(config)
+  return { config, created: true, changed: true, configPath }
 }

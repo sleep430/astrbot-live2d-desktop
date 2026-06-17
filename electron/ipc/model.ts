@@ -6,6 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'url'
 import { formatCubismAssetIssues, validateCubismModelAssets } from '../utils/cubismAssetManifest'
 import { createCubismModelLoadDescriptor } from '../utils/cubismModelDiscovery'
 import { buildCatalogForAbsoluteModel, ensureModelAliasConfig } from '../utils/modelCatalog'
+import { notifyModelConfigChanged } from '../utils/modelConfigEvents'
 import { getAppDataPath } from '../utils/appPaths'
 import { createScopedLogger } from '../utils/logger'
 import { t } from '../../src/i18n/mainProcess'
@@ -662,7 +663,7 @@ ipcMain.handle('model:getCatalog', async (_event, modelPath: string) => {
  */
 ipcMain.handle(
   'modelConfig:ensure',
-  async (_event, payload: { modelPath: string; motionDurations?: Record<string, number> }) => {
+  async (event, payload: { modelPath: string; motionDurations?: Record<string, number> }) => {
     const modelPath = payload?.modelPath
     if (!modelPath) {
       return { success: false, error: 'modelPath is required' }
@@ -674,7 +675,19 @@ ipcMain.handle(
         modelAbsolutePath,
         payload.motionDurations
       )
-      return { success: true, config: result.config, created: result.created }
+      if (result.changed) {
+        notifyModelConfigChanged(
+          { modelPath, configPath: result.configPath },
+          { excludeWebContents: event.sender }
+        )
+      }
+      return {
+        success: true,
+        config: result.config,
+        created: result.created,
+        changed: result.changed,
+        configPath: result.configPath
+      }
     } catch (error: any) {
       return { success: false, error: error.message }
     }

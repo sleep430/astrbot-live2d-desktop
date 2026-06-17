@@ -6,6 +6,7 @@ import {
   writeModelConfigFile,
   getModelConfigPath
 } from '../utils/modelConfigPaths'
+import { notifyModelConfigChanged } from '../utils/modelConfigEvents'
 import type { ModelAliasConfigV2 } from '../../src/shared/modelConfigFactory'
 
 const logger = createScopedLogger('ipc.modelConfig')
@@ -30,6 +31,7 @@ export function registerModelConfigHandlers() {
     try {
       const configPath = await writeModelConfigFile(config)
       logger.info('config.saved', { modelPath: config.modelPath, configPath })
+      notifyModelConfigChanged({ modelPath: config.modelPath, configPath })
       return { success: true }
     } catch (error: any) {
       logger.error('config.saveFailed', { modelPath: config.modelPath, error: error.message })
@@ -42,9 +44,11 @@ export function registerModelConfigHandlers() {
       const configPath = getModelConfigPath(modelPath)
       await unlink(configPath)
       logger.info('config.deleted', { modelPath, configPath })
+      notifyModelConfigChanged({ modelPath, configPath, deleted: true })
       return { success: true }
     } catch (error: any) {
       if (error.code === 'ENOENT') {
+        notifyModelConfigChanged({ modelPath, deleted: true })
         return { success: true }
       }
       logger.error('config.deleteFailed', { modelPath, error: error.message })
