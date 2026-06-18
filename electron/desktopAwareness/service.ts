@@ -128,6 +128,12 @@ export class DesktopAwarenessService {
     return () => this.listeners.delete(callback)
   }
 
+  async ingestWindowSnapshot(window: WindowInfo): Promise<void> {
+    await this.ensureSettings()
+    if (!this.settings?.enabled) return
+    this.updateContext(window, 'initial', Date.now(), false)
+  }
+
   async getSettings(): Promise<DesktopAwarenessSettings> {
     await this.ensureSettings()
     return cloneJson(this.settings!)

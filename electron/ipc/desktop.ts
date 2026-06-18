@@ -9,7 +9,9 @@ import { safeGetActiveWindow as safeLoadActiveWindow } from '../utils/activeWinL
 import { createScopedLogger } from '../utils/logger'
 import { loadDesktopAwarenessSettings } from '../desktopAwareness/settings'
 import { resolveAppIdentity } from '../desktopAwareness/appIdentity'
+import { getDesktopAwarenessService } from '../desktopAwareness/service'
 import { t } from '../../src/i18n/mainProcess'
+import type { WindowInfo } from '../utils/windowWatcher'
 import type {
   DesktopWindowInfo,
   DesktopCaptureRequestPayload,
@@ -171,6 +173,34 @@ function toWindowInfo(win: any): DesktopWindowInfo {
   }
 }
 
+function toAwarenessWindowInfo(win: any): WindowInfo {
+  const bounds = win?.bounds || {}
+  return {
+    id: String(win?.id ?? ''),
+    title: String(win?.title ?? ''),
+    processName: String(win?.owner?.name ?? ''),
+    processPath: String(win?.owner?.path ?? ''),
+    processId: Number(win?.owner?.processId || 0),
+    bounds: {
+      x: Number(bounds.x || 0),
+      y: Number(bounds.y || 0),
+      width: Number(bounds.width || 0),
+      height: Number(bounds.height || 0)
+    },
+    isFullscreen: false,
+    isMinimized: false,
+    isMaximized: false
+  }
+}
+
+function publishActiveWindowToAwareness(win: any): void {
+  void getDesktopAwarenessService()
+    .ingestWindowSnapshot(toAwarenessWindowInfo(win))
+    .catch(error => {
+      logger.warn('awareness_ingest.failed', { error })
+    })
+}
+
 // ──────── 公开 API（供 client.ts 调用）────────
 
 export async function getWindowList(): Promise<DesktopWindowListPayload> {
@@ -183,6 +213,7 @@ export async function getWindowList(): Promise<DesktopWindowListPayload> {
     })
     return { windows: [] }
   }
+  publishActiveWindowToAwareness(win)
   const payload = { windows: [toWindowInfo(win)] }
   timer.done({
     count: payload.windows.length,
@@ -202,6 +233,7 @@ export async function getActiveWindow(): Promise<DesktopWindowActivePayload> {
     })
     return { window: null }
   }
+  publishActiveWindowToAwareness(win)
   const windowInfo = toWindowInfo(win)
   timer.done({
     hasWindow: true,
