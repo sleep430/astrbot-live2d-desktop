@@ -3,111 +3,63 @@ import { useMessage } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { createDeferredTaskCache } from '../composables/createDeferredTaskCache'
 
-const BUILTIN_PROCESS_NAMES = [
-  'dwm.exe',
-  'csrss.exe',
-  'explorer.exe',
-  'SearchUI.exe',
-  'ShellExperienceHost.exe',
-  'StartMenuExperienceHost.exe',
-  'TextInputHost.exe',
-  'SecurityHealthSystray.exe'
-]
-
-const BUILTIN_TITLE_KEYWORDS = [
-  'Program Manager',
-  '锁屏',
-  'Lock Screen',
-  'LockApp',
-  'Windows Shell Experience Host',
-  'Windows Default Lock Screen',
-  'Windows 输入体验',
-  'Task Switching',
-  'Task View'
-]
-
-function createDefaultWatcherConfig(): WindowWatcherConfig {
+function createDefaultAwarenessSettings(): DesktopAwarenessSettings {
   return {
     enabled: true,
-    appLaunchEnabled: true,
-    throttle: {
-      globalInterval: 1000,
-      perWindowInterval: 3000,
-      minInterval: 100
+    mode: 'smart',
+    appScope: {
+      mode: 'all',
+      apps: []
     },
-    events: {
-      focus: true,
-      blur: false,
-      create: true,
-      destroy: false,
-      fullscreen: true,
-      windowed: false,
-      resize: false,
-      move: false,
-      minimize: false,
-      maximize: false,
-      restore: false
-    },
-    ignore: {
-      processNames: ['dwm.exe', 'csrss.exe', 'explorer.exe'],
-      titleKeywords: ['Program Manager', '锁屏', 'Lock Screen']
-    },
-    aiResponse: {
-      mode: 'first-open',
-      specificApps: []
+    privacy: {
+      shareWindowTitle: false,
+      allowScreenshotOnRequest: true
     }
   }
 }
 
-function cloneWatcherConfig(config: WindowWatcherConfig): WindowWatcherConfig {
+function cloneAwarenessSettings(config: DesktopAwarenessSettings): DesktopAwarenessSettings {
   return {
     enabled: Boolean(config.enabled),
-    appLaunchEnabled: Boolean(config.appLaunchEnabled),
-    throttle: {
-      globalInterval: Number(config.throttle.globalInterval),
-      perWindowInterval: Number(config.throttle.perWindowInterval),
-      minInterval: Number(config.throttle.minInterval)
+    mode: config.mode,
+    appScope: {
+      mode: config.appScope.mode,
+      apps: [...config.appScope.apps]
     },
-    events: {
-      focus: Boolean(config.events.focus),
-      blur: Boolean(config.events.blur),
-      create: Boolean(config.events.create),
-      destroy: Boolean(config.events.destroy),
-      fullscreen: Boolean(config.events.fullscreen),
-      windowed: Boolean(config.events.windowed),
-      resize: Boolean(config.events.resize),
-      move: Boolean(config.events.move),
-      minimize: Boolean(config.events.minimize),
-      maximize: Boolean(config.events.maximize),
-      restore: Boolean(config.events.restore)
-    },
-    ignore: {
-      processNames: [...config.ignore.processNames],
-      titleKeywords: [...config.ignore.titleKeywords]
-    },
-    aiResponse: {
-      mode: config.aiResponse.mode,
-      specificApps: [...config.aiResponse.specificApps]
+    privacy: {
+      shareWindowTitle: Boolean(config.privacy.shareWindowTitle),
+      allowScreenshotOnRequest: Boolean(config.privacy.allowScreenshotOnRequest)
     }
   }
+}
+
+function parseAppList(value: string): string[] {
+  return Array.from(
+    new Set(
+      value
+        .split('\n')
+        .map(item => item.trim())
+        .filter(Boolean)
+    )
+  )
 }
 
 export interface WatcherSettingsDomain {
+  appScopeInput: Ref<string>
   canSave: ComputedRef<boolean>
   dirty: ComputedRef<boolean>
-  draftConfig: Ref<WindowWatcherConfig>
+  draftConfig: Ref<DesktopAwarenessSettings>
   ensureReady: (force?: boolean) => Promise<void>
-  ignoreProcessNamesInput: Ref<string>
-  ignoreTitleKeywordsInput: Ref<string>
+  recentApps: Ref<DesktopAwarenessSnapshot['recentApps']>
   resetDraft: () => void
   resetPersisted: () => Promise<void>
   saveDraft: () => Promise<void>
   saving: Ref<boolean>
-  specificAppsInput: Ref<string>
+  snapshot: Ref<DesktopAwarenessSnapshot | null>
   status: Ref<'idle' | 'loading' | 'ready' | 'error'>
-  updateIgnoreProcessNames: (value: string) => void
-  updateIgnoreTitleKeywords: (value: string) => void
-  updateSpecificApps: (value: string) => void
+  addAppToScope: (appKey: string) => void
+  removeAppFromScope: (appKey: string) => void
+  updateAppScopeInput: (value: string) => void
 }
 
 export const watcherSettingsDomainKey: InjectionKey<WatcherSettingsDomain> =
@@ -128,62 +80,64 @@ export function createWatcherSettingsDomain(message: MessageApi): WatcherSetting
   const { t } = useI18n()
   const status = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const saving = ref(false)
-  const draftConfig = ref<WindowWatcherConfig>(createDefaultWatcherConfig())
-  const savedConfig = ref<WindowWatcherConfig>(createDefaultWatcherConfig())
-  const specificAppsInput = ref('')
-  const ignoreProcessNamesInput = ref('')
-  const ignoreTitleKeywordsInput = ref('')
+  const draftConfig = ref<DesktopAwarenessSettings>(createDefaultAwarenessSettings())
+  const savedConfig = ref<DesktopAwarenessSettings>(createDefaultAwarenessSettings())
+  const snapshot = ref<DesktopAwarenessSnapshot | null>(null)
+  const recentApps = ref<DesktopAwarenessSnapshot['recentApps']>([])
+  const appScopeInput = ref('')
   const savedSnapshot = ref('')
+  let snapshotUnsubscribe: Unsubscribe | null = null
 
   const taskCache = createDeferredTaskCache()
 
-  function buildSnapshot(config: WindowWatcherConfig) {
+  function buildSnapshot(config: DesktopAwarenessSettings) {
     return JSON.stringify(config)
   }
 
-  function applySavedConfig(config: WindowWatcherConfig) {
-    const nextConfig = cloneWatcherConfig(config)
+  function applySavedConfig(config: DesktopAwarenessSettings) {
+    const nextConfig = cloneAwarenessSettings(config)
     savedConfig.value = nextConfig
-    draftConfig.value = cloneWatcherConfig(nextConfig)
-    specificAppsInput.value = nextConfig.aiResponse.specificApps.join('\n')
-    ignoreProcessNamesInput.value = nextConfig.ignore.processNames.join('\n')
-    ignoreTitleKeywordsInput.value = nextConfig.ignore.titleKeywords.join('\n')
-    savedSnapshot.value = buildSnapshot(cloneWatcherConfig(nextConfig))
+    draftConfig.value = cloneAwarenessSettings(nextConfig)
+    appScopeInput.value = nextConfig.appScope.apps.join('\n')
+    savedSnapshot.value = buildSnapshot(cloneAwarenessSettings(nextConfig))
+  }
+
+  async function refreshSnapshot() {
+    const nextSnapshot = await window.electron.desktopAwareness.getSnapshot()
+    snapshot.value = nextSnapshot
+    recentApps.value = nextSnapshot.recentApps
+  }
+
+  function bindSnapshotUpdates() {
+    if (snapshotUnsubscribe) return
+    snapshotUnsubscribe = window.electron.desktopAwareness.onSnapshotChanged(nextSnapshot => {
+      snapshot.value = nextSnapshot
+      recentApps.value = nextSnapshot.recentApps
+    })
   }
 
   const dirty = computed(
-    () => buildSnapshot(cloneWatcherConfig(draftConfig.value)) !== savedSnapshot.value
+    () => buildSnapshot(cloneAwarenessSettings(draftConfig.value)) !== savedSnapshot.value
   )
   const canSave = computed(() => dirty.value && !saving.value)
 
-  function updateSpecificApps(value: string) {
-    specificAppsInput.value = value
-    draftConfig.value.aiResponse.specificApps = value
-      .split('\n')
-      .map(item => item.trim())
-      .filter(Boolean)
+  function updateAppScopeInput(value: string) {
+    appScopeInput.value = value
+    draftConfig.value.appScope.apps = parseAppList(value)
   }
 
-  function updateIgnoreProcessNames(value: string) {
-    ignoreProcessNamesInput.value = value
-    draftConfig.value.ignore.processNames = value
-      .split('\n')
-      .map(item => item.trim())
-      .filter(item => Boolean(item) && !BUILTIN_PROCESS_NAMES.includes(item))
+  function addAppToScope(appKey: string) {
+    const key = appKey.trim()
+    if (!key) return
+    if (!draftConfig.value.appScope.apps.includes(key)) {
+      draftConfig.value.appScope.apps = [...draftConfig.value.appScope.apps, key]
+      appScopeInput.value = draftConfig.value.appScope.apps.join('\n')
+    }
   }
 
-  function updateIgnoreTitleKeywords(value: string) {
-    ignoreTitleKeywordsInput.value = value
-    draftConfig.value.ignore.titleKeywords = value
-      .split('\n')
-      .map(item => item.trim())
-      .filter(
-        item =>
-          Boolean(item) &&
-          !BUILTIN_TITLE_KEYWORDS.some(keyword =>
-            item.toLowerCase().includes(keyword.toLowerCase())
-          )
-      )
+  function removeAppFromScope(appKey: string) {
+    draftConfig.value.appScope.apps = draftConfig.value.appScope.apps.filter(app => app !== appKey)
+    appScopeInput.value = draftConfig.value.appScope.apps.join('\n')
   }
 
   async function ensureReady(force = false) {
@@ -194,11 +148,15 @@ export function createWatcherSettingsDomain(message: MessageApi): WatcherSetting
     status.value = 'loading'
 
     try {
+      bindSnapshotUpdates()
       await taskCache.runTask(
-        'watcher:config',
+        'desktop-awareness:settings',
         async () => {
-          const config = await window.electron.window.getWatcherConfig()
-          applySavedConfig(config)
+          const [settings] = await Promise.all([
+            window.electron.desktopAwareness.getSettings(),
+            refreshSnapshot()
+          ])
+          applySavedConfig(settings)
         },
         force
       )
@@ -221,8 +179,10 @@ export function createWatcherSettingsDomain(message: MessageApi): WatcherSetting
     saving.value = true
 
     try {
-      await window.electron.window.updateWatcherConfig(cloneWatcherConfig(draftConfig.value))
-      taskCache.invalidate(['watcher:config'])
+      await window.electron.desktopAwareness.updateSettings(
+        cloneAwarenessSettings(draftConfig.value)
+      )
+      taskCache.invalidate(['desktop-awareness:settings'])
       await ensureReady(true)
       message.success(t('toast.watcherConfigSaved'))
     } catch (error: any) {
@@ -236,9 +196,10 @@ export function createWatcherSettingsDomain(message: MessageApi): WatcherSetting
     saving.value = true
 
     try {
-      const result = await window.electron.window.resetWatcherConfig()
-      applySavedConfig(result.config)
-      taskCache.invalidate(['watcher:config'])
+      const result = await window.electron.desktopAwareness.resetSettings()
+      applySavedConfig(result.settings)
+      await refreshSnapshot()
+      taskCache.invalidate(['desktop-awareness:settings'])
       status.value = 'ready'
       message.success(t('toast.watcherConfigReset'))
     } catch (error: any) {
@@ -250,20 +211,20 @@ export function createWatcherSettingsDomain(message: MessageApi): WatcherSetting
   }
 
   return {
+    appScopeInput,
     canSave,
     dirty,
     draftConfig,
     ensureReady,
-    ignoreProcessNamesInput,
-    ignoreTitleKeywordsInput,
+    recentApps,
     resetDraft,
     resetPersisted,
     saveDraft,
     saving,
-    specificAppsInput,
+    snapshot,
     status,
-    updateIgnoreProcessNames,
-    updateIgnoreTitleKeywords,
-    updateSpecificApps
+    addAppToScope,
+    removeAppFromScope,
+    updateAppScopeInput
   }
 }

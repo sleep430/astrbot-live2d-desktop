@@ -1,12 +1,3 @@
-/**
- * 直接加载 active-win 的 native binding，绕过 @mapbox/node-pre-gyp 解析链。
- * 打包后 ASAR 中不含 @mapbox/node-pre-gyp 及其大量传递依赖，
- * 导致 active-win/lib/windows-binding.js 静默降级为空函数。
- *
- * 这里复制了 node-pre-gyp 对 active-win 的路径计算逻辑，
- * 直接 require() 解包后的 .node 文件。
- */
-
 import { createRequire } from 'module'
 import { app } from 'electron'
 import path from 'path'
@@ -15,34 +6,44 @@ import fs from 'fs'
 const nodeRequire = createRequire(import.meta.url)
 
 let cachedBinding: any = null
+let cachedActiveWinModule: any = null
 let loadAttempted = false
 
 function findBindingPath(): string | null {
   const platform = process.platform
   const arch = process.arch
-  // active-win 的 package.json binary.napi_versions = [3, 6]，实际预构建用 napi-6
-  const dir = `napi-6-${platform}-unknown-${arch}`
   const fileName = 'node-active-win.node'
 
   const appPath = app.getAppPath()
   // asarUnpack: ["**/*.node"] 将 .node 文件提取到 app.asar.unpacked/
   const unpackedBase = appPath.replace('app.asar', 'app.asar.unpacked')
 
-  const candidates = [
-    // 打包后（ASAR 解包目录）
-    path.join(unpackedBase, 'node_modules', 'active-win', 'lib', 'binding', dir, fileName),
-    // 开发模式（项目根目录下）
-    path.join(appPath, 'node_modules', 'active-win', 'lib', 'binding', dir, fileName)
+  const bindingRoots = [
+    path.join(unpackedBase, 'node_modules', 'active-win', 'lib', 'binding'),
+    path.join(appPath, 'node_modules', 'active-win', 'lib', 'binding')
   ]
 
-  for (const p of candidates) {
+  const candidates: Array<{ napi: number; path: string }> = []
+  for (const root of bindingRoots) {
     try {
-      if (fs.existsSync(p)) return p
+      if (!fs.existsSync(root)) continue
+      for (const dirName of fs.readdirSync(root)) {
+        const match = dirName.match(/^napi-(\d+)-(.+)-(.+)-(.+)$/)
+        if (!match) continue
+        const [, napiVersion, dirPlatform, , dirArch] = match
+        if (dirPlatform !== platform || dirArch !== arch) continue
+        const bindingPath = path.join(root, dirName, fileName)
+        if (fs.existsSync(bindingPath)) {
+          candidates.push({ napi: Number(napiVersion), path: bindingPath })
+        }
+      }
     } catch {
-      // ASAR 内 existsSync 可能抛异常，忽略
+      // ASAR 内 existsSync/readdirSync 可能抛异常，忽略
     }
   }
-  return null
+
+  candidates.sort((a, b) => b.napi - a.napi)
+  return candidates[0]?.path || null
 }
 
 function loadBinding(): any {
@@ -69,10 +70,23 @@ function loadBinding(): any {
  * 获取当前活跃窗口信息，返回值与 active-win 包一致
  */
 export async function getActiveWindow(): Promise<any | undefined> {
-  const binding = loadBinding()
-  if (!binding?.getActiveWindow) return undefined
+  if (process.platform === 'win32') {
+    const binding = loadBinding()
+    if (binding?.getActiveWindow) {
+      try {
+        return binding.getActiveWindow()
+      } catch {
+        return undefined
+      }
+    }
+  }
+
   try {
-    return binding.getActiveWindow()
+    if (!cachedActiveWinModule) {
+      cachedActiveWinModule = await import('active-win')
+    }
+    if (typeof cachedActiveWinModule.activeWindow !== 'function') return undefined
+    return await cachedActiveWinModule.activeWindow()
   } catch {
     return undefined
   }

@@ -16,6 +16,10 @@ import type {
   DesktopRevealReason as _DesktopRevealReason
 } from '../../electron/desktopBehavior/types'
 import type {
+  DesktopAwarenessSettings as _DesktopAwarenessSettings,
+  DesktopAwarenessSnapshot as _DesktopAwarenessSnapshot
+} from '../../electron/desktopAwareness/types'
+import type {
   BridgeLifecycleCommandResult as _BridgeLifecycleCommandResult,
   BridgeLifecycleSnapshot as _BridgeLifecycleSnapshot,
   BridgeSessionState as _BridgeSessionState
@@ -66,6 +70,8 @@ declare global {
   type DesktopBehaviorRuntimeState = _DesktopBehaviorRuntimeState
   type DesktopBehaviorSnapshot = _DesktopBehaviorSnapshot
   type DesktopRevealReason = _DesktopRevealReason
+  type DesktopAwarenessSettings = _DesktopAwarenessSettings
+  type DesktopAwarenessSnapshot = _DesktopAwarenessSnapshot
   type BridgeLifecycleCommandResult = _BridgeLifecycleCommandResult
   type BridgeLifecycleSnapshot = _BridgeLifecycleSnapshot
   type BridgeSessionState = _BridgeSessionState
@@ -212,6 +218,15 @@ declare global {
         setModelReady: (ready: boolean) => Promise<DesktopBehaviorSnapshot>
         requestReveal: (reason?: DesktopRevealReason) => Promise<DesktopBehaviorSnapshot>
         onSnapshotChanged: (callback: (snapshot: DesktopBehaviorSnapshot) => void) => Unsubscribe
+      }
+      desktopAwareness: {
+        getSettings: () => Promise<DesktopAwarenessSettings>
+        updateSettings: (
+          patch: Partial<DesktopAwarenessSettings>
+        ) => Promise<{ success: boolean; settings: DesktopAwarenessSettings }>
+        resetSettings: () => Promise<{ success: boolean; settings: DesktopAwarenessSettings }>
+        getSnapshot: () => Promise<DesktopAwarenessSnapshot>
+        onSnapshotChanged: (callback: (snapshot: DesktopAwarenessSnapshot) => void) => Unsubscribe
       }
       settings: {
         getPendingPage: () => Promise<string | null>

@@ -7,6 +7,7 @@ import { BrowserWindow, desktopCapturer, screen } from 'electron'
 import { loadScreenshotSettings } from '../utils/screenshotSettings'
 import { safeGetActiveWindow as safeLoadActiveWindow } from '../utils/activeWinLoader'
 import { createScopedLogger } from '../utils/logger'
+import { loadDesktopAwarenessSettings } from '../desktopAwareness/settings'
 import { t } from '../../src/i18n/mainProcess'
 import type {
   DesktopWindowInfo,
@@ -208,6 +209,12 @@ export async function captureScreenshot(
     hasUploadFn: Boolean(uploadFn),
     maxInlineBytes: options.maxInlineBytes
   })
+  const awarenessSettings = await loadDesktopAwarenessSettings()
+  if (!awarenessSettings.privacy.allowScreenshotOnRequest) {
+    timer.done({ blockedByPrivacy: true })
+    throw new Error(t('error.screenshotBlockedByPrivacy'))
+  }
+
   const screenshotSettings = loadScreenshotSettings()
   const target = req.target || screenshotSettings.defaultTarget
   const activeWin = await safeGetActiveWin()

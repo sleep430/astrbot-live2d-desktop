@@ -89,7 +89,7 @@ const en: I18nMessageSchema = {
   'settings.menu.advanced': 'Advanced',
   'settings.menu.advanced.behavior': 'Behavior',
   'settings.menu.advanced.shortcut': 'Shortcuts',
-  'settings.menu.advanced.windowWatcher': 'Window Watcher',
+  'settings.menu.advanced.windowWatcher': 'Desktop Awareness',
   'settings.menu.advanced.data': 'Data Management',
   'settings.menu.about': 'About',
   'settings.menu.about.info': 'About',
@@ -130,7 +130,8 @@ const en: I18nMessageSchema = {
   'settings.page.advanced.behavior.desc':
     'Desktop interaction, recording, bubbles, and screenshots.',
   'settings.page.advanced.shortcut.desc': 'Global recording shortcut and duration limit.',
-  'settings.page.advanced.windowWatcher.desc': 'Window focus and app switch monitoring.',
+  'settings.page.advanced.windowWatcher.desc':
+    'App switching, current context, and proactive awareness.',
   'settings.page.advanced.data.desc': 'Logs, cache, config import/export, and reset.',
   'settings.page.about.info.desc': 'Version, language, appearance, and links.',
 
@@ -740,6 +741,45 @@ const en: I18nMessageSchema = {
     'Enter additional title keywords to ignore...',
   'settings.advanced.watcher.ignoreTitleKeywordsFeedback':
     'Windows with titles containing these keywords will be ignored.',
+  'settings.advanced.watcher.awarenessTitle': 'Desktop Awareness',
+  'settings.advanced.watcher.awarenessDesc':
+    'Let the desktop companion understand the app you are using and share context with AI more calmly.',
+  'settings.advanced.watcher.enableAwareness': 'Enable desktop awareness',
+  'settings.advanced.watcher.awarenessMode': 'Proactivity',
+  'settings.advanced.watcher.modeQuiet': 'Quiet',
+  'settings.advanced.watcher.modeSmart': 'Smart',
+  'settings.advanced.watcher.modeActive': 'Active',
+  'settings.advanced.watcher.modeQuietDesc':
+    'Only updates the current context and does not send proactive desktop events.',
+  'settings.advanced.watcher.modeSmartDesc':
+    'Recommended. Sends context only after a meaningful app switch and short dwell time.',
+  'settings.advanced.watcher.modeActiveDesc':
+    'Responds faster to app switches for a more proactive companion.',
+  'settings.advanced.watcher.appScope': 'App Scope',
+  'settings.advanced.watcher.appScopeDesc':
+    'Matches real app identity, so chrome, chrome.exe, and Google Chrome are treated as the same app.',
+  'settings.advanced.watcher.appScopeMode': 'Scope',
+  'settings.advanced.watcher.scopeAll': 'All regular apps',
+  'settings.advanced.watcher.scopeInclude': 'Only these apps',
+  'settings.advanced.watcher.scopeExclude': 'Exclude these apps',
+  'settings.advanced.watcher.scopeApps': 'Apps',
+  'settings.advanced.watcher.scopeAppsPlaceholder': 'For example:\nChrome\nVS Code\nWeChat',
+  'settings.advanced.watcher.scopeAppsFeedback':
+    'One app name or identity key per line. You can add items from recently detected apps.',
+  'settings.advanced.watcher.recentApps': 'Recently detected apps',
+  'settings.advanced.watcher.addToScope': 'Add',
+  'settings.advanced.watcher.removeFromScope': 'Remove',
+  'settings.advanced.watcher.privacy': 'Privacy',
+  'settings.advanced.watcher.privacyDesc':
+    'Control which desktop context details may be shared with AI.',
+  'settings.advanced.watcher.shareWindowTitle': 'Share window title with AI',
+  'settings.advanced.watcher.allowScreenshotOnRequest': 'Allow AI to request screenshots',
+  'settings.advanced.watcher.diagnostics': 'Diagnostics',
+  'settings.advanced.watcher.diagnosticsDesc':
+    'Inspect the current recognition result and latest policy decision.',
+  'settings.advanced.watcher.currentApp': 'Current app',
+  'settings.advanced.watcher.currentAppKey': 'Identity key',
+  'settings.advanced.watcher.lastDecision': 'Latest decision',
 
   // Settings — History messages
   'settings.history.messages.searchPlaceholder': 'Search messages...',
@@ -788,6 +828,8 @@ const en: I18nMessageSchema = {
   'error.modelResourceIncomplete': 'Model resources incomplete',
   'error.desktopSourceUnavailable': 'Unable to get desktop capture source',
   'error.screenshotSourceUnavailable': 'Screenshot source unavailable, please try again later',
+  'error.screenshotBlockedByPrivacy':
+    'Desktop awareness privacy settings block AI screenshot requests',
   'error.unknownTool': 'Unknown tool: {name}',
   'error.localHistoryResourceMissing': 'Local history resource does not exist',
   'error.onlyHttpMailtoProtocol': 'Only http/https/mailto protocol links are supported',

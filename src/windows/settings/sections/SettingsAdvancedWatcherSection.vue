@@ -22,201 +22,218 @@
     </SettingsSubsection>
 
     <SettingsSubsection
-      :title="$t('settings.advanced.watcher.basicSwitches')"
-      :description="$t('settings.advanced.watcher.basicSwitchesDesc')"
+      :title="$t('settings.advanced.watcher.awarenessTitle')"
+      :description="$t('settings.advanced.watcher.awarenessDesc')"
     >
       <n-form label-placement="top">
-        <n-form-item :label="$t('settings.advanced.watcher.enableWatcher')">
+        <n-form-item :label="$t('settings.advanced.watcher.enableAwareness')">
           <n-switch v-model:value="draftConfig.enabled" />
         </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.enableAppLaunch')">
-          <n-switch v-model:value="draftConfig.appLaunchEnabled" />
+
+        <n-form-item :label="$t('settings.advanced.watcher.awarenessMode')">
+          <n-radio-group v-model:value="draftConfig.mode" class="mode-group">
+            <n-radio-button value="quiet">{{
+              $t('settings.advanced.watcher.modeQuiet')
+            }}</n-radio-button>
+            <n-radio-button value="smart">{{
+              $t('settings.advanced.watcher.modeSmart')
+            }}</n-radio-button>
+            <n-radio-button value="active">{{
+              $t('settings.advanced.watcher.modeActive')
+            }}</n-radio-button>
+          </n-radio-group>
           <template #feedback>
-            {{ $t('settings.advanced.watcher.appLaunchFeedback') }}
+            {{ modeDescription }}
           </template>
         </n-form-item>
       </n-form>
     </SettingsSubsection>
 
     <SettingsSubsection
-      :title="$t('settings.advanced.watcher.monitorFrequency')"
-      :description="$t('settings.advanced.watcher.monitorFrequencyDesc')"
+      :title="$t('settings.advanced.watcher.appScope')"
+      :description="$t('settings.advanced.watcher.appScopeDesc')"
     >
       <n-form label-placement="top">
-        <n-form-item :label="$t('settings.advanced.watcher.globalInterval')">
-          <n-input-number
-            v-model:value="draftConfig.throttle.globalInterval"
-            :min="0"
-            :max="60000"
-            :step="100"
-            :placeholder="$t('settings.advanced.watcher.globalIntervalPlaceholder')"
-          />
-          <template #feedback>{{
-            $t('settings.advanced.watcher.globalIntervalFeedback')
-          }}</template>
+        <n-form-item :label="$t('settings.advanced.watcher.appScopeMode')">
+          <n-radio-group v-model:value="draftConfig.appScope.mode">
+            <n-space>
+              <n-radio value="all">{{ $t('settings.advanced.watcher.scopeAll') }}</n-radio>
+              <n-radio value="include">{{ $t('settings.advanced.watcher.scopeInclude') }}</n-radio>
+              <n-radio value="exclude">{{ $t('settings.advanced.watcher.scopeExclude') }}</n-radio>
+            </n-space>
+          </n-radio-group>
         </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.perWindowInterval')">
-          <n-input-number
-            v-model:value="draftConfig.throttle.perWindowInterval"
-            :min="0"
-            :max="60000"
-            :step="100"
-            :placeholder="$t('settings.advanced.watcher.perWindowIntervalPlaceholder')"
-          />
-          <template #feedback>{{
-            $t('settings.advanced.watcher.perWindowIntervalFeedback')
-          }}</template>
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.minInterval')">
-          <n-input-number
-            v-model:value="draftConfig.throttle.minInterval"
-            :min="0"
-            :max="1000"
-            :step="10"
-            :placeholder="$t('settings.advanced.watcher.minIntervalPlaceholder')"
-          />
-          <template #feedback>{{ $t('settings.advanced.watcher.minIntervalFeedback') }}</template>
-        </n-form-item>
-      </n-form>
-    </SettingsSubsection>
 
-    <SettingsSubsection
-      :title="$t('settings.advanced.watcher.monitorEvents')"
-      :description="$t('settings.advanced.watcher.monitorEventsDesc')"
-    >
-      <n-form label-placement="left">
-        <n-form-item :label="$t('settings.advanced.watcher.eventFocus')">
-          <n-switch v-model:value="draftConfig.events.focus" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventBlur')">
-          <n-switch v-model:value="draftConfig.events.blur" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventCreate')">
-          <n-switch v-model:value="draftConfig.events.create" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventDestroy')">
-          <n-switch v-model:value="draftConfig.events.destroy" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventFullscreen')">
-          <n-switch v-model:value="draftConfig.events.fullscreen" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventWindowed')">
-          <n-switch v-model:value="draftConfig.events.windowed" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventResize')">
-          <n-switch v-model:value="draftConfig.events.resize" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventMove')">
-          <n-switch v-model:value="draftConfig.events.move" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventMinimize')">
-          <n-switch v-model:value="draftConfig.events.minimize" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventMaximize')">
-          <n-switch v-model:value="draftConfig.events.maximize" />
-        </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.eventRestore')">
-          <n-switch v-model:value="draftConfig.events.restore" />
-        </n-form-item>
-      </n-form>
-    </SettingsSubsection>
-
-    <SettingsSubsection
-      :title="$t('settings.advanced.watcher.aiResponseMode')"
-      :description="$t('settings.advanced.watcher.aiResponseModeDesc')"
-    >
-      <n-radio-group v-model:value="draftConfig.aiResponse.mode">
-        <n-space direction="vertical">
-          <n-radio value="first-open">{{
-            $t('settings.advanced.watcher.aiModeFirstOpen')
-          }}</n-radio>
-          <n-radio value="every-switch">{{
-            $t('settings.advanced.watcher.aiModeEverySwitch')
-          }}</n-radio>
-          <n-radio value="specific-apps">{{
-            $t('settings.advanced.watcher.aiModeSpecificApps')
-          }}</n-radio>
-        </n-space>
-      </n-radio-group>
-
-      <div v-if="draftConfig.aiResponse.mode === 'specific-apps'" class="specific-apps-config">
-        <n-form-item :label="$t('settings.advanced.watcher.specificAppsList')">
+        <n-form-item
+          v-if="draftConfig.appScope.mode !== 'all'"
+          :label="$t('settings.advanced.watcher.scopeApps')"
+        >
           <n-input
-            v-model:value="specificAppsInput"
+            v-model:value="appScopeInput"
             type="textarea"
             :rows="4"
-            placeholder="chrome.exe&#10;firefox.exe&#10;code.exe"
-            @update:value="updateSpecificApps"
+            :placeholder="$t('settings.advanced.watcher.scopeAppsPlaceholder')"
+            @update:value="updateAppScopeInput"
           />
+          <template #feedback>
+            {{ $t('settings.advanced.watcher.scopeAppsFeedback') }}
+          </template>
         </n-form-item>
+      </n-form>
+
+      <div v-if="recentApps.length > 0" class="recent-apps">
+        <div class="recent-apps__title">{{ $t('settings.advanced.watcher.recentApps') }}</div>
+        <div class="recent-apps__list">
+          <div v-for="item in recentApps" :key="item.app.canonicalKey" class="recent-app">
+            <div class="recent-app__main">
+              <strong>{{ item.app.displayName }}</strong>
+              <span>{{ item.app.canonicalKey }}</span>
+            </div>
+            <n-space size="small">
+              <n-button size="small" secondary @click="addAppToScope(item.app.canonicalKey)">
+                {{ $t('settings.advanced.watcher.addToScope') }}
+              </n-button>
+              <n-button size="small" text @click="removeAppFromScope(item.app.canonicalKey)">
+                {{ $t('settings.advanced.watcher.removeFromScope') }}
+              </n-button>
+            </n-space>
+          </div>
+        </div>
       </div>
     </SettingsSubsection>
 
     <SettingsSubsection
-      :title="$t('settings.advanced.watcher.ignoreRules')"
-      :description="$t('settings.advanced.watcher.ignoreRulesDesc')"
+      :title="$t('settings.advanced.watcher.privacy')"
+      :description="$t('settings.advanced.watcher.privacyDesc')"
     >
-      <n-alert type="info" :show-icon="false" style="margin-bottom: 16px">
-        <strong>{{ $t('settings.advanced.watcher.builtinRules') }}</strong>
-        <div style="margin-top: 8px; font-size: 12px">
-          {{ $t('settings.advanced.watcher.builtinRulesContent') }}
-        </div>
-      </n-alert>
-
-      <n-form label-placement="top">
-        <n-form-item :label="$t('settings.advanced.watcher.ignoreProcessNames')">
-          <n-input
-            v-model:value="ignoreProcessNamesInput"
-            type="textarea"
-            :rows="3"
-            :placeholder="$t('settings.advanced.watcher.ignoreProcessNamesPlaceholder')"
-            @update:value="updateIgnoreProcessNames"
-          />
-          <template #feedback>{{
-            $t('settings.advanced.watcher.ignoreProcessNamesFeedback')
-          }}</template>
+      <n-form label-placement="left">
+        <n-form-item :label="$t('settings.advanced.watcher.shareWindowTitle')">
+          <n-switch v-model:value="draftConfig.privacy.shareWindowTitle" />
         </n-form-item>
-        <n-form-item :label="$t('settings.advanced.watcher.ignoreTitleKeywords')">
-          <n-input
-            v-model:value="ignoreTitleKeywordsInput"
-            type="textarea"
-            :rows="3"
-            :placeholder="$t('settings.advanced.watcher.ignoreTitleKeywordsPlaceholder')"
-            @update:value="updateIgnoreTitleKeywords"
-          />
-          <template #feedback>{{
-            $t('settings.advanced.watcher.ignoreTitleKeywordsFeedback')
-          }}</template>
+        <n-form-item :label="$t('settings.advanced.watcher.allowScreenshotOnRequest')">
+          <n-switch v-model:value="draftConfig.privacy.allowScreenshotOnRequest" />
         </n-form-item>
       </n-form>
+    </SettingsSubsection>
+
+    <SettingsSubsection
+      :title="$t('settings.advanced.watcher.diagnostics')"
+      :description="$t('settings.advanced.watcher.diagnosticsDesc')"
+    >
+      <div class="diagnostics">
+        <div>
+          <span>{{ $t('settings.advanced.watcher.currentApp') }}</span>
+          <strong>{{ snapshot?.current.app?.displayName || '-' }}</strong>
+        </div>
+        <div>
+          <span>{{ $t('settings.advanced.watcher.currentAppKey') }}</span>
+          <strong>{{ snapshot?.current.app?.canonicalKey || '-' }}</strong>
+        </div>
+        <div>
+          <span>{{ $t('settings.advanced.watcher.lastDecision') }}</span>
+          <strong>{{ snapshot?.lastDecision?.reason || '-' }}</strong>
+        </div>
+      </div>
     </SettingsSubsection>
   </SettingsPageScaffold>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
 import SettingsPageScaffold from '../shared/SettingsPageScaffold.vue'
 import SettingsSubsection from '../shared/SettingsSubsection.vue'
 import { useWatcherSettingsDomain } from '../domains/createWatcherSettingsDomain'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const {
+  appScopeInput,
   canSave,
   dirty,
   draftConfig,
-  ignoreProcessNamesInput,
-  ignoreTitleKeywordsInput,
+  recentApps,
   resetDraft,
   resetPersisted,
   saveDraft,
   saving,
-  specificAppsInput,
-  updateIgnoreProcessNames,
-  updateIgnoreTitleKeywords,
-  updateSpecificApps
+  snapshot,
+  addAppToScope,
+  removeAppFromScope,
+  updateAppScopeInput
 } = useWatcherSettingsDomain()
+
+const modeDescription = computed(() => {
+  switch (draftConfig.value.mode) {
+    case 'quiet':
+      return t('settings.advanced.watcher.modeQuietDesc')
+    case 'active':
+      return t('settings.advanced.watcher.modeActiveDesc')
+    case 'smart':
+    default:
+      return t('settings.advanced.watcher.modeSmartDesc')
+  }
+})
 </script>
 
 <style scoped>
-.specific-apps-config {
-  margin-top: 16px;
+.mode-group {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.recent-apps {
+  margin-top: 8px;
+}
+
+.recent-apps__title {
+  margin-bottom: 10px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.recent-apps__list {
+  display: grid;
+  gap: 8px;
+}
+
+.recent-app {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--settings-bg-muted);
+}
+
+.recent-app__main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recent-app__main span {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}
+
+.diagnostics {
+  display: grid;
+  gap: 10px;
+}
+
+.diagnostics > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.diagnostics span {
+  color: var(--color-text-secondary);
 }
 </style>

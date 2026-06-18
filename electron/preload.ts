@@ -260,6 +260,15 @@ contextBridge.exposeInMainWorld('electron', {
       subscribeIpc('desktopBehavior:snapshotChanged', callback)
   },
 
+  desktopAwareness: {
+    getSettings: () => ipcRenderer.invoke('desktopAwareness:getSettings'),
+    updateSettings: (patch: any) => ipcRenderer.invoke('desktopAwareness:updateSettings', patch),
+    resetSettings: () => ipcRenderer.invoke('desktopAwareness:resetSettings'),
+    getSnapshot: () => ipcRenderer.invoke('desktopAwareness:getSnapshot'),
+    onSnapshotChanged: (callback: (snapshot: any) => void) =>
+      subscribeIpc('desktopAwareness:snapshotChanged', callback)
+  },
+
   // 设置窗口专用
   settings: {
     getPendingPage: () => ipcRenderer.invoke('settings:getPendingPage'),
