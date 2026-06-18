@@ -108,24 +108,47 @@ function selectHighlighted() {
 .settings-command-palette {
   width: min(480px, 92vw);
   padding: 0;
-  border-radius: 14px;
-  border: 1px solid var(--settings-border);
+  border-radius: 16px;
+  border: 1px solid var(--settings-border-strong);
   background: var(--settings-bg-elevated);
-  box-shadow: var(--settings-shadow);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.5),
+    0 8px 24px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
   overflow: hidden;
+  animation: settings-palette-in 0.32s var(--ease-spring);
+}
+
+@keyframes settings-palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .settings-command-palette__input-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 11px;
+  padding: 15px 18px;
   border-bottom: 1px solid var(--settings-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent);
 }
 
 .settings-command-palette__icon {
   color: var(--color-text-tertiary);
   flex-shrink: 0;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.settings-command-palette__input-wrap:focus-within .settings-command-palette__icon {
+  color: var(--color-accent);
 }
 
 .settings-command-palette__input {
@@ -133,8 +156,15 @@ function selectHighlighted() {
   border: none;
   background: transparent;
   font-size: 15px;
+  font-weight: 500;
   color: var(--color-text-primary);
   outline: none;
+  letter-spacing: -0.005em;
+}
+
+.settings-command-palette__input::placeholder {
+  color: var(--color-text-tertiary);
+  font-weight: 400;
 }
 
 .settings-command-palette__list {
@@ -153,28 +183,38 @@ function selectHighlighted() {
   padding: 10px 12px;
   border-radius: 10px;
   cursor: pointer;
-  transition: background 0.12s ease;
+  position: relative;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    transform var(--duration-fast) var(--ease-out);
 }
 
 .settings-command-palette__item:hover,
 .settings-command-palette__item--active {
   background: var(--settings-bg-active);
+  transform: translateX(2px);
+}
+
+.settings-command-palette__item--active {
+  box-shadow: inset 0 0 0 1px rgba(var(--color-accent-rgb), 0.2);
 }
 
 .settings-command-palette__item-title {
   font-size: 13px;
   font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 .settings-command-palette__item-group {
-  font-size: 11px;
+  font-size: 10.5px;
   color: var(--color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
+  font-weight: 600;
 }
 
 .settings-command-palette__empty {
-  padding: 16px;
+  padding: 24px 16px;
   text-align: center;
   font-size: 13px;
   color: var(--color-text-tertiary);
