@@ -2,19 +2,21 @@
   <header class="settings-page-header" :class="{ 'settings-page-header--immersive': immersive }">
     <transition name="settings-page-head" mode="out-in">
       <div :key="pageKey" class="settings-page-header__inner">
-        <h2 class="settings-page-header__title">
-          <span v-if="immersive" class="settings-page-header__title-art" aria-hidden="true">
-            <span
-              v-for="(ch, index) in titleChars"
-              :key="`${pageKey}-${index}`"
-              class="settings-page-header__char"
-              :style="{ '--char-delay': `${index * 42}ms` }"
-              >{{ ch === ' ' ? ' ' : ch }}</span
-            >
-          </span>
-          <span v-else class="settings-page-header__title-text">{{ title }}</span>
-        </h2>
-        <p v-if="description" class="settings-page-header__desc">{{ description }}</p>
+        <div class="settings-page-header__main">
+          <h2 class="settings-page-header__title">
+            <span v-if="immersive" class="settings-page-header__title-art" aria-hidden="true">
+              <span
+                v-for="(ch, index) in titleChars"
+                :key="`${pageKey}-${index}`"
+                class="settings-page-header__char"
+                :style="{ '--char-delay': `${index * 42}ms` }"
+                >{{ ch === ' ' ? ' ' : ch }}</span
+              >
+            </span>
+            <span v-else class="settings-page-header__title-text">{{ title }}</span>
+          </h2>
+          <p v-if="description" class="settings-page-header__desc">{{ description }}</p>
+        </div>
         <div v-if="$slots.extra" class="settings-page-header__extra">
           <slot name="extra" />
         </div>
@@ -45,7 +47,7 @@ const titleChars = computed(() => [...props.title])
 
 <style scoped>
 .settings-page-header {
-  margin-bottom: 22px;
+  margin-bottom: 18px;
   position: relative;
 }
 
@@ -57,19 +59,24 @@ const titleChars = computed(() => [...props.title])
 
 .settings-page-header__inner {
   position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
 }
 
 .settings-page-header__title {
-  margin: 0 0 8px;
-  font-size: 23px;
+  margin: 0 0 6px;
+  font-size: 19px;
   font-weight: 700;
-  letter-spacing: -0.035em;
-  line-height: 1.18;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  color: var(--color-text-primary);
 }
 
 .settings-page-header--immersive .settings-page-header__title {
-  font-size: clamp(30px, 4.2vw, 42px);
-  letter-spacing: -0.045em;
+  font-size: clamp(28px, 3.6vw, 38px);
+  letter-spacing: -0.04em;
 }
 
 .settings-page-header__title-text {
@@ -132,10 +139,10 @@ const titleChars = computed(() => [...props.title])
 
 .settings-page-header__desc {
   margin: 0;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--color-text-secondary);
-  line-height: 1.65;
-  max-width: 520px;
+  line-height: 1.6;
+  max-width: 560px;
   letter-spacing: 0.005em;
 }
 
@@ -144,7 +151,30 @@ const titleChars = computed(() => [...props.title])
 }
 
 .settings-page-header__extra {
+  justify-self: end;
+  max-width: min(100%, 520px);
+  padding-top: 2px;
+}
+
+.settings-page-header--immersive .settings-page-header__inner {
+  display: block;
+}
+
+.settings-page-header--immersive .settings-page-header__extra {
+  max-width: none;
+  padding-top: 0;
   margin-top: 14px;
+}
+
+@media (max-width: 760px) {
+  .settings-page-header__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-page-header__extra {
+    justify-self: stretch;
+    max-width: none;
+  }
 }
 
 .settings-page-head-enter-active {

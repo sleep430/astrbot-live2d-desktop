@@ -22,18 +22,19 @@ defineProps<{
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .settings-subsection__head h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--settings-text-muted);
+  color: var(--color-text-secondary);
   position: relative;
-  padding-left: 12px;
+  padding-left: 11px;
+  line-height: 1.4;
 }
 
 .settings-subsection__head h3::before {
@@ -43,9 +44,9 @@ defineProps<{
   top: 50%;
   transform: translateY(-50%);
   width: 3px;
-  height: 12px;
+  height: 13px;
   border-radius: 2px;
   background: linear-gradient(180deg, var(--color-accent-hover), var(--color-accent));
-  opacity: 0.7;
+  opacity: 0.85;
 }
 </style>
