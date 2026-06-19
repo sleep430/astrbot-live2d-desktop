@@ -158,13 +158,14 @@ export class L2DBridgeClient extends EventEmitter {
         })
 
         this.ws.on('close', (code, reason) => {
+          const wasReady = this.ready
           const disconnectInfo = this.handleSocketClose(code, reason.toString())
           if (this.pendingOpen) {
             this.rejectPendingOpen(createOpenCloseError(disconnectInfo))
             return
           }
 
-          if (this.ready || disconnectInfo.errorCode || disconnectInfo.errorMessage) {
+          if (wasReady || disconnectInfo.errorCode || disconnectInfo.errorMessage) {
             this.emit('disconnected', disconnectInfo)
           }
         })
