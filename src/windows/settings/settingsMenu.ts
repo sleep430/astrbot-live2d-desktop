@@ -30,6 +30,8 @@ export type SettingsChildKey =
   | 'behavior'
   | 'shortcut'
   | 'windowWatcher'
+  | 'personality'
+  | 'scenePro'
   | 'data'
   | 'info'
 
@@ -77,6 +79,8 @@ export const settingsMenuGroups: SettingsMenuGroup[] = [
       { key: 'behavior', icon: Settings2 },
       { key: 'shortcut', icon: Keyboard },
       { key: 'windowWatcher', icon: Eye },
+      { key: 'personality', icon: Sparkles },
+      { key: 'scenePro', icon: Eye },
       { key: 'data', icon: Database }
     ]
   },

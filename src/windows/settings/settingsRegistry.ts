@@ -175,6 +175,24 @@ export function createSettingsSectionRegistry(
       loader: () => import('./sections/SettingsAdvancedWatcherSection.vue'),
       prepare: force => watcherDomain.ensureReady(force)
     },
+    'advanced/personality': {
+      key: 'advanced/personality',
+      group: 'advanced',
+      child: 'personality',
+      layoutProfile: 'document',
+      cachePolicy: 'keep-alive',
+      skeletonKind: 'form',
+      loader: () => import('./sections/SettingsAdvancedPersonalitySection.vue')
+    },
+    'advanced/scenePro': {
+      key: 'advanced/scenePro',
+      group: 'advanced',
+      child: 'scenePro',
+      layoutProfile: 'document',
+      cachePolicy: 'keep-alive',
+      skeletonKind: 'form',
+      loader: () => import('./sections/SettingsAdvancedSceneProSection.vue')
+    },
     'advanced/data': {
       key: 'advanced/data',
       group: 'advanced',
